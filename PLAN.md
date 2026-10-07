@@ -164,6 +164,16 @@ mask, data), only the two edge words are masked. Original sketch below.
 - Cell lookup: direction tables (dx,dy for forward and right per facing) → map offset arithmetic
   on `y*32+x`.
 
+## 5a. Look and atmosphere
+
+Decided 2026-10-07: **dark caves.** Little light that fades quickly with
+depth, a black ceiling, a wide dark band at the horizon, dark stone colours
+(blue with some magenta blocks, a faint white light on the top edges),
+dimmed enemies whose eyes always glow ('*' red, '+' yellow in the pixel
+art). Settings: `DARK` and `WALLSETS` in tools/gfxc.py, `SPRITE_LIGHT` for
+the enemies. New wall sets keep to this; the cave levels later get a rough
+rock texture instead of laid stone.
+
 ## 6. Milestones
 
 Each one builds with make.sh, runs in sQLux, and ends with a size report.

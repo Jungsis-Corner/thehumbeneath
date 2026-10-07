@@ -3,7 +3,8 @@
 Each picture is drawn as the left half and mirrored (odd details are added
 afterwards). Characters: '.' transparent, K black, B blue, R red, M magenta,
 G green, C cyan, Y yellow, W white; lower case = the same colour at lower
-brightness (dithered with black). SIZE is the size in Mode 8 pixels at
+brightness (dithered with black); eyes glow in the dark: '*' red, '+' yellow
+are never dimmed. SIZE is the size in Mode 8 pixels at
 depth 1; the art is stretched to it (Mode 8 pixels are wide, so pictures
 get more height than the art has rows).
 """
@@ -18,8 +19,8 @@ RAT_HALF = [
     ".......WWwwwwwwwwwww",
     "......wwwwwwwwwwwwww",
     ".....wwwwwwwwwwwwwww",
-    ".....wwwKRRwwwwwwwww",
-    ".....wwwKRRwwwwwwwww",
+    ".....wwwK**wwwwwwwww",
+    ".....wwwK**wwwwwwwww",
     "......wwwwwwwwwwwwww",
     "...W...wwwwwwwwwwwww",
     "....WW..wwwwwwwwwwMM",
@@ -47,8 +48,8 @@ SPIDER_HALF = [
     "........wwwwwwww...mmmmmmmmm",
     "................wwmmmmmmmmmm",
     "...................mmmmmmmmm",
-    "........wwwwwwwwwwwmmmRRmRRm",
-    ".......w...........mmmRRmRRm",
+    "........wwwwwwwwwwwmmm**m**m",
+    ".......w...........mmm**m**m",
     "......w............mmmmmmmmm",
     ".....w..........wwwwmmmmmmmm",
     "....w..........w.....mmmmmmm",
@@ -68,7 +69,7 @@ def mirror(half):
 def big_rat():
     """Old Whiskerless: a larger rat with one ear and yellow eyes."""
     art = mirror(RAT_HALF)
-    art = [row.replace('R', 'Y') for row in art]
+    art = [row.replace('*', '+') for row in art]
     for y in range(4):                       # the right ear is gone
         art[y] = art[y][:20] + '.' * 20
     big = []                                 # 1.4 times as large
@@ -106,10 +107,15 @@ ART = {
 }
 
 
+GLOW = {'*': 2, '+': 6}               # glowing eyes: red, yellow
+
+
 def pixel(ch):
-    """Art character -> (colour, brightness) or None for transparent."""
+    """Art character -> (colour, brightness, glows) or None for transparent."""
     if ch == '.':
         return None
+    if ch in GLOW:
+        return GLOW[ch], 1.0, True
     if ch.isupper():
-        return COLOURS[ch], 1.0
-    return COLOURS[ch.upper()], 0.6
+        return COLOURS[ch], 1.0, False
+    return COLOURS[ch.upper()], 0.6, False

@@ -58,6 +58,8 @@ DEPTHS = 4                         # cell depths 0..3
 LAT = 3                            # lateral offsets -3..3
 WALLMAX = 28672                    # wall set buffer in the game
 SPRMAX = 12288                     # sprite set buffer in the game
+SPRITE_LIGHT = (0.70, 0.18)        # enemy pictures: light at depth 1, loss per cell
+                                   # (eyes always glow at full brightness)
 SPRITESETS = {1: None}             # set number: sprite names (None = all)
 MAGIC = b'HWS1'
 ENTRY = 22                         # bytes per draw list entry
@@ -97,21 +99,28 @@ class StoneSet:
     rows = 3                       # block rows per wall
     cols = 2                       # blocks per row and wall width
 
-    def __init__(self, stone, odd, floor, floor_i, ceil, ceil_i):
+    def __init__(self, stone, odd, floor, floor_i, ceil, ceil_i,
+                 light0=0.86, lightz=0.19, side=0.78, fog=None, edge=None):
         self.stone, self.odd = stone, odd          # block colours
+        self.edge = edge                           # colour of the top edges
         self.floor, self.floor_i = floor, floor_i  # floor colour, intensity
         self.ceil, self.ceil_i = ceil, ceil_i
+        self.light0, self.lightz = light0, lightz  # light at depth 0, loss per cell
+        self.side = side                           # side faces get this share
+        self.fog = HH[4] if fog is None else fog   # black band around the horizon
 
-    @staticmethod
-    def light(z, side=False):
-        return max((0.86 - 0.19 * z) * (0.78 if side else 1), 0.06)
+    def light(self, z, side=False):
+        return max((self.light0 - self.lightz * z) * (self.side if side else 1), 0.06)
 
     def wall(self, x, y, u, v, z, side):
         """Colour of a wall pixel; u, v in 0..1 on the face, z = depth."""
         r = int(v * self.rows)
+        fv = (v * self.rows) % 1
         fu = u * self.cols + (0.5 if r & 1 else 0)
-        if (v * self.rows) % 1 < 0.07 or fu % 1 < 0.035:
+        if fv < 0.07 or fu % 1 < 0.035:
             return BLACK
+        if self.edge is not None and fv < 0.13:     # faint light on the top edge
+            return dither(x, y, self.light(z, side) * 0.8, self.edge)
         block = int(fu) * 7 + r * 13
         colour = self.odd if block % 5 == 3 else self.stone
         return dither(x, y, self.light(z, side), colour)
@@ -148,15 +157,18 @@ class StoneSet:
 
     def background(self, x, y):
         if y < CY:                 # ceiling, black at the horizon
-            t = (CY - HH[4] - y) / (CY - HH[4])
+            t = (CY - self.fog - y) / (CY - self.fog)
             return dither(x, y, self.ceil_i * t, self.ceil) if t > 0 else BLACK
-        t = (y - CY - HH[4] + 1) / (CY - HH[4])
+        t = (y - CY - self.fog + 1) / (CY - self.fog)
         return dither(x, y, self.floor_i * t, self.floor) if t > 0 else BLACK
 
 
+# Dark caves (decided 2026-10-07): little light that fades quickly, black
+# ceiling, a wide dark band at the horizon, dark stone colours.
+DARK = dict(light0=0.48, lightz=0.13, side=0.65, fog=20)
 WALLSETS = {
-    1: StoneSet(WHITE, YEL, RED, 0.6, BLUE, 0.45),     # root cellar
-    2: StoneSet(CYAN, GREEN, BLUE, 0.6, BLUE, 0.25),   # wet stone (test)
+    1: StoneSet(BLUE, MAG, RED, 0.25, BLUE, 0.0, edge=WHITE, **DARK),    # root cellar
+    2: StoneSet(CYAN, GREEN, BLUE, 0.25, BLUE, 0.0, edge=WHITE, **DARK), # wet stone (test)
 }
 
 # view classes, as in levelc.py
@@ -242,7 +254,7 @@ def sprite_tile(art, size, d):
     bottom = min(int(CY + mid(HH, d)), VIEW_H)
     y0 = bottom - h
     left = x0 * 4 + (words * 4 - w) // 2
-    light = 1.0 - 0.17 * (d - 1)
+    light = SPRITE_LIGHT[0] - SPRITE_LIGHT[1] * (d - 1)
     rows, index, offsets = [], {}, []
     pos = 8 + 2 * h
     for y in range(h):
@@ -253,7 +265,7 @@ def sprite_tile(art, size, d):
             if 0 <= sx < w:
                 p = sprites.pixel(art[int(y * h0 / h)][int(sx * w0 / w)])
                 if p:
-                    c = dither(x0 * 4 + x, y0 + y, light * p[1], p[0])
+                    c = p[0] if p[2] else dither(x0 * 4 + x, y0 + y, light * p[1], p[0])
             px.append(c)
         row = b''.join(struct.pack('>HH', *encode(px[i:i + 4]))
                        for i in range(0, len(px), 4))
