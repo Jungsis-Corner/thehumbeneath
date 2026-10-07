@@ -320,6 +320,16 @@ saving any time outside a fight; 3 save slots; a title picture with menu.
 - **M8b title, intro, names:** title picture loaded by BOOT, main menu
   (NEW GAME, LOAD GAME, QUIT), intro text, name entry (keyboard and a letter
   wheel for the joystick). OPTIONS waits until there is something to set.
+  Progress in % (decided 2026-10-07), shown at game over (with a short
+  break-down, then back to the title menu) and in the save slot list
+  ("Slot 1: level 3, 37%"):
+    50 % depth     deepest level reached of the 8 levels
+    25 % explored  visited cells of all levels / all reachable cells
+                   (levelc.py counts them for every level)
+    25 % story     Scratch-Marks found + mini-bosses beaten / their totals
+                   (levelc.py counts them; marks get a "seen" flag)
+  The save header gets the progress (save version 2). While the test
+  levels 0 and 9 are built they count like real levels.
 **M9 – levels 1-8 content**, mini-bosses, hazards, sneak step (L7), Elder Pale choice.
 **M10 – endings, sound, polish, distribution** (win image, README, MiSTer test).
 
