@@ -13,7 +13,8 @@ One party member (all words):
   p_flags (bit 0 poisoned; later stun, fear), p_fen, p_dry, p_glow (moss),
   p_mosscap (moss of all kinds together), p_row (0 front, 1 back),
   p_guard (1 = defends until its next turn in combat), p_gear (item worn,
-  0 none), p_wrap (steps without bleeding left from a Cobweb Wrap)
+  0 none), p_wrap (steps without bleeding left from a Cobweb Wrap),
+  p_press (bleeding levels held back by Press and Hold until the fight ends)
 
 One enemy type (all words): e_name e_plural (text ids), e_hp, e_atk, e_def,
   e_spd, e_bleed, e_poison, e_boss, e_xp. The types are numbered in file
@@ -33,7 +34,7 @@ import items  # noqa: E402
 EFIELDS = ['name', 'plural', 'hp', 'atk', 'def', 'spd', 'bleed', 'poison', 'boss', 'xp']
 FIELDS = ['name', 'role', 'rank', 'xp', 'hp', 'hpmax', 'hpbase', 'atk', 'def',
           'spd', 'find', 'bleed', 'flags', 'fen', 'dry', 'glow', 'mosscap', 'row',
-          'guard', 'gear', 'wrap']
+          'guard', 'gear', 'wrap', 'press']
 IFIELDS = ['name', 'kind', 'value']
 NPARTY = 4
 
@@ -82,7 +83,8 @@ def main():
                 cats.append(dict(name=name, role=role, rank=0, xp=0, hp=hp, hpmax=hp,
                                  hpbase=hp, atk=atk, def_=df, spd=spd, find=find,
                                  bleed=0, flags=0, fen=fen, dry=dry, glow=glow,
-                                 mosscap=cap, row=row, guard=0, gear=0, wrap=0))
+                                 mosscap=cap, row=row, guard=0, gear=0, wrap=0,
+                                 press=0))
             else:
                 fail('%s: cannot read "%s"' % (where, raw.strip()))
         except ValueError:

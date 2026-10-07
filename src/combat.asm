@@ -14,8 +14,9 @@ WOUND_PCT equ   35              ; chance that a hit makes bleed / poisons
 GUARD_DEF equ   3               ; extra defence while keeping guard
 CM_ATTACK equ   0               ; combat menu lines
 CM_DEFEND equ   1
-CM_ITEM   equ   2
-CM_FLEE   equ   3
+CM_SKILL  equ   2
+CM_ITEM   equ   3
+CM_FLEE   equ   4
 CE_VICTORY equ  1               ; v_cend
 CE_FLED   equ   2
 
@@ -42,6 +43,8 @@ combat:
         dbra    d0,.init
         clr.w   v_cend(a5)
         move.w  #1,v_fight(a5)
+        clr.w   v_charm(a5)
+        clr.w   v_charmed(a5)
         lea     v_party(a5),a0
         moveq   #NPARTY-1,d0
 .g0     clr.w   p_guard(a0)
@@ -73,10 +76,24 @@ combat:
 .nfoe   dbra    d7,.speed
         bsr     wound_tick      ; end of the round: bleeding, poison
         bsr     party_check
+        tst.w   v_charm(a5)     ; the charm wears off
+        beq.s   .rnd
+        subq.w  #1,v_charm(a5)
+.rnd
         bra.s   .round
 
 .done   clr.w   v_cact(a5)
         clr.w   v_fight(a5)
+        lea     v_party(a5),a0  ; Press and Hold ends with the fight
+        moveq   #NPARTY-1,d0
+.prs    move.w  p_press(a0),d1
+        beq.s   .prn
+        clr.w   p_press(a0)
+        tst.w   p_hp(a0)
+        ble.s   .prn
+        add.w   d1,p_bleed(a0)
+.prn    lea     p_size(a0),a0
+        dbra    d0,.prs
         cmp.w   #CE_VICTORY,v_cend(a5)
         bne.s   .e
         bsr     victory
@@ -98,6 +115,8 @@ cat_turn:
         bsr     menu_addt
         move.w  #T_CMB_DEFEND,d0
         bsr     menu_addt
+        move.w  #T_CMB_SKILL,d0
+        bsr     menu_addt
         move.w  #T_CMB_ITEM,d0
         bsr     menu_addt
         move.w  #T_CMB_FLEE,d0
@@ -109,6 +128,8 @@ cat_turn:
         bmi.s   .ask
         cmp.w   #CM_DEFEND,d0
         beq.s   .guard
+        cmp.w   #CM_SKILL,d0
+        beq     .skill
         cmp.w   #CM_ITEM,d0
         beq     .item
         cmp.w   #CM_FLEE,d0
@@ -121,7 +142,7 @@ cat_turn:
         bsr     name_msg
         bra     .e
 .flee   tst.w   e_boss(a4)      ; no way out from a mini-boss
-        bne.s   .cannot
+        bne     .cannot
         move.w  v_dir(a5),d0    ; the cell behind the party must be free
         add.w   d0,d0
         lea     doff(pc),a0
@@ -129,12 +150,12 @@ cat_turn:
         sub.w   0(a0,d0.w),d5
         lea     v_map(a5),a0
         btst    #CELL_GROUP,0(a0,d5.w)
-        bne.s   .cannot
+        bne     .cannot
         moveq   #CELL_TYPE,d0
         and.b   0(a0,d5.w),d0
         lea     celltab(pc),a0
         btst    #0,0(a0,d0.w)   ; CF_BLOCK
-        bne.s   .cannot
+        bne     .cannot
         move.w  p_spd(a2),d1    ; chance 50 % + 10 % per speed above the enemy
         sub.w   e_spd(a4),d1
         muls    #10,d1
@@ -151,14 +172,23 @@ cat_turn:
         move.w  #CE_FLED,v_cend(a5)
         move.w  #T_FLEES,d0
         bsr     msg_print
-        bra.s   .e
+        bra     .e
 .fail   move.w  #1,v_cskip(a5)  ; the enemies get the rest of the round
         move.w  #T_FLEE_FAILS,d0
         bsr     msg_print
-        bra.s   .e
+        bra     .e
 .cannot move.w  #T_CANNOT_FLEE,d0
         bsr     msg_print
         bra     .ask
+.skill  bsr     view_refresh    ; which skill (on whom: use_skill asks)
+        bsr     skill_menu
+        tst.w   d0
+        bmi     .re
+        bsr     view_refresh
+        bsr     use_skill
+        beq     .re
+        bsr     view_refresh
+        bra     .e
 .item   move.w  #T_CMB_ITEM,d0  ; which item, then on whom
         bsr     text_get
         moveq   #0,d1
@@ -285,6 +315,10 @@ foe_attack:
         lsr.w   #1,d1
         sub.w   d1,d0
         tst.w   p_guard(a3)     ; keeping guard: half
+        beq.s   .chm
+        addq.w  #1,d0
+        lsr.w   #1,d0
+.chm    tst.w   v_charm(a5)     ; the Starfolk watch over the party: half
         beq.s   .min
         addq.w  #1,d0
         lsr.w   #1,d0

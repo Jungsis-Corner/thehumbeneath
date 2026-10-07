@@ -63,6 +63,25 @@ NO_GEAR         Nothing to wear.
 NOTHING         The pack is empty.
 STALE_SICK      The prey was bad.
 
+# --- Healing and skills ---
+MOSS_PACK       %s uses a Moss Pack.
+PRESSES_MOSS    %s presses moss to the wound.
+BLEED_STOPS     The bleeding stops.
+BLEED_SLOWS     The bleeding slows.
+NO_MOSS         No moss left.
+MOSS_WEAK       The moss is too weak for this wound.
+PRESS_HOLD      %s presses on the wound.
+HERB_CHEW       %s chews the herb.
+POISON_FADES    The poison fades.
+NO_HERB         No herbs left.
+CHARM_ON        The Starfolk watch over you.
+CHARM_USED      The Starfolk are silent now.
+GATHERS_MOSS    %s gathers moss.
+FINDS_HERBS     %s finds herbs.
+FINDS_NOTHING   %s finds nothing here.
+NO_NEED         %s does not need it.
+NOT_ABLE        %s is in no state for that.
+
 # --- Traps ---
 TRAP_GLASS      Broken glass cuts into a paw.
 TRAP_THORNS     Thorns tear at the fur.
@@ -142,12 +161,20 @@ PSTAT_POISON    Poison
 CMB_ATTACK      Attack
 CMB_DEFEND      Defend
 CMB_ITEM        Item
+CMB_SKILL       Skill
+SK_MOSS_PACK    Moss Pack
+SK_PRESS        Press and Hold
+SK_HERB         Herb Chew
+SK_CHARM        Starfolk Charm
+SK_GATHER       Gather
+SK_APPLY        Apply Moss
 CMB_FLEE        Flee
 CMB_MARK        >
 MENU_PARTY      Party
 MENU_PACK       Pack
 MENU_ITEM       Item
 MENU_EQUIP      Equip
+MENU_SKILL      Skill
 MENU_REMOVE     (take off)
 MENU_WHO        On whom?
 @width 40

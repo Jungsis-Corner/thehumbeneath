@@ -3,7 +3,7 @@
 Status: approved 2026-10-07 (open questions answered with the proposals, see section 8).
 Changes to the architecture below need approval (CLAUDE.md).
 
-Progress: M1 done (M1a, M1b, M1c), M2-M6 done, M7a done.
+Progress: M1 done (M1a, M1b, M1c), M2-M7 done.
 
 ## 1. Toolchain (taken over from FUSE RUNNER)
 
@@ -298,9 +298,16 @@ fire); Gather finds fixed spots in the level data. Split in two steps:
   shows all items with counts, who wears what and the party's moss.
   Note: text ids are now above 127, so they are loaded with move.w (moveq
   only reaches 127); make.sh fails on any vasm warning (-wfail).
-- **M7b healer skills:** Moss Pack, Press and Hold, Herb Chew, Starfolk
-  Charm, Gather; other cats apply moss (Scratch only); Skill in the combat
-  menu.
+- **M7b healer skills: DONE.** skills.asm. Party menu: cat -> Item /
+  Equip / Skill; combat menu: Attack, Defend, Skill, Item, Flee.
+  Mossfern: Moss Pack (stops bleeding, +3 HP, heals the Deep Wound maximum;
+  takes the weakest moss that helps: dry not for a Deep Wound, glowcap also
+  cures poison; moss from the user first, then from the others), Press and
+  Hold (fight only, no moss: bleeding one level less until the fight ends),
+  Herb Chew (one Herb from the pack cures poison), Starfolk Charm (fight
+  only, once per fight: half damage for 3 rounds), Gather (not in a fight:
+  the gather spot of the cell, once). The other cats: Apply Moss (Scratch
+  only, one moss). A fallen cat cannot use skills.
 **M8 – save/load, title, intro, menu.**
 **M9 – levels 1-8 content**, mini-bosses, hazards, sneak step (L7), Elder Pale choice.
 **M10 – endings, sound, polish, distribution** (win image, README, MiSTer test).

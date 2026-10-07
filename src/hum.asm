@@ -156,6 +156,8 @@ v_cact  rs.w    1               ; combat: cat whose turn it is + 1 (0 = none)
 v_msel  rs.w    1               ; menu: chosen line
 v_mtop  rs.w    1               ; menu: top line of the box on the screen
 v_fight rs.w    1               ; 1 while a fight is going on
+v_charm rs.w    1               ; rounds of the Starfolk Charm left
+v_charmed rs.w  1               ; the charm was used in this fight
 v_mcount rs.w   1               ; menu: number of lines
 v_mtxt  rs.b    MENU_MAX*MENU_LEN ; menu: the lines
 v_mitem rs.b    MENU_MAX        ; menu: item of each line (pack menus)
@@ -1399,6 +1401,7 @@ draw_map:
         include 'hud.asm'       ; party panel, 4 px font
         include 'combat.asm'    ; fights
         include 'items.asm'     ; pack, items, gear, menus
+        include 'skills.asm'    ; healer skills, moss
 
 ;=====================================================================
 ; Party
@@ -1420,7 +1423,7 @@ party_init:
         lea     v_pack(a5),a0
         move.l  #IT_MARIGOLD_LEAF<<24|2<<16|IT_STARFOLK_FEATHER<<8|1,(a0)+
         move.l  #IT_THISTLE_CHARM<<24|1<<16|IT_COBWEB_WRAP<<8|1,(a0)+
-        move.w  #IT_STALE_PREY<<8|1,(a0)+
+        move.l  #IT_STALE_PREY<<24|1<<16|IT_HERB<<8|2,(a0)+
         endc
         ifd     XPTEST
         move.w  #18,p_xp(a1)

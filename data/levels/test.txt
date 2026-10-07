@@ -56,6 +56,8 @@ event 8 1 item STARFOLK_FEATHER 1
 event 8 2 item THISTLE_CHARM 1
 event 3 1 item FEN_MOSS 3
 event 4 7 lock CELLAR_KEY
+event 4 3 gather FEN_MOSS 2
+event 3 4 gather HERB 2
 
 group 3 8 RAT 3 guard
 group 11 3 GIANT_SPIDER 1 guard

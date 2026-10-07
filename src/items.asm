@@ -401,11 +401,13 @@ menu_run:
         rts
 
 view_refresh:                   ; the view again (and the enemies in a fight)
+        movem.l d0-d7/a0-a4,-(sp)       ; (keeps all registers)
         bsr     redraw
         tst.w   v_fight(a5)
         beq.s   .e
         bsr     foes_draw
-.e      rts
+.e      movem.l (sp)+,d0-d7/a0-a4
+        rts
 
 wait_free:                      ; wait until no key is held
         move.l  d0,-(sp)
@@ -533,11 +535,16 @@ party_menu:
         bsr     menu_addt
         move.w  #T_MENU_EQUIP,d0
         bsr     menu_addt
+        move.w  #T_MENU_SKILL,d0
+        bsr     menu_addt
         move.w  p_name(a3),d0
         bsr     text_get
         bsr     menu_run
         tst.w   d0
-        bmi.s   .back
+        bmi     .back
+        cmp.w   #2,d0
+        beq.s   .skill
+        tst.w   d0
         bne.s   .equip
         move.w  p_name(a3),d0   ; Item: used on this cat
         bsr     text_get
@@ -559,6 +566,20 @@ party_menu:
 .done   movem.l (sp)+,d1-d2/a1-a3
         moveq   #1,d0           ; NE
         rts
+.skill  move.l  a3,a2           ; Skill: this cat uses it
+        tst.w   p_hp(a2)
+        bgt.s   .sk1
+        move.w  #T_NOT_ABLE,d0
+        move.w  p_name(a2),d1
+        bsr     name_msg
+        bra     .back
+.sk1    bsr     redraw
+        bsr     skill_menu
+        tst.w   d0
+        bmi     .back
+        bsr     use_skill
+        bne.s   .done
+        bra     .back
 .back   bsr     redraw
         bra     .who
 .none   bsr     redraw
