@@ -1,0 +1,29 @@
+# THE HUM BENEATH - items (names are text ids; see STORY.md, section 5)
+#
+# kind:  moss (value 1 fen, 2 dry, 3 glowcap: goes to the cats' moss)
+#        herb (used by the healer's Herb Chew), heal (value = HP),
+#        wrap (bleeding pauses for value steps), calm (removes fear),
+#        stale (heals value HP, may poison), gear_def (+value defence),
+#        gear_poison (no poison), gear_revive (stands up once per level),
+#        gear_light (effect later), lure (effect later), key
+#
+#    id                name             kind         value
+item FEN_MOSS          IT_FEN_MOSS      moss         1
+item DRY_MOSS          IT_DRY_MOSS      moss         2
+item GLOWCAP_MOSS      IT_GLOW_MOSS     moss         3
+item HERB              IT_HERB          herb         0
+item MARIGOLD_LEAF     IT_MARIGOLD      heal         5
+item COBWEB_WRAP       IT_COBWEB        wrap         10
+item POPPY_SEED        IT_POPPY         calm         0
+item FRESH_PREY        IT_FRESH_PREY    heal         4
+item STALE_PREY        IT_STALE_PREY    stale        2
+item BRAMBLE_COLLAR    IT_COLLAR        gear_def     1
+item THISTLE_CHARM     IT_THISTLE       gear_poison  0
+item STARFOLK_FEATHER  IT_FEATHER       gear_revive  0
+item LANTERN_SHARD     IT_LANTERN       gear_light   0
+item ECHO_PEBBLE       IT_PEBBLE        lure         0
+item CELLAR_KEY        IT_CELLAR_KEY    key          0
+item VALVE_WHEEL       IT_VALVE         key          0
+item HANDCAR_LEVER     IT_LEVER         key          0
+item PALE_TOTEM        IT_TOTEM         key          0
+item HEART_STONE       IT_HEART_STONE   key          0

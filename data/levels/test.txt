@@ -1,6 +1,7 @@
 # Test level: corridors of different lengths, a loop, pillars, side
 # openings, dead ends, one large room, a door (7,4), a locked door (4,7),
-# Scratch-Marks, a message, two traps and stairs down to test level 9.
+# Scratch-Marks, a message, two traps, items in the start room (key for
+# the locked door) and stairs down to test level 9.
 number  0
 start   2 2 E
 wallset 1
@@ -46,6 +47,15 @@ event 10 1 message DRIPPING
 event 14 1 trap 2 TRAP_GLASS
 event 16 1 trap 1 TRAP_THORNS
 event 23 30 stairs 9 2 2
+event 1 1 item CELLAR_KEY 1
+event 1 6 item MARIGOLD_LEAF 2
+event 6 6 item BRAMBLE_COLLAR 1
+event 6 1 item COBWEB_WRAP 1
+event 2 5 item STALE_PREY 1
+event 8 1 item STARFOLK_FEATHER 1
+event 8 2 item THISTLE_CHARM 1
+event 3 1 item FEN_MOSS 3
+event 4 7 lock CELLAR_KEY
 
 group 3 8 RAT 3 guard
 group 11 3 GIANT_SPIDER 1 guard

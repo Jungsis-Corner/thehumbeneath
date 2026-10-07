@@ -3,7 +3,8 @@
 ;
 ; Turn order by speed, highest first; on equal speed the cats act before
 ; the enemies. A cat chooses Attack, Defend or Flee in a small menu in
-; the viewport. Front row cats are attacked more often; back row cats
+; the viewport (or uses an item). Front row cats are attacked more often;
+; back row cats
 ; deal half damage. Bleeding and poison cost hit points every round.
 ;=====================================================================
 NFOE      equ   9               ; enemies per group at most
@@ -11,12 +12,10 @@ CMB_PAUSE equ   25              ; frames after a combat message
 FRONT_PCT equ   75              ; chance that an enemy aims at the front row
 WOUND_PCT equ   35              ; chance that a hit makes bleed / poisons
 GUARD_DEF equ   3               ; extra defence while keeping guard
-MENU_Y    equ   VIEW_H-4*LINE_H ; combat menu: first line
-MENU_W    equ   11              ; width in words
-CM_ATTACK equ   0
+CM_ATTACK equ   0               ; combat menu lines
 CM_DEFEND equ   1
-CM_FLEE   equ   2
-CM_COUNT  equ   3
+CM_ITEM   equ   2
+CM_FLEE   equ   3
 CE_VICTORY equ  1               ; v_cend
 CE_FLED   equ   2
 
@@ -42,6 +41,7 @@ combat:
 .in1    addq.l  #2,a0
         dbra    d0,.init
         clr.w   v_cend(a5)
+        move.w  #1,v_fight(a5)
         lea     v_party(a5),a0
         moveq   #NPARTY-1,d0
 .g0     clr.w   p_guard(a0)
@@ -76,6 +76,7 @@ combat:
         bra.s   .round
 
 .done   clr.w   v_cact(a5)
+        clr.w   v_fight(a5)
         cmp.w   #CE_VICTORY,v_cend(a5)
         bne.s   .e
         bsr     victory
@@ -92,9 +93,24 @@ cat_turn:
         move.w  d0,v_cact(a5)   ; highlighted in the panel
         bsr     panel_show
         move.l  v_cetab(a5),a4
-.ask    bsr     combat_menu     ; -> d0
+.ask    bsr     menu_clear      ; Attack, Defend, Item, Flee
+        moveq   #T_CMB_ATTACK,d0
+        bsr     menu_addt
+        moveq   #T_CMB_DEFEND,d0
+        bsr     menu_addt
+        moveq   #T_CMB_ITEM,d0
+        bsr     menu_addt
+        moveq   #T_CMB_FLEE,d0
+        bsr     menu_addt
+        move.w  p_name(a2),d0
+        bsr     text_get
+        bsr     menu_run
+        tst.w   d0
+        bmi.s   .ask
         cmp.w   #CM_DEFEND,d0
         beq.s   .guard
+        cmp.w   #CM_ITEM,d0
+        beq     .item
         cmp.w   #CM_FLEE,d0
         beq.s   .flee
         bsr     cat_attack
@@ -142,6 +158,31 @@ cat_turn:
         bra.s   .e
 .cannot moveq   #T_CANNOT_FLEE,d0
         bsr     msg_print
+        bra     .ask
+.item   moveq   #T_CMB_ITEM,d0  ; which item, then on whom
+        bsr     text_get
+        moveq   #0,d1
+        bsr     menu_pack
+        tst.w   d0
+        bgt.s   .it1
+        tst.w   v_mcount(a5)
+        bne.s   .re
+        moveq   #T_NOTHING,d0
+        bsr     msg_print
+        bra.s   .re
+.it1    move.w  d0,d5
+        moveq   #T_MENU_WHO,d0
+        bsr     menu_cats       ; -> a3
+        tst.w   d0
+        bmi.s   .re
+        move.w  d5,d0
+        bsr     use_item
+        beq.s   .re             ; not used: choose again
+        bsr     redraw
+        bsr     foes_draw
+        bra     .e
+.re     bsr     redraw          ; the menus are gone, ask again
+        bsr     foes_draw
         bra     .ask
 .e      bsr     pause
         movem.l (sp)+,d0-d7/a0-a4
@@ -220,7 +261,8 @@ foe_attack:
         bsr     name_msg
         bsr     pause
         bsr     pick_target     ; -> a3 = cat
-        move.w  p_def(a3),d4
+        bsr     cat_def
+        move.w  d0,d4
         tst.w   p_guard(a3)
         beq.s   .def
         addq.w  #GUARD_DEF,d4
@@ -237,7 +279,9 @@ foe_attack:
         move.w  e_atk(a4),d1
         bsr     randn
         addq.w  #1,d0
-        move.w  p_def(a3),d1
+        move.w  d0,d1
+        bsr     cat_def
+        exg     d0,d1
         lsr.w   #1,d1
         sub.w   d1,d0
         tst.w   p_guard(a3)     ; keeping guard: half
@@ -267,15 +311,10 @@ foe_attack:
         bsr     name_msg
 .poison tst.w   e_poison(a4)    ; or poison
         beq.s   .fall
-        btst    #0,p_flags+1(a3)
-        bne.s   .fall
         bsr     rand100
         cmp.w   #WOUND_PCT,d0
         bhs.s   .fall
-        bset    #0,p_flags+1(a3)
-        moveq   #T_POISONED,d0
-        move.w  p_name(a3),d1
-        bsr     name_msg
+        bsr     poison_cat
 .fall   bsr     fall_check
         bsr     panel_show
         bsr     party_check
@@ -472,79 +511,6 @@ foes_draw:
 .nx     addq.w  #2,d0
         dbra    d7,.bar
 .e      movem.l (sp)+,d0-d7/a0-a4
-        rts
-
-; combat_menu: -> d0 = CM_ATTACK, CM_DEFEND or CM_FLEE (up/down choose,
-;               space, enter or right confirm; joystick works the same)
-combat_menu:
-        movem.l d1-d7/a0-a3,-(sp)
-        clr.w   v_csel(a5)
-.draw   moveq   #0,d0           ; box bottom left in the viewport
-        move.w  #MENU_Y-2,d1
-        moveq   #MENU_W,d2
-        moveq   #VIEW_H-MENU_Y+2,d3
-        moveq   #C_BLACK,d4
-        bsr     fill_rect
-        move.w  v_cact(a5),d0   ; the cat whose turn it is
-        subq.w  #1,d0
-        mulu    #p_size,d0
-        lea     v_party(a5),a0
-        move.w  p_name(a0,d0.w),d0
-        bsr     text_get
-        moveq   #1,d0
-        move.w  #MENU_Y,d1
-        moveq   #C_YEL,d2
-        moveq   #C_BLACK,d3
-        bsr     pdraw
-        moveq   #0,d6           ; the choices
-.item   move.w  d6,d0
-        add.w   #T_CMB_ATTACK,d0
-        bsr     text_get
-        moveq   #2,d0
-        move.w  d6,d1
-        addq.w  #1,d1
-        mulu    #LINE_H,d1
-        add.w   #MENU_Y,d1
-        moveq   #C_CYAN,d2
-        cmp.w   v_csel(a5),d6
-        bne.s   .it1
-        moveq   #C_WHITE,d2     ; the chosen one: white with a marker
-        move.l  a1,-(sp)
-        move.w  d1,-(sp)
-        moveq   #T_CMB_MARK,d0
-        bsr     text_get        ; (changes d1)
-        move.w  (sp)+,d1
-        moveq   #1,d0
-        bsr     pdraw
-        move.l  (sp)+,a1
-        moveq   #2,d0
-.it1    bsr     pdraw
-        addq.w  #1,d6
-        cmp.w   #CM_COUNT,d6
-        blo.s   .item
-.key    bsr     frame           ; wait for a newly pressed key
-        bsr     readkeys
-        move.w  v_pkeys(a5),d1
-        not.w   d1
-        and.w   d0,d1
-        beq.s   .key
-        btst    #K_UP,d1
-        beq.s   .k1
-        subq.w  #1,v_csel(a5)
-        bpl     .draw
-        move.w  #CM_COUNT-1,v_csel(a5)
-        bra     .draw
-.k1     btst    #K_DOWN,d1
-        beq.s   .k2
-        addq.w  #1,v_csel(a5)
-        cmp.w   #CM_COUNT,v_csel(a5)
-        blo     .draw
-        clr.w   v_csel(a5)
-        bra     .draw
-.k2     and.w   #(1<<K_SPACE)|(1<<K_ENTER)|(1<<K_RIGHT),d1
-        beq.s   .key
-        move.w  v_csel(a5),d0
-        movem.l (sp)+,d1-d7/a0-a3
         rts
 
 ; name_msg:     d0 = message id, d1 = text id of a name for %s

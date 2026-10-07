@@ -41,6 +41,28 @@ FLEE_FAILS      The party cannot get away.
 GAIN_XP         The party gains %d XP.
 RISES           %s rises to %s.
 
+# --- Items (messages with item names: %s up to 16 characters) ---
+@strlen 16
+@digits 2
+FOUND           Found: %s x%d.
+PACK_FULL       The pack is full.
+MOSS_FULL       Nobody can carry more moss.
+UNLOCKS         The %s fits the lock.
+TAKES_OFF       Removed: %s.
+@digits 6
+@strlen 12
+# cat name (12) + item name (16): at most 12+11+16+1 = 40 characters
+WEARS           %s wears the %s.
+REVIVE          The Starfolk lift %s up again.
+HEALED          %s feels better.
+CANNOT_HELP     %s cannot be helped.
+WRAPPED         The wrap holds the bleeding.
+CALM            %s is calm again.
+NOT_NOW         Not now.
+NO_GEAR         Nothing to wear.
+NOTHING         The pack is empty.
+STALE_SICK      The prey was bad.
+
 # --- Traps ---
 TRAP_GLASS      Broken glass cuts into a paw.
 TRAP_THORNS     Thorns tear at the fur.
@@ -61,6 +83,28 @@ NAME_ASHCLAW    Ashclaw
 NAME_MOSSFERN   Mossfern
 NAME_QUICKWHISKER Quickwhisker
 NAME_SEDGEPELT  Sedgepelt
+
+# --- Item names, at most 16 characters ---
+@width 16
+IT_FEN_MOSS     Fen Moss
+IT_DRY_MOSS     Dry Moss
+IT_GLOW_MOSS    Glowcap Moss
+IT_HERB         Herb
+IT_MARIGOLD     Marigold Leaf
+IT_COBWEB       Cobweb Wrap
+IT_POPPY        Poppy Seed
+IT_FRESH_PREY   Fresh Prey
+IT_STALE_PREY   Stale Prey
+IT_COLLAR       Bramble Collar
+IT_THISTLE      Thistle Charm
+IT_FEATHER      Starfolk Feather
+IT_LANTERN      Lantern Shard
+IT_PEBBLE       Echo Pebble
+IT_CELLAR_KEY   Cellar Key
+IT_VALVE        Valve Wheel
+IT_LEVER        Handcar Lever
+IT_TOTEM        Pale Totem
+IT_HEART_STONE  Heart Stone
 
 # --- Enemy names (singular, plural), at most 16 characters ---
 @width 16
@@ -97,12 +141,20 @@ PSTAT_POISON    Poison
 @width 15
 CMB_ATTACK      Attack
 CMB_DEFEND      Defend
+CMB_ITEM        Item
 CMB_FLEE        Flee
 CMB_MARK        >
+MENU_PARTY      Party
+MENU_ITEM       Item
+MENU_EQUIP      Equip
+MENU_REMOVE     (take off)
+MENU_WHO        On whom?
 @width 40
 @strlen 16
 @digits 1
 CMB_FOES        %d %s
+@digits 2
+MENU_COUNT      %s x%d
 @digits 6
 @strlen 12
 

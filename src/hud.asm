@@ -149,6 +149,18 @@ sheet_show:
         move.l  a1,12(a2)
         moveq   #T_SHEET_HP,d0
         bsr     .line
+        move.w  p_gear(a3),d0   ; gear on the same line from column 32
+        beq.s   .ng             ; (the HP line has at most 31 characters,
+        bsr     item_rec        ; an item name at most 16)
+        move.w  i_name(a0),d0
+        bsr     text_get
+        moveq   #32,d0
+        move.w  d6,d1
+        subq.w  #LINE_H,d1
+        moveq   #C_YEL,d2
+        moveq   #C_BLACK,d3
+        bsr     pdraw
+.ng
         moveq   #0,d0           ; attack, defence, speed, find
         move.w  p_atk(a3),d0
         move.l  d0,(a2)

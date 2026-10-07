@@ -49,13 +49,20 @@ def view_table(level, x, y, d):
 
 
 def group_table(level, x, y, d):
-    """Enemy type + 1 per view cell (0 = no group)."""
+    """Enemy type + 1 per view cell (0 = no group), bit 7 = an item lies
+    there (item event not taken yet)."""
     at = {}
+    pos = 1034
+    while level[pos] != 0xff:
+        ex, ey, kind, flags = level[pos:pos + 4]
+        if kind == 5 and not flags & 1:
+            at[ex, ey] = 0x80
+        pos += 6
     pos = struct.unpack_from('>H', level, 1032)[0]
     while level[pos] != 0xff:
         gx, gy, t, _, _, flags = level[pos:pos + 6]
         if not flags & 1:
-            at[gx, gy] = t + 1
+            at[gx, gy] = at.get((gx, gy), 0) | (t + 1)
         pos += 6
     fx, fy = STEP[d]
     rx, ry = STEP[(d + 1) & 3]
@@ -94,10 +101,14 @@ def render(level, ws, ss, x, y, d):
         cell, kind, cmask, shift, tile = struct.unpack_from('>BBBxhI', ws, pos)
         pos += 22                       # occluder sets are not used here:
                                         # drawing everything checks them
-        if kind == 2:                   # enemy: tile = depth
-            if groups[cell]:
-                spr = struct.unpack_from('>I', ss, 12 + 12 * (groups[cell] - 1)
-                                         + 4 * (tile - 1))[0]
+        if kind == 2:                   # item and/or enemy: tile = depth
+            pics = []
+            if groups[cell] & 0x80:     # the bundle is the last picture
+                pics.append(struct.unpack_from('>H', ss, 8)[0] - 1)
+            if groups[cell] & 0x7f:
+                pics.append((groups[cell] & 0x7f) - 1)
+            for pic in pics:
+                spr = struct.unpack_from('>I', ss, 12 + 12 * pic + 4 * (tile - 1))[0]
                 if spr:
                     blit(buf, ss, spr, shift, True)
             continue

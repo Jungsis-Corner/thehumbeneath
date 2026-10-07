@@ -12,7 +12,7 @@ python3 ../tools/textc.py ../data/text.txt $B/hum_txt textid.inc || exit 1
 python3 ../tools/levelc.py textid.inc $B levels.inc ../data/levels/*.txt || exit 1
 python3 ../tools/gfxc.py $B walls.inc || exit 1
 python3 ../tools/fontc.py font.inc || exit 1
-python3 ../tools/datac.py textid.inc ../data/party.txt ../data/enemies.txt party.inc || exit 1
+python3 ../tools/datac.py textid.inc ../data/party.txt ../data/enemies.txt ../data/items.txt party.inc || exit 1
 vasmm68k_mot -Fbin -m68000 -quiet $VASMOPT -L $B/hum.lst -o $B/hum_bin hum.asm || exit 1
 # thehum: same binary plus XTcc trailer (job header for sQLux/Q-emuLator/qxltool)
 python3 -c "import struct;d=open('$B/hum_bin','rb').read();open('$B/thehum','wb').write(d+b'XTcc'+struct.pack('>I',4096))"

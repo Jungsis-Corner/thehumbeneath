@@ -18,6 +18,7 @@
 ;   HPTEST          start with reduced hit points (to see the bar colours)
 ;   BLEEDTEST       start with bleeding cats (Scratch, Gash, Deep Wound)
 ;   XPTEST          every cat starts with 18 XP (the next rank needs 20)
+;   ITEMTEST        the pack starts with some items (see party_init)
 ;=====================================================================
 
         include 'textid.inc'    ; T_... text ids         (tools/textc.py)
@@ -43,6 +44,16 @@ MAP_X   equ     8               ; debug map: first word column (32 cells x 4 px)
 
 ; enemies
 HUNT_RANGE equ  6               ; hunters follow the party within this distance
+
+; items and menus
+PACK_SLOTS equ  12              ; kinds of items in the party pack
+PACK_MAX   equ  99              ; items of one kind
+MENU_MAX   equ  16              ; menu lines
+MENU_LEN   equ  24              ; bytes per menu line (zero-terminated)
+MENU_W     equ  24              ; menu box width in words
+PF_POISON  equ  0               ; p_flags: poisoned
+PF_FEAR    equ  2               ; p_flags: afraid (no source yet)
+PF_FEATHER equ  3               ; p_flags: the feather was used on this level
 
 ; input
 REP_FIRST equ   12              ; frames until a held key repeats
@@ -140,7 +151,13 @@ v_cgrp  rs.l    1               ; combat: the enemy group
 v_cetab rs.l    1               ; combat: its enemy type (enemytab entry)
 v_cfoe  rs.w    9               ; combat: hit points of each enemy (0 = down)
 v_cact  rs.w    1               ; combat: cat whose turn it is + 1 (0 = none)
-v_csel  rs.w    1               ; combat: menu choice
+v_msel  rs.w    1               ; menu: chosen line
+v_mtop  rs.w    1               ; menu: top line of the box on the screen
+v_fight rs.w    1               ; 1 while a fight is going on
+v_mcount rs.w   1               ; menu: number of lines
+v_mtxt  rs.b    MENU_MAX*MENU_LEN ; menu: the lines
+v_mitem rs.b    MENU_MAX        ; menu: item of each line (pack menus)
+v_pack  rs.b    2*PACK_SLOTS    ; party pack: item, count
 v_cend  rs.w    1               ; combat: 0 going on, 1 victory, 2 fled
 v_cskip rs.w    1               ; combat: the party lost the rest of the round
 v_rtime rs.w    1               ; frames the last render took (DEBUG)
@@ -325,7 +342,7 @@ mainloop:
         bsr     frame
         bsr     readkeys
         btst    #K_ESC,d0
-        bne.s   .esc
+        bne     .esc
         move.w  v_pkeys(a5),d2  ; M: switch between map and 3D view
         not.w   d2
         and.w   d0,d2
@@ -341,8 +358,16 @@ mainloop:
 .set    move.w  d1,v_page(a5)
         bsr     clear_view
         bsr     redraw
-        bra.s   mainloop
-.nomap  move.w  d0,d1
+        bra     mainloop
+.nomap  btst    #K_SPACE,d2     ; space: party menu
+        beq.s   .nomenu
+        bsr     wait_free
+        bsr     party_menu
+        beq.s   .redr
+        bsr     groups_act      ; using an item takes time
+.redr   bsr     redraw
+        bra     mainloop
+.nomenu move.w  d0,d1
         and.w   #K_MOVE,d1
         beq.s   .none
         move.w  v_pkeys(a5),d2  ; keys pressed since the last poll
@@ -358,9 +383,9 @@ mainloop:
 .act    bsr.s   do_keys
         bsr     groups_act
         bsr     redraw
-        bra.s   mainloop
+        bra     mainloop
 .none   clr.w   v_rep(a5)
-        bra.s   mainloop
+        bra     mainloop
 .esc    bsr     wait_esc        ; wait until ESC is released
         bra     exit_prog
 
@@ -443,6 +468,11 @@ level_load:
 ;              one, its wall set. A missing file ends the game.
 enter_level:
         movem.l d0-d1/a2,-(sp)
+        lea     v_party+p_flags(a5),a2 ; feathers work again on a new level
+        moveq   #NPARTY-1,d1
+.fe     bclr    #PF_FEATHER,1(a2)
+        lea     p_size(a2),a2
+        dbra    d1,.fe
         bsr     level_load
         beq.s   .walls
         moveq   #T_NO_LEVEL,d1
@@ -521,7 +551,7 @@ move_rel:
         moveq   #CELL_TYPE,d1
         and.b   0(a0,d0.w),d1
         btst    #CELL_GROUP,0(a0,d0.w)
-        bne.s   .group
+        bne     .group
         lea     celltab(pc),a1
         btst    #0,0(a1,d1.w)   ; CF_BLOCK
         bne.s   .block
@@ -548,12 +578,54 @@ move_rel:
         bra     msg_print
 .door   moveq   #T_DOOR_BLOCKS,d0
         bra     msg_print
-.locked moveq   #T_DOOR_LOCKED,d0
+.locked move.w  d0,d2           ; a key for this door in the pack?
+        moveq   #EV_LOCK,d1
+        bsr     event_at
+        cmpa.w  #0,a3
+        beq.s   .shut
+        move.w  EV_PARAM(a3),d0
+        bsr     pack_count
+        beq.s   .shut
+        lea     v_args(a5),a2   ; "The <key> fits the lock."
+        bsr     item_rec
+        move.w  i_name(a0),d0
+        bsr     text_get
+        move.l  a1,(a2)
+        moveq   #T_UNLOCKS,d0
+        bsr     msg_print
+        lea     v_map(a5),a0
+        and.b   #~CELL_TYPE,0(a0,d2.w)
+        or.b    #CT_DOOR_OPEN,0(a0,d2.w)
+        moveq   #T_DOOR_OPENS,d0
+        bra     msg_print
+.shut   moveq   #T_DOOR_LOCKED,d0
         bra     msg_print
 .wall   moveq   #T_BLOCKED,d0
         bra     msg_print
 .group  bsr     group_at        ; walked into an enemy group
         bra     encounter
+
+; event_at: d0 = cell, d1 = event type -> a3 = event (0 if none)
+event_at:
+        movem.l d2-d3,-(sp)
+        moveq   #31,d2
+        and.w   d0,d2           ; x
+        move.w  d0,d3
+        lsr.w   #5,d3           ; y
+        lea     v_map+LV_EVENT(a5),a3
+.l      cmp.b   #EV_END,EV_X(a3)
+        beq.s   .none
+        cmp.b   EV_X(a3),d2
+        bne.s   .nx
+        cmp.b   EV_Y(a3),d3
+        bne.s   .nx
+        cmp.b   EV_TYPE(a3),d1
+        beq.s   .e
+.nx     addq.l  #EV_SIZE,a3
+        bra.s   .l
+.none   sub.l   a3,a3
+.e      movem.l (sp)+,d2-d3
+        rts
 
 ; cell_events: the player has entered cell d0, which has events
 cell_events:
@@ -572,11 +644,15 @@ cell_events:
         bne.s   .nx
         move.b  EV_TYPE(a3),d0
         cmp.b   #EV_STAIRS,d0
-        beq.s   .stairs
+        beq     .stairs
         cmp.b   #EV_MARK,d0
         beq.s   .mark
         cmp.b   #EV_TRAP,d0
-        beq.s   .trap
+        beq     .trap
+        cmp.b   #EV_ITEM,d0
+        beq     .item
+        cmp.b   #EV_MESSAGE,d0
+        bne     .nx             ; gather, lock: not when entering
         bset    #0,EV_FLAGS(a3) ; message: only the first time
         bne.s   .nx
         move.w  EV_PARAM(a3),d0
@@ -592,6 +668,38 @@ cell_events:
         bsr     msg_ink
 .nx     addq.l  #EV_SIZE,a3
         bra.s   .ev
+.item   btst    #0,EV_FLAGS(a3) ; item: until it is taken
+        bne     .nx
+        moveq   #0,d0
+        move.b  EV_PARAM(a3),d0 ; item
+        moveq   #0,d1
+        move.b  EV_PARAM+1(a3),d1 ; count
+        move.w  d1,d2
+        bsr     pack_add
+        bne.s   .took
+        bsr     item_rec        ; (pack_add keeps d0 = item)
+        moveq   #T_PACK_FULL,d0
+        cmp.w   #IK_MOSS,i_kind(a0)
+        bne.s   .full
+        moveq   #T_MOSS_FULL,d0
+.full   bsr     msg_print
+        bra     .nx
+.took   bset    #0,EV_FLAGS(a3)
+        lea     v_args(a5),a2   ; "Found: <item> x<n>."
+        move.l  d1,-(sp)
+        bsr     item_rec
+        move.w  i_name(a0),d0
+        bsr     text_get
+        move.l  a1,(a2)
+        move.l  (sp)+,d1
+        move.l  d1,4(a2)
+        moveq   #T_FOUND,d0
+        bsr     msg_print
+        cmp.w   d1,d2           ; not all of the moss found room
+        beq     .nx
+        moveq   #T_MOSS_FULL,d0
+        bsr     msg_print
+        bra     .nx
 .trap   bset    #0,EV_FLAGS(a3) ; trap: only the first time
         bne.s   .nx
         move.w  EV_PARAM(a3),d1 ; bleed<<12 | text id
@@ -601,7 +709,7 @@ cell_events:
         moveq   #12,d0
         lsr.w   d0,d1
         bsr     wound_random
-        bra.s   .nx
+        bra     .nx
 .stairs moveq   #T_STAIRS_DOWN,d0
         move.w  v_pos(a5),d1
         lea     v_map(a5),a0
@@ -908,12 +1016,14 @@ fread:
 ; Texts
 ;=====================================================================
 ; text_get: d0.w = text id -> a1 = zero-terminated string
-text_get:
+text_get:                       ; (keeps all other registers)
+        move.l  d0,-(sp)
         move.l  v_text(a5),a1
         add.w   d0,d0
-        moveq   #0,d1
-        move.w  TXT_OFFS(a1,d0.w),d1
-        add.l   d1,a1
+        move.w  TXT_OFFS(a1,d0.w),d0
+        and.l   #$ffff,d0
+        add.l   d0,a1
+        move.l  (sp)+,d0
         rts
 
 ; text_fmt: d0.w = text id, a2 = arguments (one long each: %s = pointer
@@ -1174,6 +1284,7 @@ draw_frame:                     ; placeholder layout: separator line
         bra.s   fill_rect
 
 redraw:                         ; after a step or turn
+        move.w  #VIEW_H,v_mtop(a5) ; no menu box on the screen any more
         cmp.w   #PG_MAP,v_page(a5)
         bne.s   .nomap
         bsr.s   draw_map
@@ -1224,7 +1335,27 @@ draw_map:
         dbra    d6,.cell
         lea     LINEB*4(a0),a0
         dbra    d7,.row
-        move.w  v_pos(a5),d0    ; player
+        lea     v_map+LV_EVENT(a5),a1 ; items not taken: a yellow dot
+.itm    cmp.b   #EV_END,EV_X(a1)
+        beq.s   .iend
+        cmp.b   #EV_ITEM,EV_TYPE(a1)
+        bne.s   .inx
+        btst    #0,EV_FLAGS(a1)
+        bne.s   .inx
+        moveq   #0,d0
+        move.b  EV_Y(a1),d0
+        mulu    #LINEB*4,d0
+        moveq   #0,d1
+        move.b  EV_X(a1),d1
+        add.w   d1,d1
+        add.w   d1,d0
+        lea     SCREEN+MAP_X*2+LINEB,a0
+        add.l   d0,a0
+        move.w  #$2828,(a0)
+        move.w  #$2828,LINEB(a0)
+.inx    addq.l  #EV_SIZE,a1
+        bra.s   .itm
+.iend   move.w  v_pos(a5),d0    ; player
         moveq   #31,d1
         and.w   d0,d1
         lsr.w   #5,d0
@@ -1247,6 +1378,7 @@ draw_map:
         include 'render.asm'    ; first-person view
         include 'hud.asm'       ; party panel, 4 px font
         include 'combat.asm'    ; fights
+        include 'items.asm'     ; pack, items, gear, menus
 
 ;=====================================================================
 ; Party
@@ -1263,6 +1395,12 @@ party_init:
         move.w  #5,p_size+p_hp(a1)
         move.w  #2,2*p_size+p_hp(a1)
         clr.w   3*p_size+p_hp(a1)
+        endc
+        ifd     ITEMTEST
+        lea     v_pack(a5),a0
+        move.l  #IT_MARIGOLD_LEAF<<24|2<<16|IT_STARFOLK_FEATHER<<8|1,(a0)+
+        move.l  #IT_THISTLE_CHARM<<24|1<<16|IT_COBWEB_WRAP<<8|1,(a0)+
+        move.w  #IT_STALE_PREY<<8|1,(a0)+
         endc
         ifd     XPTEST
         move.w  #18,p_xp(a1)
@@ -1322,6 +1460,13 @@ wound_random:
 
 ; bleed_step: after a step; every BLEED_STEPS steps a wound tick
 bleed_step:
+        lea     v_party+p_wrap(a5),a0 ; wraps last a number of steps
+        moveq   #NPARTY-1,d0
+.wr     tst.w   (a0)
+        beq.s   .wn
+        subq.w  #1,(a0)
+.wn     lea     p_size(a0),a0
+        dbra    d0,.wr
         addq.w  #1,v_steps(a5)
         cmp.w   #BLEED_STEPS,v_steps(a5)
         blo.s   .e
@@ -1344,6 +1489,8 @@ wound_tick:
         subq.w  #1,p_hp(a3)     ; poison
 .bleed  move.w  p_bleed(a3),d1
         beq.s   .fall
+        tst.w   p_wrap(a3)      ; a Cobweb Wrap holds the bleeding
+        bne.s   .fall
         sub.w   d1,p_hp(a3)
         cmp.w   #3,d1
         bne.s   .cap
@@ -1368,17 +1515,32 @@ wound_tick:
 fall_check:
         tst.w   p_hp(a3)
         bgt.s   .e
-        movem.l d0/a1-a2,-(sp)
+        movem.l d0-d1/a1-a2,-(sp)
+        bsr     gear_kind       ; a Starfolk Feather: up again once per level
+        cmp.w   #IK_GEAR_REVIVE,d0
+        bne.s   .fall
+        bset    #PF_FEATHER,p_flags+1(a3)
+        bne.s   .fall
+        move.w  p_hpmax(a3),d0
+        lsr.w   #2,d0
+        bne.s   .q
+        moveq   #1,d0
+.q      move.w  d0,p_hp(a3)
+        moveq   #T_REVIVE,d0
+        move.w  p_name(a3),d1
+        bsr     name_msg
+        bra.s   .done
+.fall
         clr.w   p_hp(a3)
         clr.w   p_bleed(a3)
-        clr.w   p_flags(a3)
+        and.w   #1<<PF_FEATHER,p_flags(a3)
         lea     v_args(a5),a2   ; "%s falls."
         move.w  p_name(a3),d0
         bsr     text_get
         move.l  a1,(a2)
         moveq   #T_FALLS,d0
         bsr     msg_print
-        movem.l (sp)+,d0/a1-a2
+.done   movem.l (sp)+,d0-d1/a1-a2
 .e      rts
 
 ; party_check: when every cat has fallen the game is over

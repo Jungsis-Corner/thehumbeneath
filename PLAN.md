@@ -3,7 +3,7 @@
 Status: approved 2026-10-07 (open questions answered with the proposals, see section 8).
 Changes to the architecture below need approval (CLAUDE.md).
 
-Progress: M1 done (M1a, M1b, M1c), M2-M6 done.
+Progress: M1 done (M1a, M1b, M1c), M2-M6 done, M7a done.
 
 ## 1. Toolchain (taken over from FUSE RUNNER)
 
@@ -265,6 +265,28 @@ Decided 2026-10-07 (all as proposed):
 - Test switch XPTEST (18 XP at the start). New enemy for tests: Sewer Rat
   (poison) in test level 9.
 **M7 – items and healer skills:** inventory, Moss Pack, Gather, Herb Chew, gear effects.
+Decided 2026-10-07: shared party pack (12 kinds of items) plus one piece of
+gear per cat, moss stays per cat; space opens the party menu (joystick:
+fire); Gather finds fixed spots in the level data. Split in two steps:
+- **M7a items: DONE.** data/items.txt (items of STORY.md; tools/items.py,
+  datac.py -> itemtab). Level events `item X Y ITEM COUNT` (taken when the
+  cell is entered; moss goes to the cat with most room), `gather` (for M7b),
+  `lock X Y ITEM` (locked door opened by a key in the pack). Generic menu
+  (items.asm: menu_run; up/down, confirm space/enter/right, cancel left/ESC).
+  Party menu: cat -> Item (used on that cat) / Equip (or take off). Combat
+  menu: Attack, Defend, Item, Flee. Gear: Bramble Collar +1 defence, Thistle
+  Charm no poison, Starfolk Feather: a falling cat stands up again with 1/4
+  HP once per level. Marigold Leaf 5 HP, Fresh Prey 4 HP, Stale Prey 2 HP
+  with 25 % poison (no stamina system: "restores stamina" is read as HP),
+  Cobweb Wrap: no bleeding for 10 steps, Poppy Seed clears fear (no fear
+  source yet). Lantern Shard, Echo Pebble: in the pack, effect with their
+  levels. Sheet shows the gear. Test switch ITEMTEST.
+  Items not taken yet are shown as a bundle on the floor (last picture of
+  the sprite set, drawn like the enemies) and as yellow dots on the debug
+  map; Gather spots stay hidden.
+- **M7b healer skills:** Moss Pack, Press and Hold, Herb Chew, Starfolk
+  Charm, Gather; other cats apply moss (Scratch only); Skill in the combat
+  menu.
 **M8 – save/load, title, intro, menu.**
 **M9 – levels 1-8 content**, mini-bosses, hazards, sneak step (L7), Elder Pale choice.
 **M10 – endings, sound, polish, distribution** (win image, README, MiSTer test).

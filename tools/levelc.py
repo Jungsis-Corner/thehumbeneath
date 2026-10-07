@@ -21,6 +21,9 @@ Level source:
     event X Y message TEXT         shown the first time the cell is entered
     event X Y trap BLEED TEXT      the first time: TEXT, a random cat bleeds
                                    (BLEED 1 Scratch, 2 Gash, 3 Deep Wound)
+    event X Y item ITEM COUNT      found when the cell is entered (once)
+    event X Y gather ITEM COUNT    found by the healer's Gather (once)
+    event X Y lock ITEM            locked door ('L') that ITEM opens
     group X Y ENEMY COUNT guard|hunt   enemy group (ENEMY = id from
                                    data/enemies.txt); guards stay, hunters
                                    come closer when the party is near
@@ -37,7 +40,8 @@ hum_lN layout:
     events       6 bytes each: x, y, type, flags (0; bit 0 = done at run
                  time), param.w; ends with $FF
                  stairs param = level<<10 | y<<5 | x, mark/message = text id,
-                 trap param = bleed<<12 | text id
+                 trap param = bleed<<12 | text id,
+                 item/gather param = item<<8 | count, lock param = item
     groups       6 bytes each: x, y, enemy type, count, mode (0 guard,
                  1 hunt), flags (0; at run time bit 0 = gone, bit 1 = seen);
                  ends with $FF
@@ -49,6 +53,7 @@ from collections import deque
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import enemies  # noqa: E402
+import items  # noqa: E402
 
 SIZE = 32
 MAPLEN = SIZE * SIZE
@@ -82,7 +87,9 @@ BY_CHAR = {c[0]: c for c in CELLS}
 BY_TYPE = {c[1]: c for c in CELLS}
 CF_BLOCK = 1
 
-EVENTS = {'stairs': 1, 'mark': 2, 'message': 3, 'trap': 4}
+EVENTS = {'stairs': 1, 'mark': 2, 'message': 3, 'trap': 4, 'item': 5, 'gather': 6,
+          'lock': 7}
+ITEM_IDS = {it['id']: i + 1 for i, it in enumerate(items.read())}
 MODES = {'guard': 0, 'hunt': 1}
 MAXGROUPS = 16
 ENEMY_IDS = {e['id']: i for i, e in enumerate(enemies.read())}
@@ -140,12 +147,20 @@ def parse(path, textids):
             rows = []
         elif key == 'event':
             if len(args) < 4 or args[2] not in EVENTS:
-                fail('%s: event X Y stairs|mark|message|trap ...' % where)
+                fail('%s: event X Y %s ...' % (where, '|'.join(EVENTS)))
             x, y, kind = int(args[0]), int(args[1]), args[2]
             if kind == 'stairs':
                 if len(args) != 6:
                     fail('%s: event X Y stairs LEVEL TX TY' % where)
                 param = tuple(int(a) for a in args[3:6])
+            elif kind in ('item', 'gather'):
+                if len(args) != 5 or args[3] not in ITEM_IDS or not 1 <= int(args[4]) <= 99:
+                    fail('%s: event X Y %s ITEM COUNT(1-99)' % (where, kind))
+                param = ITEM_IDS[args[3]] << 8 | int(args[4])
+            elif kind == 'lock':
+                if len(args) != 4 or args[3] not in ITEM_IDS:
+                    fail('%s: event X Y lock ITEM' % where)
+                param = ITEM_IDS[args[3]]
             elif kind == 'trap':
                 if len(args) != 5 or args[3] not in '123' or args[4] not in textids:
                     fail('%s: event X Y trap BLEED(1-3) TEXT' % where)
@@ -201,7 +216,12 @@ def check(lv):
                 if (x, y) not in stairs:
                     fail('%s: stairs at %d,%d without a stairs event' % (path, x, y))
     for x, y, kind, _, where in lv['events']:
-        if not (0 <= x < SIZE and 0 <= y < SIZE) or blocks(rows[y][x]):
+        if not (0 <= x < SIZE and 0 <= y < SIZE):
+            fail('%s: event cell %d,%d outside the map' % (where, x, y))
+        if kind == 'lock':
+            if rows[y][x] != 'L':
+                fail('%s: lock event on a cell without a locked door' % where)
+        elif blocks(rows[y][x]):
             fail('%s: event cell %d,%d is not open' % (where, x, y))
         if kind == 'stairs' and rows[y][x] not in '<>':
             fail('%s: stairs event on a cell without stairs' % where)

@@ -36,8 +36,9 @@ hum_wN layout (big-endian):
                   (n > 1) through rmask, the words between are copied
 
 hum_sN layout (sprite set):
-  'HSS1', length.l, count.w (enemy types), 0.w,
-  count x 3 tile offset.l (depth 1, 2, 3; 0 = no picture),
+  'HSS1', length.l, count.w (enemy types + 1), 0.w,
+  count x 3 tile offset.l (depth 1, 2, 3; 0 = no picture); the last
+  picture is the bundle shown where an item lies,
   tiles: x0.w (words, for lateral 0), y0.w, w.w, h.w, h x row offset.w,
          rows of w x (mask.w, data.w); drawn shifted like front tiles
 """
@@ -266,10 +267,10 @@ def sprite_tile(art, size, d):
 
 
 def build_sprites(names):
-    foes = enemies.read()
+    foes = enemies.read() + [{'sprite': 'bundle', 'where': 'items'}]
     tiles, table = [], b''
     for e in foes:
-        if names is not None and e['sprite'] not in names:
+        if names is not None and e['sprite'] not in names + ['bundle']:
             table += b'\0' * 12
             continue
         if e['sprite'] not in sprites.ART:

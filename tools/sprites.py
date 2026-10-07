@@ -79,13 +79,27 @@ def big_rat():
     return big
 
 
+# A found item lying on the floor (one picture for all items).
+BUNDLE = [
+    "......YY........",
+    ".....Y..Y.......",
+    "...wwwYYwww.....",
+    "..wWWWWWWWWw....",
+    ".wWWWWWWWWWWw...",
+    ".wWWWWWWWWWWWw..",
+    "..wwWWWWWWWww...",
+    "....wwwwwww.....",
+]
+
 SIZE = {
+    'bundle': (24, 14),
     'rat': (48, 34),
     'spider': (72, 46),
     'bigrat': (64, 48),
 }
 
 ART = {
+    'bundle': BUNDLE,
     'rat': mirror(RAT_HALF),
     'spider': mirror(SPIDER_HALF),
     'bigrat': big_rat(),

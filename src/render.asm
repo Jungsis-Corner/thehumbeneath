@@ -133,7 +133,8 @@ render:
         dbra    d2,.bits
         move.l  d0,v_vmask(a5)
 
-; --- enemy groups in view: v_vgrp[cell] = enemy type + 1 (0 = none)
+; --- enemy groups and items in view: v_vgrp[cell] = enemy type + 1
+;     (0 = none), bit 7 = an item lies there
         lea     v_vgrp(a5),a0
         moveq   #VIEW_D*VIEW_L-1,d0
 .gclr   clr.b   (a0)+
@@ -145,35 +146,32 @@ render:
         beq.s   .gend
         btst    #GF_GONE,G_FLAGS(a1)
         bne.s   .gnx
-        moveq   #0,d0           ; offset from the player: dx, dy
         move.b  G_X(a1),d0
-        sub.w   d5,d0
-        moveq   #0,d1
         move.b  G_Y(a1),d1
-        sub.w   d4,d1
-        move.w  d0,d2           ; depth = dx*fdx + dy*fdy
-        muls    v_fdx(a5),d2
-        move.w  d1,d3
-        muls    v_fdy(a5),d3
-        add.w   d3,d2
+        bsr     view_cell
         bmi.s   .gnx
-        cmp.w   #VIEW_D,d2
-        bge.s   .gnx
-        muls    v_rdx(a5),d0    ; lateral = dx*rdx + dy*rdy
-        muls    v_rdy(a5),d1
-        add.w   d1,d0
-        add.w   #VIEW_L/2,d0
-        cmp.w   #VIEW_L,d0
-        bhs.s   .gnx
-        mulu    #VIEW_L,d2
-        add.w   d0,d2
         move.b  G_TYPE(a1),d0
         addq.b  #1,d0
         lea     v_vgrp(a5),a0
-        move.b  d0,0(a0,d2.w)
+        or.b    d0,0(a0,d2.w)
 .gnx    addq.l  #G_SIZE,a1
         bra.s   .grp
-.gend
+.gend   lea     v_map+LV_EVENT(a5),a1 ; items not taken yet
+.itm    cmp.b   #EV_END,EV_X(a1)
+        beq.s   .iend
+        cmp.b   #EV_ITEM,EV_TYPE(a1)
+        bne.s   .inx
+        btst    #0,EV_FLAGS(a1)
+        bne.s   .inx
+        move.b  EV_X(a1),d0
+        move.b  EV_Y(a1),d1
+        bsr     view_cell
+        bmi.s   .inx
+        lea     v_vgrp(a5),a0
+        bset    #7,0(a0,d2.w)
+.inx    addq.l  #EV_SIZE,a1
+        bra.s   .itm
+.iend
 
 ; --- floor and ceiling: one pattern word per line
         lea     v_walls(a5),a3
@@ -211,23 +209,12 @@ render:
         lea     v_vtab(a5),a1
         move.b  0(a1,d0.w),d5   ; view class of the cell
         btst    d5,d4
-        beq.s   .skip
+        beq     .skip
         lea     0(a3,d3.l),a1   ; tile
         bra.s   .occl
 .enemy  lea     v_vgrp(a5),a1
-        moveq   #0,d5
-        move.b  0(a1,d0.w),d5   ; enemy type + 1
-        beq.s   .skip
-        subq.w  #1,d5           ; picture: sprite set table [type][depth-1]
-        mulu    #12,d5
-        subq.w  #1,d3
-        lsl.w   #2,d3
-        add.w   d3,d5
-        lea     v_sprites+HS_TABLE(a5),a1
-        move.l  0(a1,d5.w),d3
-        beq.s   .skip
-        lea     v_sprites(a5),a1
-        add.l   d3,a1
+        tst.b   0(a1,d0.w)      ; an enemy or an item in this cell?
+        beq     .skip
 .occl   move.l  v_vmask(a5),d6
         moveq   #3-1,d7
 .occ    move.l  (a2)+,d4        ; occluder set
@@ -246,8 +233,37 @@ render:
         bra     .next
 .front  bsr     draw_front
         bra     .next
-.spr    bsr     draw_sprite
+.spr    lea     v_vgrp(a5),a1   ; d0 = cell, d3 = depth, d2 = shift
+        moveq   #0,d5
+        move.b  0(a1,d0.w),d5
+        bclr    #7,d5
+        beq.s   .foe
+        movem.l d2-d3/d5,-(sp)  ; an item: the bundle first
+        moveq   #NENEMY,d4
+        bsr.s   .pic
+        beq.s   .nopic
+        bsr     draw_sprite
+.nopic  movem.l (sp)+,d2-d3/d5
+.foe    tst.w   d5              ; then an enemy standing on it
+        beq     .next
+        move.w  d5,d4
+        subq.w  #1,d4
+        bsr.s   .pic
+        beq     .next
+        bsr     draw_sprite
         bra     .next
+.pic    move.w  d4,d5           ; d4 = picture, d3 = depth -> a1, EQ = none
+        mulu    #12,d5
+        move.w  d3,d4
+        subq.w  #1,d4
+        lsl.w   #2,d4
+        add.w   d4,d5
+        lea     v_sprites+HS_TABLE(a5),a1
+        move.l  0(a1,d5.w),d4
+        beq.s   .pe
+        lea     v_sprites(a5),a1
+        add.l   d4,a1
+.pe     rts
 .skip   move.l  a4,a2
         bra     .next
 
@@ -264,6 +280,34 @@ render:
         lea     LINEB-VIEWB(a1),a1
         dbra    d7,.cl
         movem.l (sp)+,d0-d7/a0-a6
+        rts
+
+; view_cell: d0.b = x, d1.b = y of a map cell, d4 = player y, d5 = player x
+;            -> d2 = cell in the view table, MI = not in view
+;            (uses d0-d3 and v_fdx..v_rdy of the current render)
+view_cell:
+        and.w   #$ff,d0
+        and.w   #$ff,d1
+        sub.w   d5,d0           ; offset from the player: dx, dy
+        sub.w   d4,d1
+        move.w  d0,d2           ; depth = dx*fdx + dy*fdy
+        muls    v_fdx(a5),d2
+        move.w  d1,d3
+        muls    v_fdy(a5),d3
+        add.w   d3,d2
+        bmi.s   .out
+        cmp.w   #VIEW_D,d2
+        bge.s   .out
+        muls    v_rdx(a5),d0    ; lateral = dx*rdx + dy*rdy
+        muls    v_rdy(a5),d1
+        add.w   d1,d0
+        add.w   #VIEW_L/2,d0
+        cmp.w   #VIEW_L,d0
+        bhs.s   .out
+        mulu    #VIEW_L,d2
+        add.w   d0,d2           ; (PL)
+        rts
+.out    moveq   #-1,d2
         rts
 
 ; draw_front: a1 = tile, d2 = shift in words; clipped to the viewport

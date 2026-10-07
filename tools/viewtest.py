@@ -3,7 +3,8 @@
 
 Start the game first (tools/emu.sh, test level 0). For every key of <keys>
 the key is pressed in the emulator, the move is simulated here with the same
-rules as the game (a step forward into a closed door opens it), and the
+rules as the game (a step forward into a closed door opens it, items on
+an entered cell are taken), and the
 screenshot is compared pixel by pixel with preview.py. Stairs are not
 followed: keep the path away from them. x y dir = start position when it is
 not the one of the level file (game built with -DSTARTX/-DSTARTY/-DSTARTDIR).
@@ -56,6 +57,11 @@ def main():
             cell = (y + dy) * 32 + x + dx
             if (level[cell] & 0x1f) not in BLOCKING:
                 x, y = x + dx, y + dy
+                pos = 1034                          # items here are taken
+                while level[pos] != 0xff:
+                    if level[pos:pos + 3] == bytes([x, y, 5]):
+                        level[pos + 3] |= 1
+                    pos += 6
             elif rel == 0 and (level[cell] & 0x1f) == TYPE['DOOR']:
                 level[cell] = level[cell] & 0xe0 | TYPE['DOOR_OPEN']
             press({'U': 'Up', 'D': 'Down', 'l': 'Left', 'r': 'Right'}[k], k in 'lr')
