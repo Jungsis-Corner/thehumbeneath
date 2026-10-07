@@ -13,7 +13,8 @@
 ; Test switches (vasm -D..., e.g. ./tools/emu.sh -DSTARTX=5 -DSTARTDIR=2):
 ;   STARTX, STARTY  start cell instead of the one in the level file
 ;   STARTDIR        start facing 0 N, 1 E, 2 S, 3 W
-;   DEBUG=1         render time in frames (1/50 s) in the panel
+;   DEBUG=1         position and render time (frames of 1/50 s) in the panel
+;   HPTEST          start with reduced hit points (to see the bar colours)
 ;=====================================================================
 
         include 'textid.inc'    ; T_... text ids         (tools/textc.py)
@@ -99,6 +100,17 @@ BUFLEN  equ     256             ; formatted text
 ERR_EF  equ     -10             ; QDOS: end of file
 
 ;---------------------------------------------------------------------
+; Party
+;---------------------------------------------------------------------
+NPARTY  equ     4
+        rsreset
+p_name  rs.w    1               ; text id of the name
+p_role  rs.w    1               ; text id of the role
+p_hp    rs.w    1               ; hit points
+p_hpmax rs.w    1
+p_size  rs.b    0
+
+;---------------------------------------------------------------------
 ; Global variables (A5)
 ;---------------------------------------------------------------------
         rsreset
@@ -107,7 +119,6 @@ v_sp    rs.l    1               ; stack pointer at entry
 v_mode  rs.w    1               ; 0 = job, 1 = CALL
 v_sysv  rs.l    1               ; system variables (MT.INF)
 v_msg   rs.l    1               ; message window channel
-v_panel rs.l    1               ; party panel channel
 v_poll  rs.l    2               ; poll list linkage (50 Hz counter)
 v_text  rs.l    1               ; text file in memory (0 = not loaded)
 v_keys  rs.w    1               ; current keys (KEYROW(1) layout)
@@ -117,6 +128,7 @@ v_level rs.w    1               ; current level number
 v_pos   rs.w    1               ; player cell: y*32+x
 v_dir   rs.w    1               ; facing: 0 N, 1 E, 2 S, 3 W
 v_args  rs.l    4               ; arguments for text_fmt
+v_party rs.b    p_size*NPARTY
 v_mapon rs.w    1               ; 1 = debug map instead of the 3D view
 v_rtime rs.w    1               ; frames the last render took (DEBUG)
 v_fdx   rs.w    1               ; one step forward: dx, dy
@@ -259,10 +271,6 @@ common:
         moveq   #C_BLACK,d5
         bsr     opench
         move.l  a0,v_msg(a5)
-        lea     panelname(pc),a0
-        moveq   #C_BLUE,d5
-        bsr     opench
-        move.l  a0,v_panel(a5)
 
         tst.l   v_text(a5)
         bne.s   start
@@ -300,7 +308,14 @@ start:
         bsr     msg_print
         bsr     wait_esc
         bra     exit_prog
-.ok2    bsr     level_start
+.ok2    bsr     party_init
+        bsr     level_start
+        lea     v_args(a5),a2   ; "<first cat> leads the way."
+        move.w  v_party+p_name(a5),d0
+        bsr     text_get
+        move.l  a1,(a2)
+        moveq   #T_PARTY_LEAD,d0
+        bsr     msg_print
         bsr     redraw
 
 mainloop:
@@ -468,9 +483,6 @@ exit_prog:
         moveq   #MT_RPOLL,d0
         trap    #1
         move.l  v_msg(a5),a0
-        moveq   #IO_CLOSE,d0
-        trap    #2
-        move.l  v_panel(a5),a0
         moveq   #IO_CLOSE,d0
         trap    #2
         moveq   #MT_DMODE,d0
@@ -819,45 +831,13 @@ redraw:                         ; after a step or turn
         tst.w   v_mapon(a5)
         beq.s   .view
         bsr.s   draw_map
-        bra.s   panel_show
+        bra     panel_show
 .view   move.w  pcount(pc),-(sp)
         bsr     render
         move.w  pcount(pc),d0
         sub.w   (sp)+,d0
         move.w  d0,v_rtime(a5)
-        ; fallthrough
-
-panel_show:                     ; debug: position and facing in the panel
-        movem.l d0-d3/a0-a2,-(sp)
-        move.l  v_panel(a5),a0
-        moveq   #SD_CLEAR,d0
-        bsr     io3
-        lea     v_args(a5),a2
-        move.w  v_pos(a5),d0
-        moveq   #31,d1
-        and.w   d0,d1
-        move.l  d1,(a2)         ; x
-        lsr.w   #5,d0
-        move.l  d0,4(a2)        ; y
-        move.w  v_dir(a5),d0
-        add.w   #T_DIR_N,d0
-        bsr     text_get
-        move.l  a1,8(a2)        ; facing name
-        moveq   #T_DEBUG_POS,d0
-        bsr     text_fmt
-        move.l  v_panel(a5),a0
-        bsr     print_str
-        ifne    DEBUG
-        moveq   #0,d0
-        move.w  v_rtime(a5),d0
-        move.l  d0,(a2)
-        moveq   #T_DEBUG_TIME,d0
-        bsr     text_fmt
-        move.l  v_panel(a5),a0
-        bsr     print_str
-        endc
-        movem.l (sp)+,d0-d3/a0-a2
-        rts
+        bra     panel_show
 
 ; draw_map: debug view, the whole level as 4x4 pixel cells in the
 ; viewport, visited floor in blue, the player as a yellow arrow
@@ -910,10 +890,34 @@ draw_map:
         rts
 
         include 'render.asm'    ; first-person view
+        include 'hud.asm'       ; party panel, 4 px font
+
+;=====================================================================
+; Party
+;=====================================================================
+party_init:
+        lea     partyinit(pc),a0
+        lea     v_party(a5),a1
+        moveq   #NPARTY*p_size/2-1,d0
+.c      move.w  (a0)+,(a1)+
+        dbra    d0,.c
+        rts
 
 ;=====================================================================
 ; Data
 ;=====================================================================
+partyinit:                      ; name, role, hit points, maximum
+        ifnd    HPTEST
+        dc.w    T_NAME_ASHCLAW,T_ROLE_FIGHTER,20,20
+        dc.w    T_NAME_MOSSFERN,T_ROLE_HEALER,12,12
+        dc.w    T_NAME_QUICKWHISKER,T_ROLE_SCOUT,9,9
+        dc.w    T_NAME_SEDGEPELT,T_ROLE_HUNTER,14,14
+        else
+        dc.w    T_NAME_ASHCLAW,T_ROLE_FIGHTER,20,20
+        dc.w    T_NAME_MOSSFERN,T_ROLE_HEALER,5,12
+        dc.w    T_NAME_QUICKWHISKER,T_ROLE_SCOUT,2,9
+        dc.w    T_NAME_SEDGEPELT,T_ROLE_HUNTER,0,14
+        endc
 colw:   dc.w    $0000,$0055,$00aa,$00ff ; colour -> word of 4 pixels
         dc.w    $aa00,$aa55,$aaaa,$aaff ; (G = even bits high, R/B low)
 kr1:    dc.b    9,1,0,0,0,0,1,2         ; IPC: KEYROW(1)
@@ -934,7 +938,7 @@ txtname: qstr   'hum_txt'
 lvname: qstr    'hum_l0'
 wsname: qstr    'hum_w0'
 msgname: qstr   'con_512x120a0x136'
-panelname: qstr 'con_128x128a384x0'
 notext: qstr    'hum_txt missing'
 
         include 'leveltab.inc'  ; cell flags, debug colours
+        include 'font.inc'      ; panel font (tools/fontc.py)

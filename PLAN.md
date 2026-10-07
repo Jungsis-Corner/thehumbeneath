@@ -3,7 +3,7 @@
 Status: approved 2026-10-07 (open questions answered with the proposals, see section 8).
 Changes to the architecture below need approval (CLAUDE.md).
 
-Progress: M1 done (M1a, M1b, M1c).
+Progress: M1 done (M1a, M1b, M1c), M2 done.
 
 ## 1. Toolchain (taken over from FUSE RUNNER)
 
@@ -184,7 +184,13 @@ Each one builds with make.sh, runs in sQLux, and ends with a size report.
   compares every view with preview.py (34 of 34 views identical).
 
 **M2 – HUD and messages:** party panel with 4 cats (name, HP placeholder), message window with
-scrolling, %s/%d formatting, compass.
+scrolling, %s/%d formatting, compass. **DONE** – panel drawn directly with an own
+4 px font (tools/fontc.py, 3x6 glyphs incl. descenders, one screen word per
+character, 15 characters per panel line): per cat name, role, "HP x/y" and a bar
+(green > 1/2, yellow > 1/4, red); "Facing ..." as compass; DEBUG builds add
+position and render time. textc.py: "@width n" for shorter lines (names 12,
+panel 15). Party values are placeholders in hum.asm (partyinit), -DHPTEST
+lowers them to show the bar colours.
 **M3 – level features:** doors (open/locked), stairs between levels (load next hum_lN/hum_wN),
 event table, Scratch-Mark texts, entry messages, visited flags.
 **M4 – party data and status:** stats, ranks, bleeding tick per step, moss counters.
@@ -207,7 +213,9 @@ encounter trigger.
 
 ## 8. Decisions (answered 2026-10-07: "passt so" = proposals accepted)
 
-1. Text: QDOS console, CSIZE 2,0, 42 columns – no own font.
+1. Text: QDOS console, CSIZE 2,0, 42 columns for the message window.
+   Party panel: own 4 px font (decided 2026-10-07 for M2, so names up to 12
+   characters fit).
 2. Layout: viewport 192x128 left, party panel 64x128 right, messages below.
 3. Controls: cursor keys, up = forward, down = back, left/right = turn, plus strafe;
    joystick via CTL2 as in FUSE RUNNER. Strafe = Shift + left/right (keyboard only).

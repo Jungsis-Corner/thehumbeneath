@@ -33,12 +33,19 @@ def shown_width(line):
 def parse(path):
     entries = []
     seen = set()
+    width = MAXLINE
     try:
         lines = open(path, encoding='ascii').read().splitlines()
     except UnicodeDecodeError as e:
         fail('%s: non-ASCII character (%s)' % (path, e))
     for n, raw in enumerate(lines, 1):
         if not raw.strip() or raw.lstrip().startswith('#'):
+            continue
+        w = re.match(r'^@width\s+(\d+)\s*$', raw)
+        if w:                       # line width for the following entries
+            width = int(w.group(1))
+            if not 1 <= width <= MAXLINE:
+                fail('%s:%d: width must be 1-%d' % (path, n, MAXLINE))
             continue
         m = re.match(r'^([A-Z][A-Z0-9_]*)\s+(\S.*)$', raw)
         if not m:
@@ -54,9 +61,9 @@ def parse(path):
             for ph in re.findall(r'%.', line):
                 if ph not in ('%s', '%d'):
                     fail('%s:%d: unknown placeholder %s' % (path, n, ph))
-            if shown_width(line) > MAXLINE:
+            if shown_width(line) > width:
                 fail('%s:%d: line longer than %d characters: "%s"'
-                     % (path, n, MAXLINE, line))
+                     % (path, n, width, line))
         entries.append((ident, text))
     if not entries:
         fail('no texts in ' + path)
