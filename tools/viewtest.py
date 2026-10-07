@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """viewtest.py <keys> [x y dir]  - regression test of the 3D view.
 
-Start the game first (tools/emu.sh, test level 0). For every key of <keys>
+Start the game first: tools/emu.sh -DQUICKSTART (straight into test level 0). For every key of <keys>
 the key is pressed in the emulator, the move is simulated here with the same
 rules as the game (a step forward into a closed door opens it, items on
 an entered cell are taken), and the

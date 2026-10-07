@@ -18,7 +18,8 @@
 ;   HPTEST          start with reduced hit points (to see the bar colours)
 ;   BLEEDTEST       start with bleeding cats (Scratch, Gash, Deep Wound)
 ;   XPTEST          every cat starts with 18 XP (the next rank needs 20)
-;   ITEMTEST        the pack starts with some items (see party_init)
+;   ITEMTEST        the pack starts with some items (see item_test)
+;   QUICKSTART      no title, names or intro: straight into the first level
 ;=====================================================================
 
         include 'textid.inc'    ; T_... text ids         (tools/textc.py)
@@ -57,7 +58,19 @@ PF_FEATHER equ  3               ; p_flags: the feather was used on this level
 
 ; level memory and saving
 LVSLOTS    equ  10              ; levels 0-9 can be kept
-SAVE_MISC  equ  12              ; save file: version .. kept levels
+LVDELTA    equ  384             ; what changed in a kept level (see state.asm):
+LVD_DOORS  equ  128             ;   0: cells seen, 1 bit each; doors: count.w,
+LVD_NDOORS equ  40              ;   up to 40 cells.w; events: count.w, up to
+LVD_EVENTS equ  LVD_DOORS+2+2*LVD_NDOORS ; 64 flags; marks found.w, bosses
+LVD_MARKS  equ  LVD_EVENTS+2+64 ;   beaten.w; the group table (16 groups + end)
+LVD_BOSSES equ  LVD_MARKS+2
+LVD_GROUPS equ  LVD_BOSSES+2
+    ifgt LVD_GROUPS+16*6+1-LVDELTA
+    fail "LVDELTA too small"
+    endc
+NAME_LEN   equ  14              ; bytes per cat name in v_cname (12 + 0, even)
+NAME_ID    equ  $f000           ; text id NAME_ID+n = name of cat n (v_cname)
+SAVE_MISC  equ  14              ; save file: version .. progress
 SAVE_HEAD  equ  8+SAVE_MISC     ; save file: magic, length, misc
 
 ; input
@@ -127,7 +140,7 @@ TXT_OFFS  equ   10              ; offset of the offset table
 TXT_HEAD  equ   10              ; bytes read before the heap exists
 
 NAMEBUF equ     48              ; room for device + file name (QDOS string)
-BUFLEN  equ     256             ; formatted text
+BUFLEN  equ     512             ; formatted text (the intro is long)
 ERR_EF  equ     -10             ; QDOS: end of file
 
 ;---------------------------------------------------------------------
@@ -149,6 +162,12 @@ v_wsnum rs.w    1               ; wall set in v_walls (0 = none)
 v_dev   rs.w    1               ; device of the game files (see fopen)
 v_lvok  rs.w    1               ; bit n: level n kept in v_lvstore
 v_inlv  rs.w    1               ; 1 when v_map holds a level
+v_full  rs.l    1               ; channel over the whole screen (title texts)
+v_sptop rs.l    1               ; stack pointer for the title
+v_spgame rs.l   1               ; stack pointer of the running game
+v_intitle rs.w  1               ; 1 while the title menu is shown
+v_prog  rs.w    5               ; progress: %, depth, explored %, marks, bosses
+v_cname rs.b    NPARTY*NAME_LEN ; the cats' names
 v_svn   rs.b    10              ; save file name 'hum_svN' (QDOS string)
 v_shdr  rs.b    SAVE_HEAD       ; save file header
 v_ssnum rs.w    1               ; sprite set in v_sprites (0 = none)
@@ -172,6 +191,7 @@ v_mcount rs.w   1               ; menu: number of lines
 v_mtxt  rs.b    MENU_MAX*MENU_LEN ; menu: the lines
 v_mitem rs.b    MENU_MAX        ; menu: item of each line (pack menus)
 v_pack  rs.b    2*PACK_SLOTS    ; party pack: item, count
+v_deep  rs.w    1               ; deepest level reached (saved after the pack)
 v_cend  rs.w    1               ; combat: 0 going on, 1 victory, 2 fled
 v_cskip rs.w    1               ; combat: the party lost the rest of the round
 v_rtime rs.w    1               ; frames the last render took (DEBUG)
@@ -186,10 +206,10 @@ v_vgrp  rs.b    VIEW_D*VIEW_L   ; cells in view: enemy type + 1 (0 = none)
 v_name  rs.b    NAMEBUF         ; file name with device
 v_buf   rs.b    BUFLEN          ; formatted text
 v_map   rs.b    LEVMAX          ; current level file
+v_lvstore rs.b  LVSLOTS*LVDELTA ; what changed in the levels visited
 v_vbuf  rs.b    VIEWB*VIEW_H    ; view buffer, copied to the screen at once
 v_sprites rs.b  SPRMAX          ; current sprite set
 v_walls rs.b    WALLMAX         ; current wall set (must start below 32K)
-v_lvstore rs.b  LVSLOTS*LEVMAX  ; levels kept (above 32K: see lv_slot)
 v_size  rs.b    0               ; text file follows directly
         ifgt    v_walls-32767   ; buffers are reached with lea d16(a5)
         fail    "v_walls must start below 32K"
@@ -313,6 +333,11 @@ common:
         trap    #1
         bsr     cls
 
+        lea     fullname(pc),a0 ; a channel over the whole screen
+        moveq   #C_BLACK,d5
+        bsr     opench
+        move.l  a0,v_full(a5)
+
         lea     v_poll(a5),a0   ; 50 Hz counter via poll list
         lea     pollrt(pc),a1
         move.l  a1,4(a0)
@@ -338,22 +363,8 @@ common:
 ; Milestone 1b: walk through the test level on a 2D debug map
 ;=====================================================================
 start:
-        bsr     draw_frame
-        bsr     party_init
-        ifd     STARTLV
-        moveq   #STARTLV,d0
-        else
-        moveq   #0,d0           ; test level
-        endc
-        bsr     enter_level
-        bsr     level_start
-        lea     v_args(a5),a2   ; "<first cat> leads the way."
-        move.w  v_party+p_name(a5),d0
-        bsr     text_get
-        move.l  a1,(a2)
-        move.w  #T_PARTY_LEAD,d0
-        bsr     msg_print
-        bsr     redraw
+        move.l  sp,v_sptop(a5)
+        bra     title_loop
 
 mainloop:
         bsr     frame
@@ -495,7 +506,10 @@ enter_level:
 .fe     bclr    #PF_FEATHER,1(a2)
         lea     p_size(a2),a2
         dbra    d1,.fe
-        bsr     lv_keep
+        cmp.w   v_deep(a5),d0   ; the deepest level reached (progress)
+        bls.s   .dp
+        move.w  d0,v_deep(a5)
+.dp     bsr     lv_keep
         bsr     lv_fetch
         beq.s   .sets
         bsr     level_load
@@ -695,7 +709,8 @@ cell_events:
         move.w  EV_PARAM(a3),d0
         bsr     msg_print
         bra.s   .nx
-.mark   move.w  #T_MARK_SEEN,d0 ; Scratch-Mark: the carved text in yellow
+.mark   bset    #0,EV_FLAGS(a3) ; (found: counts for the progress)
+        move.w  #T_MARK_SEEN,d0 ; Scratch-Mark: the carved text in yellow
         bsr     msg_print
         moveq   #C_YEL,d1
         bsr     msg_ink
@@ -963,6 +978,9 @@ exit_prog:
         move.l  v_msg(a5),a0
         moveq   #IO_CLOSE,d0
         trap    #2
+        move.l  v_full(a5),a0
+        moveq   #IO_CLOSE,d0
+        trap    #2
         moveq   #MT_DMODE,d0
         moveq   #4,d1
         moveq   #-1,d2
@@ -1064,10 +1082,18 @@ fread:
 ; text_get: d0.w = text id -> a1 = zero-terminated string
 text_get:                       ; (keeps all other registers)
         move.l  d0,-(sp)
+        cmp.w   #NAME_ID,d0     ; a cat's name?
+        bhs.s   .name
         move.l  v_text(a5),a1
         add.w   d0,d0
         move.w  TXT_OFFS(a1,d0.w),d0
         and.l   #$ffff,d0
+        add.l   d0,a1
+        move.l  (sp)+,d0
+        rts
+.name   sub.w   #NAME_ID,d0
+        mulu    #NAME_LEN,d0
+        lea     v_cname(a5),a1
         add.l   d0,a1
         move.l  (sp)+,d0
         rts
@@ -1089,6 +1115,8 @@ text_fmt:
         beq.s   .str
         cmp.b   #'d',d0
         beq.s   .num
+        cmp.b   #'%',d0         ; %%: one percent sign
+        beq.s   .put
         subq.l  #1,a1           ; unknown: keep the '%'
         moveq   #'%',d0
 .put    move.b  d0,(a0)+
@@ -1442,6 +1470,7 @@ draw_map:
         include 'items.asm'     ; pack, items, gear, menus
         include 'skills.asm'    ; healer skills, moss
         include 'state.asm'     ; level memory, save, load, game menu
+        include 'title.asm'     ; title, names, intro, game over
 
 ;=====================================================================
 ; Party
@@ -1453,17 +1482,31 @@ party_init:
 .c      move.w  (a0)+,(a1)+
         dbra    d0,.c
         move.w  pcount(pc),v_rand(a5)
+        lea     v_party(a5),a1  ; the names into v_cname, p_name points there
+        lea     v_cname(a5),a2
+        moveq   #0,d1
+.nm     move.w  p_name(a1),d0
+        move.l  a1,-(sp)
+        bsr     text_get
+        move.l  a2,a0
+        moveq   #NAME_LEN-2,d0
+.nc     move.b  (a1)+,(a0)+
+        dbeq    d0,.nc
+        clr.b   (a0)
+        move.l  (sp)+,a1
+        move.w  d1,d0
+        add.w   #NAME_ID,d0
+        move.w  d0,p_name(a1)
+        lea     NAME_LEN(a2),a2
+        lea     p_size(a1),a1
+        addq.w  #1,d1
+        cmp.w   #NPARTY,d1
+        blo.s   .nm
         lea     v_party(a5),a1
         ifd     HPTEST          ; Mossfern 5, Quickwhisker 2, Sedgepelt 0 HP
         move.w  #5,p_size+p_hp(a1)
         move.w  #2,2*p_size+p_hp(a1)
         clr.w   3*p_size+p_hp(a1)
-        endc
-        ifd     ITEMTEST
-        lea     v_pack(a5),a0
-        move.l  #IT_MARIGOLD_LEAF<<24|2<<16|IT_STARFOLK_FEATHER<<8|1,(a0)+
-        move.l  #IT_THISTLE_CHARM<<24|1<<16|IT_COBWEB_WRAP<<8|1,(a0)+
-        move.l  #IT_STALE_PREY<<24|1<<16|IT_HERB<<8|2,(a0)+
         endc
         ifd     XPTEST
         move.w  #18,p_xp(a1)
@@ -1477,6 +1520,15 @@ party_init:
         move.w  #2,2*p_size+p_bleed(a1)
         endc
         rts
+
+        ifd     ITEMTEST
+item_test:                      ; the pack for tests
+        lea     v_pack(a5),a0
+        move.l  #IT_MARIGOLD_LEAF<<24|2<<16|IT_STARFOLK_FEATHER<<8|1,(a0)+
+        move.l  #IT_THISTLE_CHARM<<24|1<<16|IT_COBWEB_WRAP<<8|1,(a0)+
+        move.l  #IT_STALE_PREY<<24|1<<16|IT_HERB<<8|2,(a0)+
+        rts
+        endc
 
 ; rand: -> d0.w random number (16 bit linear congruential generator)
 rand:   move.w  v_rand(a5),d0
@@ -1614,11 +1666,7 @@ party_check:
         bgt.s   .e
         lea     p_size(a0),a0
         dbra    d0,.l
-        bsr     panel_show
-        move.w  #T_GAME_OVER,d0
-        bsr     msg_print
-        bsr     wait_esc
-        bra     exit_prog
+        bra     game_over
 .e      rts
 
 ; cat_status: a3 = cat -> d0 = 0 unhurt, 1-3 bleeding, 4 fallen,
@@ -1660,6 +1708,11 @@ wsname: qstr    'hum_w0'
 ssname: qstr    'hum_s0'
 svname: qstr    'hum_sv0'
 msgname: qstr   'con_512x120a0x136'
+fullname: qstr  'con_512x256a0x0'
+scrname: qstr   'hum_scr'
+wheel:  dc.b    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-',39
+wheel_end:
+        even
 notext: qstr    'hum_txt missing'
 
         include 'leveltab.inc'  ; cell flags, debug colours

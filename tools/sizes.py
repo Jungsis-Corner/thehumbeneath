@@ -3,7 +3,7 @@
 
 Code     = hum_bin
 Data     = hum_txt + level files hum_l*
-Graphics = wall sets hum_w*, sprite sets hum_s*
+Graphics = wall sets hum_w*, sprite sets hum_s?, title picture hum_scr
 RAM      = what the running game occupies: code + heap block
            (v_size from the listing, which already holds the level buffer
            LEVMAX, the view buffer and the buffers WALLMAX and SPRMAX, + text)
@@ -35,7 +35,8 @@ def main():
     text = size(os.path.join(b, 'hum_txt'))
     levels = [size(p) for p in sorted(glob.glob(os.path.join(b, 'hum_l*')))]
     walls = [size(p) for p in sorted(glob.glob(os.path.join(b, 'hum_w*')))]
-    sprs = [size(p) for p in sorted(glob.glob(os.path.join(b, 'hum_s*')))]
+    sprs = [size(p) for p in sorted(glob.glob(os.path.join(b, 'hum_s?')))]
+    title = size(os.path.join(b, 'hum_scr'))
     vars_ = listing_symbol(os.path.join(b, 'hum.lst'), 'v_size')
     ram = code + vars_ + text
     rows = [
@@ -45,6 +46,7 @@ def main():
         ('Levels (%d files)' % len(levels), sum(levels)),
         ('Graphics (%d wall sets)' % len(walls), sum(walls)),
         ('Graphics (%d sprite sets)' % len(sprs), sum(sprs)),
+        ('Title picture (hum_scr, loaded to screen)', title),
     ]
     print('--- memory report ---')
     for name, n in rows:

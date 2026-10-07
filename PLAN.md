@@ -3,7 +3,7 @@
 Status: approved 2026-10-07 (open questions answered with the proposals, see section 8).
 Changes to the architecture below need approval (CLAUDE.md).
 
-Progress: M1 done (M1a, M1b, M1c), M2-M7 done, M8a done.
+Progress: M1 done (M1a, M1b, M1c), M2-M8 done.
 
 ## 1. Toolchain (taken over from FUSE RUNNER)
 
@@ -317,9 +317,16 @@ saving any time outside a fight; 3 save slots; a title picture with menu.
   level (about 1.8 KB + 1.5 KB per visited level). ESC (or Game in the space
   menu) opens the game menu: CONTINUE, SAVE GAME, LOAD GAME, QUIT (with a
   question). play.sh keeps save files.
-- **M8b title, intro, names:** title picture loaded by BOOT, main menu
-  (NEW GAME, LOAD GAME, QUIT), intro text, name entry (keyboard and a letter
-  wheel for the joystick). OPTIONS waits until there is something to set.
+- **M8b title, intro, names: DONE.** title.asm, tools/titlec.py. The game
+  starts in the title: a picture (hum_scr, a raw Mode 8 screen drawn by
+  titlec.py: the title in 5x7 letters, the moor at night, the farmstead,
+  the open cellar door, four pairs of eyes) with the main menu NEW GAME /
+  LOAD GAME / QUIT. New game: "Name your cats." (proposed names, editable:
+  typing, or up/down/right/left for the joystick; ENTER, space or fire end),
+  then the intro text of STORY.md, then the first level. Names live in RAM
+  (text ids from NAME_ID = $F000) and are saved. QUIT in the game menu and
+  game over return to the title. OPTIONS waits until there is something to
+  set. Test switch QUICKSTART skips title, names and intro (viewtest).
   Progress in % (decided 2026-10-07), shown at game over (with a short
   break-down, then back to the title menu) and in the save slot list
   ("Slot 1: level 3, 37%"):
@@ -328,8 +335,18 @@ saving any time outside a fight; 3 save slots; a title picture with menu.
                    (levelc.py counts them for every level)
     25 % story     Scratch-Marks found + mini-bosses beaten / their totals
                    (levelc.py counts them; marks get a "seen" flag)
-  The save header gets the progress (save version 2). While the test
-  levels 0 and 9 are built they count like real levels.
+  The save header gets the progress. While the test levels 0 and 9 are
+  built they count like real levels. **DONE** ("You came 6% of the way:"
+  with depth, explored and story lines; "Slot 2: level 0, 6%").
+- **Memory (M8b):** with 256 KB the game did not start any more (87 KB).
+  Measured in sQLux/Minerva at 256 KB: about 82-87 KB are free for the game
+  (job + heap). Kept levels now store only what changed against the level
+  file (LVDELTA = 384 bytes instead of 1536: seen bits, open doors, event
+  flags, group table, marks and bosses for the progress); entering a kept
+  level loads its file and puts the changes back. WALLMAX 28 KB -> 22 KB.
+  Now 70 KB in use; keep the total below about 75 KB (real QLs lose memory
+  to microdrive and floppy buffers). Save files: about 0.3 KB + 0.4 KB per
+  visited level (save version 3).
 **M9 – levels 1-8 content**, mini-bosses, hazards, sneak step (L7), Elder Pale choice.
 **M10 – endings, sound, polish, distribution** (win image, README, MiSTer test).
 

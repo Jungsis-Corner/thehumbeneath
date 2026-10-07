@@ -315,26 +315,45 @@ menu_addt:
 menu_run:
         movem.l d1-d7/a0-a3,-(sp)
         move.l  a1,a3
+        bsr     wait_free       ; a key still held is not a choice
         clr.w   v_msel(a5)
+        moveq   #0,d4           ; d4 = column of the box
+        tst.w   v_intitle(a5)
+        beq.s   .draw
+        moveq   #TITLE_MX,d0    ; title: under the picture; the whole
+        move.w  #TITLE_TOP,d1   ; menu area first
+        moveq   #TITLE_W,d2
+        move.w  #256-TITLE_TOP,d3
+        moveq   #C_BLACK,d4
+        bsr     fill_rect
+        moveq   #TITLE_MX,d4
 .draw   move.w  v_mcount(a5),d7 ; box height: title + lines
         addq.w  #1,d7
         mulu    #LINE_H,d7
         addq.w  #3,d7
-        moveq   #0,d0
+        move.w  d4,d0
         move.w  #VIEW_H,d1
-        sub.w   d7,d1
+        tst.w   v_intitle(a5)
+        beq.s   .bot
+        move.w  #TITLE_MY,d1
+.bot    sub.w   d7,d1
         move.w  d1,d6           ; top of the box
+        tst.w   v_intitle(a5)
+        bne.s   .box
         cmp.w   v_mtop(a5),d1   ; a larger box was here: view first
         bls.s   .box
         bsr     view_refresh
 .box    move.w  d6,v_mtop(a5)
+        move.w  d4,-(sp)
         move.w  d6,d1
         moveq   #MENU_W,d2
         move.w  d7,d3
         moveq   #C_BLACK,d4
         bsr     fill_rect
+        move.w  (sp)+,d4
         move.l  a3,a1           ; title
-        moveq   #1,d0
+        move.w  d4,d0
+        addq.w  #1,d0
         move.w  d6,d1
         addq.w  #2,d1
         moveq   #C_YEL,d2
@@ -355,12 +374,14 @@ menu_run:
         moveq   #C_WHITE,d2     ; the chosen one: white with a marker
         move.w  d1,-(sp)
         move.w  #T_CMB_MARK,d0
-        bsr     text_get        ; (changes d1)
+        bsr     text_get
         move.w  (sp)+,d1
-        moveq   #1,d0
+        move.w  d4,d0
+        addq.w  #1,d0
         bsr     pdraw
 .l1     move.l  a2,a1
-        moveq   #2,d0
+        move.w  d4,d0
+        addq.w  #2,d0
         bsr     pdraw
         lea     MENU_LEN(a2),a2
         addq.w  #1,d5

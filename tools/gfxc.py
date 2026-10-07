@@ -56,7 +56,7 @@ HW = [96, 64, 40, 24, 16]          # half width of plane 0..4 (multiples of 2)
 HH = [72, 48, 30, 18, 12]          # half height of plane 0..4
 DEPTHS = 4                         # cell depths 0..3
 LAT = 3                            # lateral offsets -3..3
-WALLMAX = 28672                    # wall set buffer in the game
+WALLMAX = 22528                    # wall set buffer in the game
 SPRMAX = 12288                     # sprite set buffer in the game
 SPRITE_LIGHT = (0.70, 0.18)        # enemy pictures: light at depth 1, loss per cell
                                    # (eyes always glow at full brightness)

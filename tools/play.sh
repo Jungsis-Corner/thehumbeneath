@@ -11,8 +11,8 @@ P="$T/emu/play"
 mkdir -p "$P/mdv1"
 VASMOPT="$*" TOOLCHAIN="$TC" "$T/src/make.sh" >/dev/null || exit 1
 # replace the game files; save files (hum_sv1..3) stay
-rm -f "$P"/mdv1/thehum "$P"/mdv1/hum_txt "$P"/mdv1/hum_l? "$P"/mdv1/hum_w? "$P"/mdv1/hum_s?
-cp "$T/build/thehum" "$T/build/hum_txt" "$T"/build/hum_l* "$T"/build/hum_w* "$T"/build/hum_s* "$P/mdv1/"
+rm -f "$P"/mdv1/thehum "$P"/mdv1/hum_txt "$P"/mdv1/hum_scr "$P"/mdv1/hum_l? "$P"/mdv1/hum_w? "$P"/mdv1/hum_s?
+cp "$T/build/thehum" "$T/build/hum_txt" "$T/build/hum_scr" "$T"/build/hum_l* "$T"/build/hum_w* "$T"/build/hum_s? "$P/mdv1/"
 printf '10 EXEC_W mdv1_thehum\n' > "$P/mdv1/BOOT"
 cat > "$P/sqlux.ini" <<EOI
 SYSROM = Minerva_1.98a1.bin

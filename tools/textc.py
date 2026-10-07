@@ -27,6 +27,7 @@ def fail(msg):
 
 def shown_width(line, digits=LEN_D, strlen=LEN_S):
     """Width of a line on screen with placeholders at their maximum size."""
+    line = line.replace('%%', 'P')            # a percent sign
     return len(line.replace('%s', 'S' * strlen).replace('%d', 'D' * digits))
 
 
@@ -72,7 +73,7 @@ def parse(path):
         for line in text.split('\n'):
             if any(ord(c) < 32 or ord(c) > 126 for c in line):
                 fail('%s:%d: control character in text' % (path, n))
-            for ph in re.findall(r'%.', line):
+            for ph in re.findall(r'%.', line.replace('%%', '')):
                 if ph not in ('%s', '%d'):
                     fail('%s:%d: unknown placeholder %s' % (path, n, ph))
             if shown_width(line, digits, strlen) > width:

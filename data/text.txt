@@ -3,7 +3,7 @@
 # - the build turns ID into the assembler constant T_ID (src/textid.inc)
 # - \n starts a new line, every line max. 40 characters
 #   (%s counts as 12 characters, %d as 6)
-# - ASCII only, placeholders: %s (name), %d (number)
+# - ASCII only, placeholders: %s (name), %d (number), %% (percent sign)
 # - "@width n" sets a smaller line width for the entries that follow
 #   (the party panel shows 15 characters, names are at most 12)
 # - "@digits n" sets the width of %d for the entries that follow (default 6,
@@ -15,13 +15,37 @@
 TITLE           THE HUM BENEATH
 PRESS_ESC       Press ESC to quit.
 
+# --- Title and main menu ---
+MM_NEW          NEW GAME
+MM_LOAD         LOAD GAME
+MM_QUIT         QUIT
+MM_BEGIN        BEGIN
+NAME_CATS       Name your cats.
+NAME_LINE       %s (%s)
+NAME_HELP1      Type, or up/down and right.
+NAME_HELP2      Left deletes, ENTER is done.
+PRESS_KEY       Press a key.
+INTRO           The Hum began with the thaw.\n\nOnly the young could hear it,\na low sound beneath the moor,\nlike a heartbeat in the dark.\n\nThe elders spoke of the Deepwardens,\nwho walked below the earth\nand never came home.\n\nTonight, four cats slip past\nthe camp border.\n\nThe cellar door is open.
+INTRO_END       Follow the Hum.
+
+# --- Game over and progress ---
+ALL_FALLEN      All four have fallen.
+@digits 3
+PROGRESS        You came %d%% of the way:
+@digits 2
+PROG_DEPTH      Depth: %d of %d levels
+PROG_STORY      Story: %d/%d marks, %d/%d guardians
+@digits 3
+PROG_EXPLORED   Explored: %d%% of the caves
+@digits 6
+
 # --- Game menu (ESC), saving ---
 GM_CONTINUE     CONTINUE
 GM_SAVE         SAVE GAME
 GM_LOAD         LOAD GAME
 GM_QUIT         QUIT
 @digits 1
-SLOT_USED       Slot %d: level %d
+SLOT_USED       Slot %d: level %d, %d%%
 SLOT_EMPTY      Slot %d: empty
 @digits 6
 SAVED           Save complete.
