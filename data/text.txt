@@ -8,18 +8,29 @@
 #   (the party panel shows 15 characters, names are at most 12)
 # - "@digits n" sets the width of %d for the entries that follow (default 6,
 #   enough for -32768); hit points, stats, XP and moss stay below 1000
+# - "@strlen n" sets the width of %s for the entries that follow (default 12,
+#   the longest cat name); enemy names may have 16 characters
 
 # --- System ---
 TITLE           THE HUM BENEATH
 PRESS_ESC       Press ESC to quit.
 NO_LEVEL        Level file %d is missing.
 NO_WALLS        Wall set %d is missing.
+NO_SPRITES      Sprite set %d is missing.
 
 # --- Party (names are placeholders, see STORY.md) ---
 PARTY_LEAD      %s leads the way.
 BLEEDING        %s is bleeding!
 FALLS           %s falls.
 GAME_OVER       Game over.
+
+# --- Enemies (messages with enemy names: %s up to 16 characters) ---
+@strlen 16
+SOMETHING_MOVES Something moves ahead.
+ATTACKS         %s attacks!
+GROUP_ATTACKS   %d %s attack!
+NO_COMBAT       (No combat yet: the enemy is removed.)
+@strlen 12
 
 # --- Traps ---
 TRAP_GLASS      Broken glass cuts into a paw.
@@ -40,6 +51,14 @@ NAME_ASHCLAW    Ashclaw
 NAME_MOSSFERN   Mossfern
 NAME_QUICKWHISKER Quickwhisker
 NAME_SEDGEPELT  Sedgepelt
+
+# --- Enemy names (singular, plural), at most 16 characters ---
+@width 16
+EN_RAT          Rat
+EN_RATS         Rats
+EN_SPIDER       Giant Spider
+EN_SPIDERS      Giant Spiders
+EN_WHISKERLESS  Old Whiskerless
 
 # --- Party panel ---
 @width 15

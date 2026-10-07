@@ -1,0 +1,10 @@
+# THE HUM BENEATH - enemy types (numbers only; names are text ids)
+#
+# HP from STORY.md, the other values are first proposals.
+# bleed: bleeding a hit can cause (0 none, 1 Scratch, 2 Gash, 3 Deep Wound)
+# sprite: picture name in tools/sprites.py
+#
+#     id               name              plural             hp  atk def spd bleed xp  sprite
+enemy RAT              EN_RAT            EN_RATS            4   2   0   3   0     2   rat
+enemy GIANT_SPIDER     EN_SPIDER         EN_SPIDERS         6   3   1   2   1     4   spider
+enemy OLD_WHISKERLESS  EN_WHISKERLESS    EN_WHISKERLESS     18  5   2   2   1     15  bigrat

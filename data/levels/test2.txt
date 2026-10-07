@@ -2,6 +2,7 @@
 number  9
 start   3 2 S
 wallset 2
+sprites 1
 entry   ENTRY_TEST2
 map
 ################################
@@ -39,3 +40,4 @@ map
 
 event 2 2 stairs 0 23 30
 event 3 4 mark MARK_1_1
+group 6 3 GIANT_SPIDER 2 hunt

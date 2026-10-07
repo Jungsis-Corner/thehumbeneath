@@ -40,6 +40,10 @@ SEP_Y   equ     128             ; separator between view and messages
 SEP_H   equ     8
 MAP_X   equ     8               ; debug map: first word column (32 cells x 4 px)
 
+; enemies
+HUNT_RANGE equ  6               ; hunters follow the party within this distance
+ENC_PAUSE  equ  100             ; frames the enemy stays visible (no combat yet)
+
 ; input
 REP_FIRST equ   12              ; frames until a held key repeats
 REP_NEXT  equ   7               ; frames between repeats
@@ -124,6 +128,7 @@ v_pkeys rs.w    1               ; keys of the previous poll
 v_rep   rs.w    1               ; frames until a held key repeats
 v_level rs.w    1               ; current level number
 v_wsnum rs.w    1               ; wall set in v_walls (0 = none)
+v_ssnum rs.w    1               ; sprite set in v_sprites (0 = none)
 v_pos   rs.w    1               ; player cell: y*32+x
 v_dir   rs.w    1               ; facing: 0 N, 1 E, 2 S, 3 W
 v_args  rs.l    4               ; arguments for text_fmt
@@ -137,14 +142,19 @@ v_fdy   rs.w    1
 v_rdx   rs.w    1               ; one step to the right: dx, dy
 v_rdy   rs.w    1
 v_vmask rs.l    1               ; cells in view as bits: 1 = wall
-v_vtab  rs.b    VIEW_D*VIEW_L   ; cells in view: 1 = wall
+v_vtab  rs.b    VIEW_D*VIEW_L   ; cells in view: view class
+v_vgrp  rs.b    VIEW_D*VIEW_L   ; cells in view: enemy type + 1 (0 = none)
         rs.w    0
 v_name  rs.b    NAMEBUF         ; file name with device
 v_buf   rs.b    BUFLEN          ; formatted text
 v_map   rs.b    LEVMAX          ; current level file
 v_vbuf  rs.b    VIEWB*VIEW_H    ; view buffer, copied to the screen at once
+v_sprites rs.b  SPRMAX          ; current sprite set
 v_walls rs.b    WALLMAX         ; current wall set (must start below 32K)
 v_size  rs.b    0               ; text file follows directly
+        ifgt    v_walls-32767   ; buffers are reached with lea d16(a5)
+        fail    "v_walls must start below 32K"
+        endc
 
 ;---------------------------------------------------------------------
 ; Macros
@@ -339,6 +349,7 @@ mainloop:
         bra.s   .act
 .new    move.w  #REP_FIRST,v_rep(a5)
 .act    bsr.s   do_keys
+        bsr     groups_act
         bsr     redraw
         bra.s   mainloop
 .none   clr.w   v_rep(a5)
@@ -432,14 +443,26 @@ enter_level:
 .walls  moveq   #0,d0
         move.b  v_map+LV_WALLS(a5),d0
         cmp.w   v_wsnum(a5),d0
-        beq.s   .e
+        beq.s   .spr
         clr.w   v_wsnum(a5)
         move.w  d0,d1           ; (walls_load keeps d1)
         bsr     walls_load
         bne.s   .nows
         move.w  d1,v_wsnum(a5)
+.spr    moveq   #0,d0
+        move.b  v_map+LV_SPRITES(a5),d0
+        cmp.w   v_ssnum(a5),d0
+        beq.s   .e
+        clr.w   v_ssnum(a5)
+        move.w  d0,d1
+        bsr     sprites_load
+        bne.s   .noss
+        move.w  d1,v_ssnum(a5)
 .e      movem.l (sp)+,d0-d1/a2
         rts
+.noss   move.w  d1,d0
+        moveq   #T_NO_SPRITES,d1
+        bra.s   .fatal
 .nows   move.w  d1,d0
         moveq   #T_NO_WALLS,d1
 .fatal  lea     v_args(a5),a2   ; "... %d is missing.", wait for ESC, end
@@ -490,6 +513,8 @@ move_rel:
         lea     v_map(a5),a0
         moveq   #CELL_TYPE,d1
         and.b   0(a0,d0.w),d1
+        btst    #CELL_GROUP,0(a0,d0.w)
+        bne.s   .group
         lea     celltab(pc),a1
         btst    #0,0(a1,d1.w)   ; CF_BLOCK
         bne.s   .block
@@ -520,6 +545,8 @@ move_rel:
         bra     msg_print
 .wall   moveq   #T_BLOCKED,d0
         bra     msg_print
+.group  bsr     group_at        ; walked into an enemy group
+        bra     encounter
 
 ; cell_events: the player has entered cell d0, which has events
 cell_events:
@@ -589,6 +616,202 @@ cell_events:
         move.w  LV_ENTRY(a0),d0
         bsr     msg_print
 .e      movem.l (sp)+,d0-d4/a0-a3
+        rts
+
+; group_at: d0 = cell -> a3 = group standing there (0 if none)
+group_at:
+        movem.l d1-d2/a0,-(sp)
+        moveq   #31,d1
+        and.w   d0,d1           ; x
+        move.w  d0,d2
+        lsr.w   #5,d2           ; y
+        move.w  v_map+LV_GROUPS(a5),d0
+        lea     v_map(a5),a3
+        add.w   d0,a3
+.l      cmp.b   #G_END,G_X(a3)
+        beq.s   .none
+        btst    #GF_GONE,G_FLAGS(a3)
+        bne.s   .nx
+        cmp.b   G_X(a3),d1
+        bne.s   .nx
+        cmp.b   G_Y(a3),d2
+        beq.s   .e
+.nx     addq.l  #G_SIZE,a3
+        bra.s   .l
+.none   sub.l   a3,a3
+.e      movem.l (sp)+,d1-d2/a0
+        rts
+
+; groups_act: after every action of the party; hunters within HUNT_RANGE
+;             take one step towards the party, a hunter next to it attacks
+groups_act:
+        movem.l d0-d7/a0-a3,-(sp)
+        move.w  v_pos(a5),d6
+        moveq   #31,d4
+        and.w   d6,d4           ; party x
+        lsr.w   #5,d6           ; party y
+        move.w  v_map+LV_GROUPS(a5),d0
+        lea     v_map(a5),a3
+        add.w   d0,a3
+.grp    cmp.b   #G_END,G_X(a3)
+        beq     .e
+        btst    #GF_GONE,G_FLAGS(a3)
+        bne     .nx
+        cmp.b   #GM_HUNT,G_MODE(a3)
+        bne     .nx
+        bsr     .dist           ; d0 = distance, d1 = dx, d2 = dy
+        cmp.w   #HUNT_RANGE,d0
+        bhi     .nx
+        bset    #GF_SEEN,G_FLAGS(a3)
+        bne.s   .seen
+        moveq   #T_SOMETHING_MOVES,d0
+        bsr     msg_print
+        bsr     .dist
+.seen   cmp.w   #1,d0
+        beq     .attack
+        move.w  d1,d5           ; try the longer axis first, then the other
+        bpl.s   .a1
+        neg.w   d5
+.a1     move.w  d2,d7
+        bpl.s   .a2
+        neg.w   d7
+.a2     cmp.w   d7,d5
+        blt.s   .ydir
+        bsr.s   .stepx
+        beq.s   .moved
+        bsr.s   .stepy
+        bra.s   .moved
+.ydir   bsr.s   .stepy
+        beq.s   .moved
+        bsr.s   .stepx
+.moved  bsr.s   .dist
+        cmp.w   #1,d0
+        beq.s   .attack
+.nx     addq.l  #G_SIZE,a3
+        bra     .grp
+.attack bsr     encounter
+.e      movem.l (sp)+,d0-d7/a0-a3
+        rts
+.dist   moveq   #0,d1           ; dx = party x - group x, dy likewise
+        move.b  G_X(a3),d1
+        neg.w   d1
+        add.w   d4,d1
+        moveq   #0,d2
+        move.b  G_Y(a3),d2
+        neg.w   d2
+        add.w   d6,d2
+        move.w  d1,d0
+        bpl.s   .d1
+        neg.w   d0
+.d1     move.w  d2,d3
+        bpl.s   .d2
+        neg.w   d3
+.d2     add.w   d3,d0
+        rts
+.stepx  moveq   #0,d3           ; one step in x towards the party -> EQ = done
+        tst.w   d1
+        beq.s   .no
+        moveq   #1,d3
+        tst.w   d1
+        bpl.s   .try
+        moveq   #-1,d3
+        bra.s   .try
+.stepy  moveq   #0,d3
+        tst.w   d2
+        beq.s   .no
+        moveq   #32,d3
+        tst.w   d2
+        bpl.s   .try
+        moveq   #-32,d3
+.try    moveq   #0,d0           ; d3 = map offset of the step
+        move.b  G_Y(a3),d0
+        lsl.w   #5,d0
+        moveq   #0,d5
+        move.b  G_X(a3),d5
+        add.w   d5,d0           ; group cell
+        lea     v_map(a5),a0
+        move.w  d0,d5
+        add.w   d3,d5           ; target cell
+        cmp.w   v_pos(a5),d5
+        beq.s   .no
+        btst    #CELL_GROUP,0(a0,d5.w)
+        bne.s   .no
+        moveq   #CELL_TYPE,d7
+        and.b   0(a0,d5.w),d7
+        lea     celltab(pc),a1
+        btst    #0,0(a1,d7.w)   ; CF_BLOCK
+        bne.s   .no
+        bclr    #CELL_GROUP,0(a0,d0.w)
+        bset    #CELL_GROUP,0(a0,d5.w)
+        moveq   #31,d0
+        and.w   d5,d0
+        move.b  d0,G_X(a3)
+        lsr.w   #5,d5
+        move.b  d5,G_Y(a3)
+        bsr     .dist
+        moveq   #0,d3           ; EQ: moved
+        rts
+.no     moveq   #1,d3           ; NE: could not move
+        rts
+
+; encounter: a3 = group next to the party. The party turns to it,
+;            "<enemy> attacks!"; without combat (milestone 6) the group
+;            stays visible for a moment and is then removed.
+encounter:
+        movem.l d0-d3/a0-a2,-(sp)
+        moveq   #0,d0           ; direction from the party to the group
+        move.b  G_Y(a3),d0
+        lsl.w   #5,d0
+        moveq   #0,d1
+        move.b  G_X(a3),d1
+        add.w   d1,d0
+        sub.w   v_pos(a5),d0    ; -32, 1, 32 or -1
+        lea     doff(pc),a0
+        moveq   #0,d1
+.dir    cmp.w   (a0)+,d0
+        beq.s   .face
+        addq.w  #1,d1
+        cmp.w   #4,d1
+        blo.s   .dir
+        bra.s   .show
+.face   move.w  d1,v_dir(a5)
+.show   bsr     redraw          ; the group in front of the party
+        lea     enemytab(pc),a0
+        moveq   #0,d0
+        move.b  G_TYPE(a3),d0
+        mulu    #e_size,d0
+        add.w   d0,a0
+        lea     v_args(a5),a2
+        moveq   #0,d3
+        move.b  G_COUNT(a3),d3
+        cmp.w   #1,d3
+        bne.s   .many
+        move.w  e_name(a0),d0   ; "<enemy> attacks!"
+        bsr     text_get
+        move.l  a1,(a2)
+        moveq   #T_ATTACKS,d0
+        bra.s   .say
+.many   move.l  d3,(a2)         ; "<n> <enemies> attack!"
+        move.w  e_plural(a0),d0
+        bsr     text_get
+        move.l  a1,4(a2)
+        moveq   #T_GROUP_ATTACKS,d0
+.say    bsr     msg_print
+        moveq   #T_NO_COMBAT,d0 ; placeholder until milestone 6
+        bsr     msg_print
+        move.w  #ENC_PAUSE-1,d2
+.wait   bsr     frame
+        dbra    d2,.wait
+        bset    #GF_GONE,G_FLAGS(a3)
+        moveq   #0,d0
+        move.b  G_Y(a3),d0
+        lsl.w   #5,d0
+        moveq   #0,d1
+        move.b  G_X(a3),d1
+        add.w   d1,d0
+        lea     v_map(a5),a0
+        bclr    #CELL_GROUP,0(a0,d0.w)
+        movem.l (sp)+,d0-d3/a0-a2
         rts
 
 ;---------------------------------------------------------------------
@@ -988,6 +1211,11 @@ draw_map:
         and.b   d0,d1
         moveq   #0,d2
         move.b  0(a3,d1.w),d2
+        btst    #CELL_GROUP,d0
+        beq.s   .ng
+        moveq   #C_RED,d2       ; enemy group
+        bra.s   .col
+.ng     tst.b   d2
         bne.s   .col
         btst    #CELL_SEEN,d0
         beq.s   .col
@@ -1186,6 +1414,7 @@ devices: dc.b   'win1_flp1_mdv1_'
 txtname: qstr   'hum_txt'
 lvname: qstr    'hum_l0'
 wsname: qstr    'hum_w0'
+ssname: qstr    'hum_s0'
 msgname: qstr   'con_512x120a0x136'
 notext: qstr    'hum_txt missing'
 

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""preview.py <hum_lN> <hum_wN> <x> <y> <dir N|E|S|W> <out.png> [screenshot.png]
+"""preview.py <hum_lN> <hum_wN> <hum_sN> <x> <y> <dir N|E|S|W> <out.png> [shot.png]
 
 Renders the first-person view exactly like the game's renderer (same view
-table, background rows, draw list and tiles) and writes it as PNG, scaled
+table, background rows, draw list, tiles and enemy pictures; enemy groups
+as stored in the level file) and writes it as PNG, scaled
 like the emulator window (2 screen pixels per Mode 8 pixel horizontally).
 With a sQLux screenshot as last argument, the viewport area of the
 screenshot is compared pixel by pixel with the preview.
@@ -47,17 +48,59 @@ def view_table(level, x, y, d):
     return walls
 
 
-def render(level, ws, x, y, d):
+def group_table(level, x, y, d):
+    """Enemy type + 1 per view cell (0 = no group)."""
+    at = {}
+    pos = struct.unpack_from('>H', level, 1032)[0]
+    while level[pos] != 0xff:
+        gx, gy, t, _, _, flags = level[pos:pos + 6]
+        if not flags & 1:
+            at[gx, gy] = t + 1
+        pos += 6
+    fx, fy = STEP[d]
+    rx, ry = STEP[(d + 1) & 3]
+    return [at.get((x + dep * fx + l * rx, y + dep * fy + l * ry), 0)
+            for dep in range(DEPTHS) for l in range(-LAT, LAT + 1)]
+
+
+def blit(buf, ws, tile, shift, masked):
+    w16 = lambda o: struct.unpack_from('>H', ws, o)[0]
+    x0, y0, w, h = struct.unpack_from('>HHHH', ws, tile)
+    for i in range(h):
+        row = tile + w16(tile + 8 + 2 * i)
+        line = buf[y0 + i]
+        for c in range(w):
+            sx = x0 + shift + c
+            if not 0 <= sx < VIEW_W // 4:
+                continue
+            if not masked:
+                line[sx * 4:sx * 4 + 4] = decode(w16(row + 2 * c))
+                continue
+            mask, data = w16(row + 4 * c), w16(row + 4 * c + 2)
+            for p, colour in enumerate(decode(data)):
+                if not (mask >> (15 - 2 * p)) & 1:
+                    line[sx * 4 + p] = colour
+
+
+def render(level, ws, ss, x, y, d):
     w16 = lambda o: struct.unpack_from('>H', ws, o)[0]
     buf = [[0] * VIEW_W for _ in range(VIEW_H)]
     for row in range(VIEW_H):
         buf[row] = decode(w16(8 + 2 * row)) * (VIEW_W // 4)
     walls = view_table(level, x, y, d)     # view class per cell
+    groups = group_table(level, x, y, d)
     pos = 8 + 2 * VIEW_H
     while ws[pos] != 0xff:
         cell, kind, cmask, shift, tile = struct.unpack_from('>BBBxhI', ws, pos)
         pos += 22                       # occluder sets are not used here:
                                         # drawing everything checks them
+        if kind == 2:                   # enemy: tile = depth
+            if groups[cell]:
+                spr = struct.unpack_from('>I', ss, 12 + 12 * (groups[cell] - 1)
+                                         + 4 * (tile - 1))[0]
+                if spr:
+                    blit(buf, ss, spr, shift, True)
+            continue
         if not (cmask >> walls[cell]) & 1:
             continue
         x0, y0, w, h = struct.unpack_from('>HHHH', ws, tile)
@@ -81,20 +124,21 @@ def render(level, ws, x, y, d):
 
 
 def main():
-    if len(sys.argv) not in (7, 8):
+    if len(sys.argv) not in (8, 9):
         sys.exit(__doc__)
     level = open(sys.argv[1], 'rb').read()
     ws = open(sys.argv[2], 'rb').read()
-    x, y, d = int(sys.argv[3]), int(sys.argv[4]), 'NESW'.index(sys.argv[5])
-    buf = render(level, ws, x, y, d)
+    ss = open(sys.argv[3], 'rb').read()
+    x, y, d = int(sys.argv[4]), int(sys.argv[5]), 'NESW'.index(sys.argv[6])
+    buf = render(level, ws, ss, x, y, d)
     img = Image.new('RGB', (VIEW_W * 2, VIEW_H))
     for row in range(VIEW_H):
         for col in range(VIEW_W):
             img.putpixel((2 * col, row), PALETTE[buf[row][col]])
             img.putpixel((2 * col + 1, row), PALETTE[buf[row][col]])
-    img.save(sys.argv[6])
-    if len(sys.argv) == 8:
-        shot = Image.open(sys.argv[7]).convert('RGB')
+    img.save(sys.argv[7])
+    if len(sys.argv) == 9:
+        shot = Image.open(sys.argv[8]).convert('RGB')
         bad = 0
         for row in range(VIEW_H):
             for col in range(VIEW_W):

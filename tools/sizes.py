@@ -3,10 +3,10 @@
 
 Code     = hum_bin
 Data     = hum_txt + level files hum_l*
-Graphics = wall sets hum_w*
+Graphics = wall sets hum_w*, sprite sets hum_s*
 RAM      = what the running game occupies: code + heap block
            (v_size from the listing, which already holds the level buffer
-           LEVMAX, the view buffer and the wall set buffer WALLMAX, + text)
+           LEVMAX, the view buffer and the buffers WALLMAX and SPRMAX, + text)
 """
 import glob
 import os
@@ -35,19 +35,21 @@ def main():
     text = size(os.path.join(b, 'hum_txt'))
     levels = [size(p) for p in sorted(glob.glob(os.path.join(b, 'hum_l*')))]
     walls = [size(p) for p in sorted(glob.glob(os.path.join(b, 'hum_w*')))]
+    sprs = [size(p) for p in sorted(glob.glob(os.path.join(b, 'hum_s*')))]
     vars_ = listing_symbol(os.path.join(b, 'hum.lst'), 'v_size')
     ram = code + vars_ + text
     rows = [
         ('Code (hum_bin)', code),
-        ('Heap (vars, level, view, wall buffers)', vars_),
+        ('Heap (vars, level, view, wall, sprite buffers)', vars_),
         ('Text (hum_txt)', text),
         ('Levels (%d files)' % len(levels), sum(levels)),
         ('Graphics (%d wall sets)' % len(walls), sum(walls)),
+        ('Graphics (%d sprite sets)' % len(sprs), sum(sprs)),
     ]
     print('--- memory report ---')
     for name, n in rows:
-        print('  %-38s %7d bytes' % (name, n))
-    print('  %-38s %7d bytes (%.1f KB)' % ('RAM in use (game)', ram, ram / 1024))
+        print('  %-46s %7d bytes' % (name, n))
+    print('  %-46s %7d bytes (%.1f KB)' % ('RAM in use (game)', ram, ram / 1024))
 
 
 if __name__ == '__main__':

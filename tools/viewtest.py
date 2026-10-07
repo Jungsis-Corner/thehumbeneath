@@ -68,7 +68,8 @@ def main():
         subprocess.run([os.path.join(T, 'tools', 'shot.sh'), 'vt_%02d' % n])
         res = subprocess.run([sys.executable, os.path.join(T, 'tools', 'preview.py'),
                               tmp,
-                              os.path.join(T, 'build', 'hum_w1'), str(x), str(y),
+                              os.path.join(T, 'build', 'hum_w1'),
+                              os.path.join(T, 'build', 'hum_s1'), str(x), str(y),
                               'NESW'[d], os.path.join(T, 'emu', 'shots', 'pv_%02d.png' % n),
                               shot], capture_output=True, text=True)
         ok = res.returncode == 0

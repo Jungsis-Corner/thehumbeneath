@@ -3,7 +3,7 @@
 Status: approved 2026-10-07 (open questions answered with the proposals, see section 8).
 Changes to the architecture below need approval (CLAUDE.md).
 
-Progress: M1 done (M1a, M1b, M1c), M2, M3, M4 done.
+Progress: M1 done (M1a, M1b, M1c), M2, M3, M4, M5 done.
 
 ## 1. Toolchain (taken over from FUSE RUNNER)
 
@@ -224,7 +224,24 @@ event table, Scratch-Mark texts, entry messages, visited flags. **DONE**
 - textc.py: "@digits n" (width of %d for the 40 character check).
 - Mossfern starts with 2 Fen Moss (carried from the camp; level 1 has none).
 **M5 – enemies on the map:** enemy groups placed in level, drawn in view (masked sprites per depth),
-encounter trigger.
+encounter trigger. **DONE**
+- data/enemies.txt: enemy types (names singular/plural, HP from STORY.md,
+  attack, defence, speed, bleeding, XP, picture); read by datac/levelc/gfxc
+  through tools/enemies.py.
+- Level source `group X Y ENEMY COUNT guard|hunt` (max. 16 groups); bit 7 of
+  a cell marks a group. Guards stay; after every action of the party, hunters
+  within 6 cells take one greedy step towards it (no path finding; walls and
+  closed doors stop them), first time: "Something moves ahead."
+- Encounter: the party walks into a group or a hunter ends next to it. The
+  party turns to the group, "<enemy> attacks!" / "<n> <enemies> attack!".
+  Placeholder until M6: the group stays visible for 2 s and is removed.
+- Pictures: tools/sprites.py (ASCII pixel art, mirrored halves, size per
+  picture at depth 1), scaled for depths 1-3, masked, drawn shifted per
+  lateral cell (position rounded to a screen word). Sprite sets hum_sN
+  (SPRMAX 12 KB, level header `sprites N`); draw-list kind 2 sorts enemies
+  between the depths, occlusion as for floor pictures.
+- textc.py: "@strlen n" (enemy names up to 16 characters).
+- Level header grew: LV_SPRITES, LV_GROUPS (offset of the group table).
 **M6 – combat:** turn-based rounds, actions, hits/misses, bleeding/poison, flee, victory, game over.
 **M7 – items and healer skills:** inventory, Moss Pack, Gather, Herb Chew, gear effects.
 **M8 – save/load, title, intro, menu.**

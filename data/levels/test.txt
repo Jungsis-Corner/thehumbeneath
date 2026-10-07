@@ -4,6 +4,7 @@
 number  0
 start   2 2 E
 wallset 1
+sprites 1
 entry   ENTRY_TEST
 map
 ################################
@@ -45,3 +46,8 @@ event 10 1 message DRIPPING
 event 14 1 trap 2 TRAP_GLASS
 event 16 1 trap 1 TRAP_THORNS
 event 23 30 stairs 9 2 2
+
+group 3 8 RAT 3 guard
+group 11 3 GIANT_SPIDER 1 guard
+group 20 5 RAT 2 hunt
+group 28 12 OLD_WHISKERLESS 1 guard

@@ -11,6 +11,7 @@ Level source:
     number  0                 file number -> hum_l0
     start   2 3 E             start cell x y and facing (N E S W)
     wallset 1
+    sprites 1                 sprite set (enemy pictures) hum_s1
     entry   ENTRY_1           text id shown when the level is entered
     map                       followed by exactly 32 lines of 32 characters
     ################################
@@ -20,27 +21,39 @@ Level source:
     event X Y message TEXT         shown the first time the cell is entered
     event X Y trap BLEED TEXT      the first time: TEXT, a random cat bleeds
                                    (BLEED 1 Scratch, 2 Gash, 3 Deep Wound)
+    group X Y ENEMY COUNT guard|hunt   enemy group (ENEMY = id from
+                                   data/enemies.txt); guards stay, hunters
+                                   come closer when the party is near
 
 Every stairs cell needs a stairs event; the target must be an open cell of
 a level compiled in the same run.
 
 hum_lN layout:
     1024 bytes   map, cell (x,y) at y*32+x, x = east, y = south
-                 bits 0-4 cell type, bit 5 event, bit 6 visited, bit 7 free
-    LV_SX.b LV_SY.b LV_DIR.b LV_WALLS.b LV_ENTRY.w
+                 bits 0-4 cell type, bit 5 event, bit 6 visited,
+                 bit 7 enemy group (kept up to date at run time)
+    LV_SX.b LV_SY.b LV_DIR.b LV_WALLS.b LV_SPRITES.b 0.b LV_ENTRY.w
+    LV_GROUPS.w  offset of the group table from the file start
     events       6 bytes each: x, y, type, flags (0; bit 0 = done at run
                  time), param.w; ends with $FF
                  stairs param = level<<10 | y<<5 | x, mark/message = text id,
                  trap param = bleed<<12 | text id
+    groups       6 bytes each: x, y, enemy type, count, mode (0 guard,
+                 1 hunt), flags (0; at run time bit 0 = gone, bit 1 = seen);
+                 ends with $FF
 """
 import os
 import re
 import sys
 from collections import deque
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import enemies  # noqa: E402
+
 SIZE = 32
 MAPLEN = SIZE * SIZE
 LEVMAX = 1536                 # level buffer in the game (map + header + events)
+LV_GROUPS = MAPLEN + 8        # offset of the group table offset
 DIRS = 'NESW'
 
 # view classes (how a cell is drawn in the first-person view)
@@ -70,6 +83,9 @@ BY_TYPE = {c[1]: c for c in CELLS}
 CF_BLOCK = 1
 
 EVENTS = {'stairs': 1, 'mark': 2, 'message': 3, 'trap': 4}
+MODES = {'guard': 0, 'hunt': 1}
+MAXGROUPS = 16
+ENEMY_IDS = {e['id']: i for i, e in enumerate(enemies.read())}
 
 
 def fail(msg):
@@ -86,7 +102,7 @@ def read_textids(path):
 
 
 def parse(path, textids):
-    lv = {'events': [], 'path': path}
+    lv = {'events': [], 'groups': [], 'path': path}
     rows = None
     for n, raw in enumerate(open(path, encoding='ascii').read().splitlines(), 1):
         where = '%s:%d' % (path, n)
@@ -108,6 +124,14 @@ def parse(path, textids):
             lv['start'] = (int(args[0]), int(args[1]), DIRS.index(args[2]))
         elif key == 'wallset':
             lv['wallset'] = int(args[0])
+        elif key == 'sprites':
+            lv['sprites'] = int(args[0])
+        elif key == 'group':
+            if (len(args) != 5 or args[2] not in ENEMY_IDS or args[4] not in MODES
+                    or not 1 <= int(args[3]) <= 9):
+                fail('%s: group X Y ENEMY COUNT(1-9) guard|hunt' % where)
+            lv['groups'].append((int(args[0]), int(args[1]), ENEMY_IDS[args[2]],
+                                 int(args[3]), MODES[args[4]], where))
         elif key == 'entry':
             if args[0] not in textids:
                 fail('%s: unknown text id %s' % (where, args[0]))
@@ -135,7 +159,7 @@ def parse(path, textids):
             lv['events'].append((x, y, kind, param, where))
         else:
             fail('%s: unknown keyword %s' % (where, key))
-    for k in ('number', 'start', 'wallset', 'entry'):
+    for k in ('number', 'start', 'wallset', 'sprites', 'entry'):
         if k not in lv:
             fail('%s: missing "%s"' % (path, k))
     if rows is None or len(rows) != SIZE:
@@ -181,6 +205,15 @@ def check(lv):
             fail('%s: event cell %d,%d is not open' % (where, x, y))
         if kind == 'stairs' and rows[y][x] not in '<>':
             fail('%s: stairs event on a cell without stairs' % where)
+    if len(lv['groups']) > MAXGROUPS:
+        fail('%s: more than %d groups' % (path, MAXGROUPS))
+    cells = set()
+    for x, y, _, _, _, where in lv['groups']:
+        if not (0 <= x < SIZE and 0 <= y < SIZE) or rows[y][x] != '.':
+            fail('%s: a group needs a floor cell' % where)
+        if (x, y) in cells or (x, y) == (sx, sy):
+            fail('%s: cell %d,%d is taken' % (where, x, y))
+        cells.add((x, y))
     return len(seen)
 
 
@@ -199,16 +232,20 @@ def check_links(levels):
 def build(lv):
     data = bytearray(BY_CHAR[c][1] for row in lv['rows'] for c in row)
     sx, sy, d = lv['start']
-    data += bytes([sx, sy, d, lv['wallset']]) + lv['entry'].to_bytes(2, 'big')
+    data += bytes([sx, sy, d, lv['wallset'], lv['sprites'], 0])
+    data += lv['entry'].to_bytes(2, 'big') + b'\0\0'      # group table offset
     for x, y, kind, param, _ in lv['events']:
         data[y * SIZE + x] |= 0x20
         if kind == 'stairs':
             n, tx, ty = param
             param = n << 10 | ty << 5 | tx
         data += bytes([x, y, EVENTS[kind], 0]) + param.to_bytes(2, 'big')
-    data += b'\xff'
-    if len(data) & 1:
-        data += b'\0'
+    data += b'\xff\0'
+    data[LV_GROUPS:LV_GROUPS + 2] = len(data).to_bytes(2, 'big')
+    for x, y, t, count, mode, _ in lv['groups']:
+        data[y * SIZE + x] |= 0x80
+        data += bytes([x, y, t, count, mode, 0])
+    data += b'\xff\0'
     if len(data) > LEVMAX:
         fail('level larger than %d bytes' % LEVMAX)
     return bytes(data)
@@ -219,9 +256,14 @@ def write_inc(path):
     with open(path, 'w') as f:
         f.write('; GENERATED by tools/levelc.py - do not edit\n')
         f.write('LV_MAP   equ 0\nLV_SX    equ %d\nLV_SY    equ %d\nLV_DIR   equ %d\n'
-                'LV_WALLS equ %d\nLV_ENTRY equ %d\nLV_EVENT equ %d\nLEVMAX   equ %d\n'
-                % (MAPLEN, MAPLEN + 1, MAPLEN + 2, MAPLEN + 3, MAPLEN + 4, MAPLEN + 6, LEVMAX))
-        f.write('CELL_TYPE equ $1f\nCELL_EVENT equ 5\nCELL_SEEN equ 6\n')
+                'LV_WALLS equ %d\nLV_SPRITES equ %d\nLV_ENTRY equ %d\nLV_GROUPS equ %d\n'
+                'LV_EVENT equ %d\nLEVMAX   equ %d\n'
+                % (MAPLEN, MAPLEN + 1, MAPLEN + 2, MAPLEN + 3, MAPLEN + 4, MAPLEN + 6,
+                   LV_GROUPS, MAPLEN + 10, LEVMAX))
+        f.write('CELL_TYPE equ $1f\nCELL_EVENT equ 5\nCELL_SEEN equ 6\nCELL_GROUP equ 7\n')
+        f.write('G_SIZE   equ 6\nG_X      equ 0\nG_Y      equ 1\nG_TYPE   equ 2\n'
+                'G_COUNT  equ 3\nG_MODE   equ 4\nG_FLAGS  equ 5\nG_END    equ $ff\n'
+                'GM_GUARD equ 0\nGM_HUNT  equ 1\nGF_GONE  equ 0\nGF_SEEN  equ 1\n')
         f.write('CF_BLOCK equ %d\n' % CF_BLOCK)
         for c, t, name, blk, col, vc in CELLS:
             f.write('CT_%-12s equ %d\n' % (name, t))
