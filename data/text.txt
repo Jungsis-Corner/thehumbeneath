@@ -8,14 +8,27 @@
 # --- System ---
 TITLE           THE HUM BENEATH
 PRESS_ESC       Press ESC to quit.
+NO_LEVEL        Level file %d is missing.
+
+# --- Debug panel (milestone 1) ---
+DEBUG_POS       X %d\nY %d\n%s
+
+# --- Facing ---
+DIR_N           North
+DIR_E           East
+DIR_S           South
+DIR_W           West
 
 # --- Navigation ---
 STEP            You step forward.
 BLOCKED         A wall blocks the way.
 TURN_LEFT       You turn left.
 TURN_RIGHT      You turn right.
+STEP_BACK       You step back.
+STEP_SIDE       You step aside.
 
 # --- Level entry ---
+ENTRY_TEST      A cold test cellar. Walls, nothing else.
 ENTRY_1         Dust and old apples.
 
 # --- Scratch-Marks, level 1 ---

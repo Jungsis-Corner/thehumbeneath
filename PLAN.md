@@ -3,7 +3,7 @@
 Status: approved 2026-10-07 (open questions answered with the proposals, see section 8).
 Changes to the architecture below need approval (CLAUDE.md).
 
-Progress: M1a done.
+Progress: M1a, M1b done.
 
 ## 1. Toolchain (taken over from FUSE RUNNER)
 
@@ -99,7 +99,7 @@ y 136-255  message window: QDOS console, CSIZE 2,0 = 6 px chars -> 42 columns, 1
   - bit 7: reserved
 - Header (after the map): start x, start y, start dir (0 N, 1 E, 2 S, 3 W), wall set number,
   entry text id (word).
-- Event table: entries `x, y, type, param.w`, ends with `$FF`. Scratch-Marks point to text ids,
+- Event table: 6-byte entries `x, y, type, 0, param.w` (pad byte keeps the word even), ends with `$FF`. Scratch-Marks point to text ids,
   so all text stays in hum_txt.
 - Source `data/levels/*.txt`: 32 lines × 32 chars (`#` wall, `.` floor, `D` door, `>` stairs, ...),
   plus header and event lines. `levelc.py` checks size, closed outer border, start cell is floor,
@@ -156,7 +156,10 @@ Each one builds with make.sh, runs in sQLux, and ends with a size report.
   message window, ESC quits cleanly back to BASIC. make.sh, emu.sh, sizes.py working. **DONE**
 - **M1b map + movement:** load test level, movement forward/back, turn left/right, (strafe if
   wanted), collision with walls. Debug view: small 2D top-down map in the viewport area +
-  "x,y,dir" line; messages "You step forward." / "A wall blocks the way." from hum_txt.
+  "x,y,dir" line; messages "You step forward." / "A wall blocks the way." from hum_txt. **DONE**
+  (The %s/%d formatter from M2 was needed for the panel and is already in.
+  levelc.py writes levels.inc (constants, included at the top) and leveltab.inc
+  (cell flag and debug colour tables, included with the data).)
 - **M1c 3D view:** wall rendering at 4 depth steps (d0-d3) with one wall set, floor/ceiling,
   back buffer. Minimal HUD placeholder (frame + compass letter). Verified against preview.py PNGs.
 
@@ -186,7 +189,8 @@ encounter trigger.
 1. Text: QDOS console, CSIZE 2,0, 42 columns – no own font.
 2. Layout: viewport 192x128 left, party panel 64x128 right, messages below.
 3. Controls: cursor keys, up = forward, down = back, left/right = turn, plus strafe;
-   joystick via CTL2 as in FUSE RUNNER. Strafe keys are decided in M1b.
+   joystick via CTL2 as in FUSE RUNNER. Strafe = Shift + left/right (keyboard only).
+   Held keys repeat after 12 frames, then every 7 frames.
 4. Graphics: generated procedurally by gfxc.py first.
 5. Levels and wall sets: separate files, loaded on level entry.
 6. Language: English only.
