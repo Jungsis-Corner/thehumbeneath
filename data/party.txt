@@ -1,0 +1,19 @@
+# THE HUM BENEATH - party data (numbers only; names are text ids from text.txt)
+#
+# Values are first proposals and meant to be tuned.
+
+bleedsteps 4        # steps per bleeding tick outside combat
+deepmin    50       # Deep Wound lowers max HP, but not below this percent
+
+#    rank name        XP needed
+rank RANK_KIT         0
+rank RANK_POUNCE      20
+rank RANK_FENWALKER   50
+rank RANK_EMBERGUARD  100
+rank RANK_DEEPWALKER  180
+
+#   name              role          hp  atk def spd find mosscap fen dry glow
+cat NAME_ASHCLAW      ROLE_FIGHTER  20  6   3   2   1    3       0   0   0
+cat NAME_MOSSFERN     ROLE_HEALER   12  2   2   3   2    9       2   0   0
+cat NAME_QUICKWHISKER ROLE_SCOUT    9   3   1   6   5    3       0   0   0
+cat NAME_SEDGEPELT    ROLE_HUNTER   14  4   2   4   3    3       0   0   0

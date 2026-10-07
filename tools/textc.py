@@ -25,15 +25,16 @@ def fail(msg):
     sys.exit('textc: ' + msg)
 
 
-def shown_width(line):
+def shown_width(line, digits=LEN_D):
     """Width of a line on screen with placeholders at their maximum size."""
-    return len(line.replace('%s', 'S' * LEN_S).replace('%d', 'D' * LEN_D))
+    return len(line.replace('%s', 'S' * LEN_S).replace('%d', 'D' * digits))
 
 
 def parse(path):
     entries = []
     seen = set()
     width = MAXLINE
+    digits = LEN_D
     try:
         lines = open(path, encoding='ascii').read().splitlines()
     except UnicodeDecodeError as e:
@@ -46,6 +47,12 @@ def parse(path):
             width = int(w.group(1))
             if not 1 <= width <= MAXLINE:
                 fail('%s:%d: width must be 1-%d' % (path, n, MAXLINE))
+            continue
+        w = re.match(r'^@digits\s+(\d+)\s*$', raw)
+        if w:                       # width of %d for the following entries
+            digits = int(w.group(1))
+            if not 1 <= digits <= LEN_D:
+                fail('%s:%d: digits must be 1-%d' % (path, n, LEN_D))
             continue
         m = re.match(r'^([A-Z][A-Z0-9_]*)\s+(\S.*)$', raw)
         if not m:
@@ -61,7 +68,7 @@ def parse(path):
             for ph in re.findall(r'%.', line):
                 if ph not in ('%s', '%d'):
                     fail('%s:%d: unknown placeholder %s' % (path, n, ph))
-            if shown_width(line) > width:
+            if shown_width(line, digits) > width:
                 fail('%s:%d: line longer than %d characters: "%s"'
                      % (path, n, width, line))
         entries.append((ident, text))

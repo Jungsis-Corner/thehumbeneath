@@ -6,6 +6,8 @@
 # - ASCII only, placeholders: %s (name), %d (number)
 # - "@width n" sets a smaller line width for the entries that follow
 #   (the party panel shows 15 characters, names are at most 12)
+# - "@digits n" sets the width of %d for the entries that follow (default 6,
+#   enough for -32768); hit points, stats, XP and moss stay below 1000
 
 # --- System ---
 TITLE           THE HUM BENEATH
@@ -15,8 +17,25 @@ NO_WALLS        Wall set %d is missing.
 
 # --- Party (names are placeholders, see STORY.md) ---
 PARTY_LEAD      %s leads the way.
+BLEEDING        %s is bleeding!
+FALLS           %s falls.
+GAME_OVER       Game over.
+
+# --- Traps ---
+TRAP_GLASS      Broken glass cuts into a paw.
+TRAP_THORNS     Thorns tear at the fur.
 
 @width 12
+RANK_KIT        Kit
+RANK_POUNCE     Pounce
+RANK_FENWALKER  Fenwalker
+RANK_EMBERGUARD Emberguard
+RANK_DEEPWALKER Deepwalker
+STATUS_OK       Unhurt
+STATUS_SCRATCH  Scratch
+STATUS_GASH     Gash
+STATUS_DEEP     Deep Wound
+STATUS_FALLEN   Fallen
 NAME_ASHCLAW    Ashclaw
 NAME_MOSSFERN   Mossfern
 NAME_QUICKWHISKER Quickwhisker
@@ -24,19 +43,37 @@ NAME_SEDGEPELT  Sedgepelt
 
 # --- Party panel ---
 @width 15
+@digits 3
 ROLE_FIGHTER    Fighter
 ROLE_HEALER     Healer
 ROLE_SCOUT      Scout
 ROLE_HUNTER     Hunter
-PANEL_HP        HP%d/%d
+PANEL_HP        HP %d/%d
 COMPASS_N       Facing North
 COMPASS_E       Facing East
 COMPASS_S       Facing South
 COMPASS_W       Facing West
 
+# --- Status next to the role in the panel ---
+@width 7
+PSTAT_SCRATCH   Scratch
+PSTAT_GASH      Gash
+PSTAT_DEEP      Deep
+PSTAT_FALLEN    Fallen
+
+# --- Party sheet (key C, 4 px font) ---
+@width 40
+@digits 3
+SHEET_TITLE     The party - C closes
+SHEET_NAME      %s, %s, %s
+SHEET_HP        HP %d/%d  XP %d  %s
+SHEET_STATS     Att %d  Def %d  Spd %d  Find %d
+SHEET_MOSS      Moss: fen %d dry %d glow %d max %d
+
 # --- Debug line under the compass (DEBUG builds only; the panel
 #     cuts it off after 15 characters) ---
 @width 40
+@digits 6
 DEBUG_POS       X%d Y%d %dF
 
 # --- Navigation ---

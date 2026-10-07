@@ -16,11 +16,13 @@
 ;   STARTDIR        start facing 0 N, 1 E, 2 S, 3 W
 ;   DEBUG=1         position and render time (frames of 1/50 s) in the panel
 ;   HPTEST          start with reduced hit points (to see the bar colours)
+;   BLEEDTEST       start with bleeding cats (Scratch, Gash, Deep Wound)
 ;=====================================================================
 
         include 'textid.inc'    ; T_... text ids         (tools/textc.py)
         include 'levels.inc'    ; level layout, CT_...   (tools/levelc.py)
         include 'walls.inc'     ; view geometry, wall set layout (tools/gfxc.py)
+        include 'party.inc'     ; party layout, rules       (tools/datac.py)
 
     ifnd DEBUG
 DEBUG   equ     0
@@ -85,6 +87,12 @@ K_SPACE equ     6
 K_DOWN  equ     7
 K_SHIFT equ     8               ; from KEYROW(7), added by readkeys
 K_MAP   equ     9               ; M (KEYROW(2)): debug map on/off
+K_SHEET equ     10              ; C (KEYROW(2)): party sheet on/off
+
+; pages shown in the viewport
+PG_VIEW  equ    0
+PG_MAP   equ    1
+PG_SHEET equ    2
 K_MOVE  equ     (1<<K_UP)|(1<<K_DOWN)|(1<<K_LEFT)|(1<<K_RIGHT)
 
 ;---------------------------------------------------------------------
@@ -99,17 +107,6 @@ TXT_HEAD  equ   10              ; bytes read before the heap exists
 NAMEBUF equ     48              ; room for device + file name (QDOS string)
 BUFLEN  equ     256             ; formatted text
 ERR_EF  equ     -10             ; QDOS: end of file
-
-;---------------------------------------------------------------------
-; Party
-;---------------------------------------------------------------------
-NPARTY  equ     4
-        rsreset
-p_name  rs.w    1               ; text id of the name
-p_role  rs.w    1               ; text id of the role
-p_hp    rs.w    1               ; hit points
-p_hpmax rs.w    1
-p_size  rs.b    0
 
 ;---------------------------------------------------------------------
 ; Global variables (A5)
@@ -131,7 +128,9 @@ v_pos   rs.w    1               ; player cell: y*32+x
 v_dir   rs.w    1               ; facing: 0 N, 1 E, 2 S, 3 W
 v_args  rs.l    4               ; arguments for text_fmt
 v_party rs.b    p_size*NPARTY
-v_mapon rs.w    1               ; 1 = debug map instead of the 3D view
+v_page  rs.w    1               ; PG_VIEW, PG_MAP or PG_SHEET
+v_steps rs.w    1               ; steps since the last bleeding tick
+v_rand  rs.w    1               ; random number state
 v_rtime rs.w    1               ; frames the last render took (DEBUG)
 v_fdx   rs.w    1               ; one step forward: dx, dy
 v_fdy   rs.w    1
@@ -313,9 +312,16 @@ mainloop:
         move.w  v_pkeys(a5),d2  ; M: switch between map and 3D view
         not.w   d2
         and.w   d0,d2
+        moveq   #PG_MAP,d1
         btst    #K_MAP,d2
+        bne.s   .page
+        moveq   #PG_SHEET,d1    ; C: party sheet
+        btst    #K_SHEET,d2
         beq.s   .nomap
-        bchg    #0,v_mapon+1(a5)
+.page   cmp.w   v_page(a5),d1   ; the same key again: back to the view
+        bne.s   .set
+        moveq   #PG_VIEW,d1
+.set    move.w  d1,v_page(a5)
         bsr     clear_view
         bsr     redraw
         bra.s   mainloop
@@ -492,7 +498,9 @@ move_rel:
         move.l  d0,-(sp)
         move.w  d2,d0
         bsr     msg_print
+        bsr     bleed_step
         move.l  (sp)+,d0
+        lea     v_map(a5),a0
         btst    #CELL_EVENT,0(a0,d0.w)
         bne     cell_events
         rts
@@ -533,6 +541,8 @@ cell_events:
         beq.s   .stairs
         cmp.b   #EV_MARK,d0
         beq.s   .mark
+        cmp.b   #EV_TRAP,d0
+        beq.s   .trap
         bset    #0,EV_FLAGS(a3) ; message: only the first time
         bne.s   .nx
         move.w  EV_PARAM(a3),d0
@@ -548,6 +558,16 @@ cell_events:
         bsr     msg_ink
 .nx     addq.l  #EV_SIZE,a3
         bra.s   .ev
+.trap   bset    #0,EV_FLAGS(a3) ; trap: only the first time
+        bne.s   .nx
+        move.w  EV_PARAM(a3),d1 ; bleed<<12 | text id
+        move.w  d1,d0
+        and.w   #$fff,d0
+        bsr     msg_print
+        moveq   #12,d0
+        lsr.w   d0,d1
+        bsr     wound_random
+        bra.s   .nx
 .stairs moveq   #T_STAIRS_DOWN,d0
         move.w  v_pos(a5),d1
         lea     v_map(a5),a0
@@ -835,7 +855,10 @@ readkeys:                       ; -> d0 = KEYROW(1), CTL2 mapped onto it
 .sh     btst    #6,d3
         beq.s   .m
         bset    #K_MAP,d0
-.m      btst    #1,d1           ; F1 = left
+.m      btst    #3,d3
+        beq.s   .c
+        bset    #K_SHEET,d0
+.c      btst    #1,d1           ; F1 = left
         beq.s   .f1
         bset    #K_LEFT,d0
 .f1     btst    #4,d1           ; F3 = right
@@ -934,9 +957,13 @@ draw_frame:                     ; placeholder layout: separator line
         bra.s   fill_rect
 
 redraw:                         ; after a step or turn
-        tst.w   v_mapon(a5)
-        beq.s   .view
+        cmp.w   #PG_MAP,v_page(a5)
+        bne.s   .nomap
         bsr.s   draw_map
+        bra     panel_show
+.nomap  cmp.w   #PG_SHEET,v_page(a5)
+        bne.s   .view
+        bsr     sheet_show
         bra     panel_show
 .view   move.w  pcount(pc),-(sp)
         bsr     render
@@ -1007,23 +1034,139 @@ party_init:
         moveq   #NPARTY*p_size/2-1,d0
 .c      move.w  (a0)+,(a1)+
         dbra    d0,.c
+        move.w  pcount(pc),v_rand(a5)
+        lea     v_party(a5),a1
+        ifd     HPTEST          ; Mossfern 5, Quickwhisker 2, Sedgepelt 0 HP
+        move.w  #5,p_size+p_hp(a1)
+        move.w  #2,2*p_size+p_hp(a1)
+        clr.w   3*p_size+p_hp(a1)
+        endc
+        ifd     BLEEDTEST       ; Ashclaw Deep Wound, Mossfern Scratch,
+        move.w  #3,p_bleed(a1)  ; Quickwhisker Gash
+        move.w  #1,p_size+p_bleed(a1)
+        move.w  #2,2*p_size+p_bleed(a1)
+        endc
         rts
+
+; rand: -> d0.w random number (16 bit linear congruential generator)
+rand:   move.w  v_rand(a5),d0
+        mulu    #25173,d0
+        add.w   #13849,d0
+        move.w  d0,v_rand(a5)
+        rts
+
+; wound_random: d1 = bleed level; a random cat that is still standing
+;               bleeds at least that much
+wound_random:
+        movem.l d0-d3/a0-a3,-(sp)
+        lea     v_party(a5),a3
+        moveq   #0,d2           ; cats standing
+        moveq   #NPARTY-1,d3
+.cnt    tst.w   p_hp(a3)
+        ble.s   .c1
+        addq.w  #1,d2
+.c1     lea     p_size(a3),a3
+        dbra    d3,.cnt
+        tst.w   d2
+        beq.s   .e
+        bsr     rand            ; pick one of them
+        mulu    d2,d0
+        swap    d0              ; 0 .. standing-1
+        lea     v_party(a5),a3
+.find   tst.w   p_hp(a3)
+        ble.s   .f1
+        subq.w  #1,d0
+        bmi.s   .hit
+.f1     lea     p_size(a3),a3
+        bra.s   .find
+.hit    cmp.w   p_bleed(a3),d1
+        bls.s   .msg
+        move.w  d1,p_bleed(a3)
+.msg    lea     v_args(a5),a2   ; "%s is bleeding!"
+        move.w  p_name(a3),d0
+        bsr     text_get
+        move.l  a1,(a2)
+        moveq   #T_BLEEDING,d0
+        bsr     msg_print
+.e      movem.l (sp)+,d0-d3/a0-a3
+        rts
+
+; bleed_step: after a step; every BLEED_STEPS steps bleeding cats lose
+;             1-3 hit points, a Deep Wound also lowers the maximum
+bleed_step:
+        movem.l d0-d3/a0-a3,-(sp)
+        addq.w  #1,v_steps(a5)
+        cmp.w   #BLEED_STEPS,v_steps(a5)
+        blo.s   .e
+        clr.w   v_steps(a5)
+        lea     v_party(a5),a3
+        moveq   #NPARTY-1,d3
+.cat    move.w  p_bleed(a3),d1
+        beq.s   .nx
+        tst.w   p_hp(a3)
+        ble.s   .nx
+        sub.w   d1,p_hp(a3)
+        cmp.w   #3,d1
+        bne.s   .cap
+        move.w  p_hpbase(a3),d0 ; Deep Wound: max HP down to DEEP_MIN %
+        mulu    #DEEP_MIN,d0
+        divu    #100,d0
+        cmp.w   p_hpmax(a3),d0
+        bge.s   .cap
+        subq.w  #1,p_hpmax(a3)
+.cap    move.w  p_hpmax(a3),d0
+        cmp.w   p_hp(a3),d0
+        bge.s   .fall
+        move.w  d0,p_hp(a3)
+.fall   bsr.s   fall_check
+.nx     lea     p_size(a3),a3
+        dbra    d3,.cat
+        bsr.s   party_check
+.e      movem.l (sp)+,d0-d3/a0-a3
+        rts
+
+; fall_check: a3 = cat; at 0 hit points or less it falls
+fall_check:
+        tst.w   p_hp(a3)
+        bgt.s   .e
+        movem.l d0/a1-a2,-(sp)
+        clr.w   p_hp(a3)
+        clr.w   p_bleed(a3)
+        lea     v_args(a5),a2   ; "%s falls."
+        move.w  p_name(a3),d0
+        bsr     text_get
+        move.l  a1,(a2)
+        moveq   #T_FALLS,d0
+        bsr     msg_print
+        movem.l (sp)+,d0/a1-a2
+.e      rts
+
+; party_check: when every cat has fallen the game is over
+party_check:
+        lea     v_party+p_hp(a5),a0
+        moveq   #NPARTY-1,d0
+.l      tst.w   (a0)
+        bgt.s   .e
+        lea     p_size(a0),a0
+        dbra    d0,.l
+        bsr     panel_show
+        moveq   #T_GAME_OVER,d0
+        bsr     msg_print
+        bsr     wait_esc
+        bra     exit_prog
+.e      rts
+
+; cat_status: a3 = cat -> d0 = 0 unhurt, 1-3 bleeding, 4 fallen
+cat_status:
+        moveq   #4,d0
+        tst.w   p_hp(a3)
+        ble.s   .e
+        move.w  p_bleed(a3),d0
+.e      rts
 
 ;=====================================================================
 ; Data
 ;=====================================================================
-partyinit:                      ; name, role, hit points, maximum
-        ifnd    HPTEST
-        dc.w    T_NAME_ASHCLAW,T_ROLE_FIGHTER,20,20
-        dc.w    T_NAME_MOSSFERN,T_ROLE_HEALER,12,12
-        dc.w    T_NAME_QUICKWHISKER,T_ROLE_SCOUT,9,9
-        dc.w    T_NAME_SEDGEPELT,T_ROLE_HUNTER,14,14
-        else
-        dc.w    T_NAME_ASHCLAW,T_ROLE_FIGHTER,20,20
-        dc.w    T_NAME_MOSSFERN,T_ROLE_HEALER,5,12
-        dc.w    T_NAME_QUICKWHISKER,T_ROLE_SCOUT,2,9
-        dc.w    T_NAME_SEDGEPELT,T_ROLE_HUNTER,0,14
-        endc
 colw:   dc.w    $0000,$0055,$00aa,$00ff ; colour -> word of 4 pixels
         dc.w    $aa00,$aa55,$aaaa,$aaff ; (G = even bits high, R/B low)
 kr1:    dc.b    9,1,0,0,0,0,1,2         ; IPC: KEYROW(1)
@@ -1048,3 +1191,4 @@ notext: qstr    'hum_txt missing'
 
         include 'leveltab.inc'  ; cell flags, debug colours
         include 'font.inc'      ; panel font (tools/fontc.py)
+        include 'partytab.inc'  ; party start values, ranks (tools/datac.py)

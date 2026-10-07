@@ -3,7 +3,7 @@
 Status: approved 2026-10-07 (open questions answered with the proposals, see section 8).
 Changes to the architecture below need approval (CLAUDE.md).
 
-Progress: M1 done (M1a, M1b, M1c), M2 done, M3 done.
+Progress: M1 done (M1a, M1b, M1c), M2, M3, M4 done.
 
 ## 1. Toolchain (taken over from FUSE RUNNER)
 
@@ -210,7 +210,19 @@ event table, Scratch-Mark texts, entry messages, visited flags. **DONE**
   down, stairs up; draw-list entries have a class mask (gfxc.py, 22 bytes).
 - WALLMAX raised to 28 KB (a set is now ~23 KB: sides 10 KB, stairs 6.5 KB,
   doors 3 KB, fronts 1.5 KB). Test level 9 with wall set 2 tests the switch.
-**M4 – party data and status:** stats, ranks, bleeding tick per step, moss counters.
+**M4 – party data and status:** stats, ranks, bleeding tick per step, moss counters. **DONE**
+- data/party.txt (tools/datac.py -> party.inc, partytab.inc): per cat role,
+  HP, attack, defence, speed, find, moss cap and start moss; rank names with
+  XP thresholds; bleeding rules. Values are first proposals to be tuned.
+- Bleeding (decided 2026-10-07): outside combat every 4 steps (bleedsteps)
+  Scratch 1, Gash 2, Deep Wound 3 HP; a Deep Wound also lowers max HP by 1 per
+  tick, not below 50 % (deepmin); treatment restores it (M7). At 0 HP a cat
+  falls ("%s falls."), bleeding stops; all fallen: "Game over.", ESC ends.
+- New event `trap BLEED TEXT` (once): text, a random standing cat bleeds.
+- Panel: status (Scratch/Gash/Deep/Fallen) in red after the role. Key C:
+  party sheet with rank, XP, HP, status, stats and moss.
+- textc.py: "@digits n" (width of %d for the 40 character check).
+- Mossfern starts with 2 Fen Moss (carried from the camp; level 1 has none).
 **M5 – enemies on the map:** enemy groups placed in level, drawn in view (masked sprites per depth),
 encounter trigger.
 **M6 – combat:** turn-based rounds, actions, hits/misses, bleeding/poison, flee, victory, game over.

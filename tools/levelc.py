@@ -18,6 +18,8 @@ Level source:
     event X Y stairs LEVEL TX TY   stairs ('<' or '>') to cell TX,TY of LEVEL
     event X Y mark TEXT            Scratch-Mark, shown when the cell is entered
     event X Y message TEXT         shown the first time the cell is entered
+    event X Y trap BLEED TEXT      the first time: TEXT, a random cat bleeds
+                                   (BLEED 1 Scratch, 2 Gash, 3 Deep Wound)
 
 Every stairs cell needs a stairs event; the target must be an open cell of
 a level compiled in the same run.
@@ -28,7 +30,8 @@ hum_lN layout:
     LV_SX.b LV_SY.b LV_DIR.b LV_WALLS.b LV_ENTRY.w
     events       6 bytes each: x, y, type, flags (0; bit 0 = done at run
                  time), param.w; ends with $FF
-                 stairs param = level<<10 | y<<5 | x, mark/message = text id
+                 stairs param = level<<10 | y<<5 | x, mark/message = text id,
+                 trap param = bleed<<12 | text id
 """
 import os
 import re
@@ -66,7 +69,7 @@ BY_CHAR = {c[0]: c for c in CELLS}
 BY_TYPE = {c[1]: c for c in CELLS}
 CF_BLOCK = 1
 
-EVENTS = {'stairs': 1, 'mark': 2, 'message': 3}
+EVENTS = {'stairs': 1, 'mark': 2, 'message': 3, 'trap': 4}
 
 
 def fail(msg):
@@ -113,12 +116,18 @@ def parse(path, textids):
             rows = []
         elif key == 'event':
             if len(args) < 4 or args[2] not in EVENTS:
-                fail('%s: event X Y stairs|mark|message ...' % where)
+                fail('%s: event X Y stairs|mark|message|trap ...' % where)
             x, y, kind = int(args[0]), int(args[1]), args[2]
             if kind == 'stairs':
                 if len(args) != 6:
                     fail('%s: event X Y stairs LEVEL TX TY' % where)
                 param = tuple(int(a) for a in args[3:6])
+            elif kind == 'trap':
+                if len(args) != 5 or args[3] not in '123' or args[4] not in textids:
+                    fail('%s: event X Y trap BLEED(1-3) TEXT' % where)
+                if textids[args[4]] >= 4096:
+                    fail('%s: text id too large for a trap' % where)
+                param = int(args[3]) << 12 | textids[args[4]]
             else:
                 if len(args) != 4 or args[3] not in textids:
                     fail('%s: unknown text id %s' % (where, args[3]))

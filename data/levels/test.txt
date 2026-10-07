@@ -1,6 +1,6 @@
 # Test level: corridors of different lengths, a loop, pillars, side
 # openings, dead ends, one large room, a door (7,4), a locked door (4,7),
-# Scratch-Marks, a message and stairs down to test level 9.
+# Scratch-Marks, a message, two traps and stairs down to test level 9.
 number  0
 start   2 2 E
 wallset 1
@@ -42,4 +42,6 @@ map
 event 5 2 mark MARK_1_1
 event 12 1 mark MARK_1_2
 event 10 1 message DRIPPING
+event 14 1 trap 2 TRAP_GLASS
+event 16 1 trap 1 TRAP_THORNS
 event 23 30 stairs 9 2 2

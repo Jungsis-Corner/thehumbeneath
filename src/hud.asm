@@ -1,9 +1,10 @@
 ;=====================================================================
-; HUD: party panel with the 4 px font (included by hum.asm)
+; HUD: party panel and party sheet with the 4 px font (included by hum.asm)
 ;
 ; The panel (x 192-255, y 0-127) is drawn straight onto the screen:
-; per cat name, role, hit points and a bar, then the facing at the
-; bottom. In DEBUG builds a line with position and render time follows.
+; per cat name, role and status, hit points and a bar, then the facing
+; at the bottom. In DEBUG builds a line with position and render time
+; follows. The party sheet (key C) fills the viewport.
 ;=====================================================================
 PNL_COL   equ   PANEL_X+1       ; text column (4 px margin)
 PNL_Y0    equ   2               ; first line of the first cat
@@ -40,7 +41,17 @@ panel_show:
         addq.w  #LINE_H,d1
         moveq   #C_CYAN,d2
         bsr     pdraw
-        moveq   #0,d0           ; hit points
+        bsr     cat_status      ; status in red after the role
+        subq.w  #1,d0
+        bmi.s   .hp
+        add.w   #T_PSTAT_SCRATCH,d0
+        bsr     text_get
+        moveq   #PNL_COL+8,d0
+        move.w  d6,d1
+        addq.w  #LINE_H,d1
+        moveq   #C_RED,d2
+        bsr     pdraw
+.hp     moveq   #0,d0           ; hit points
         move.w  p_hp(a3),d0
         move.l  d0,(a2)
         move.w  p_hpmax(a3),d0
@@ -87,6 +98,87 @@ panel_show:
         bsr     pdraw
         endc
         movem.l (sp)+,d0-d7/a0-a3
+        rts
+
+; sheet_show: the party sheet in the viewport (key C)
+sheet_show:
+        movem.l d0-d7/a0-a3,-(sp)
+        bsr     clear_view
+        lea     v_args(a5),a2
+        moveq   #1,d6           ; y
+        moveq   #T_SHEET_TITLE,d0
+        moveq   #C_YEL,d2
+        bsr     .line
+        addq.w  #1,d6
+        lea     v_party(a5),a3
+        moveq   #NPARTY-1,d7
+.cat    move.w  p_name(a3),d0   ; name, role, rank
+        bsr     text_get
+        move.l  a1,(a2)
+        move.w  p_role(a3),d0
+        bsr     text_get
+        move.l  a1,4(a2)
+        move.w  p_rank(a3),d0
+        add.w   d0,d0
+        lea     rankname(pc),a0
+        move.w  0(a0,d0.w),d0
+        bsr     text_get
+        move.l  a1,8(a2)
+        moveq   #T_SHEET_NAME,d0
+        moveq   #C_WHITE,d2
+        bsr     .line
+        moveq   #0,d0           ; hit points, XP, status
+        move.w  p_hp(a3),d0
+        move.l  d0,(a2)
+        move.w  p_hpmax(a3),d0
+        move.l  d0,4(a2)
+        move.w  p_xp(a3),d0
+        move.l  d0,8(a2)
+        bsr     cat_status
+        moveq   #C_WHITE,d2
+        tst.w   d0
+        beq.s   .ok
+        moveq   #C_RED,d2
+.ok     add.w   #T_STATUS_OK,d0
+        bsr     text_get
+        move.l  a1,12(a2)
+        moveq   #T_SHEET_HP,d0
+        bsr     .line
+        moveq   #0,d0           ; attack, defence, speed, find
+        move.w  p_atk(a3),d0
+        move.l  d0,(a2)
+        move.w  p_def(a3),d0
+        move.l  d0,4(a2)
+        move.w  p_spd(a3),d0
+        move.l  d0,8(a2)
+        move.w  p_find(a3),d0
+        move.l  d0,12(a2)
+        moveq   #T_SHEET_STATS,d0
+        moveq   #C_CYAN,d2
+        bsr     .line
+        moveq   #0,d0           ; moss
+        move.w  p_fen(a3),d0
+        move.l  d0,(a2)
+        move.w  p_dry(a3),d0
+        move.l  d0,4(a2)
+        move.w  p_glow(a3),d0
+        move.l  d0,8(a2)
+        move.w  p_mosscap(a3),d0
+        move.l  d0,12(a2)
+        moveq   #T_SHEET_MOSS,d0
+        moveq   #C_GREEN,d2
+        bsr     .line
+        addq.w  #1,d6
+        lea     p_size(a3),a3
+        dbra    d7,.cat
+        movem.l (sp)+,d0-d7/a0-a3
+        rts
+.line   bsr     text_fmt        ; d0 = text id, d2 = ink, at line d6
+        moveq   #1,d0
+        move.w  d6,d1
+        moveq   #C_BLACK,d3
+        bsr     pdraw
+        addq.w  #LINE_H,d6
         rts
 
 ; hp_bar: d0 = column, d1 = y, d2 = hit points, d3 = maximum
