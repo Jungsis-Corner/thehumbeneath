@@ -14,6 +14,24 @@
 # --- System ---
 TITLE           THE HUM BENEATH
 PRESS_ESC       Press ESC to quit.
+
+# --- Game menu (ESC), saving ---
+GM_CONTINUE     CONTINUE
+GM_SAVE         SAVE GAME
+GM_LOAD         LOAD GAME
+GM_QUIT         QUIT
+@digits 1
+SLOT_USED       Slot %d: level %d
+SLOT_EMPTY      Slot %d: empty
+@digits 6
+SAVED           Save complete.
+SAVE_FAILED     The game could not be saved.
+NO_SAVE         No save found.
+LOADED          Game loaded.
+LOAD_FAILED     The save is damaged.
+QUIT_ASK        Quit the game?
+YES             Yes
+NO              No
 NO_LEVEL        Level file %d is missing.
 NO_WALLS        Wall set %d is missing.
 NO_SPRITES      Sprite set %d is missing.
@@ -172,6 +190,7 @@ CMB_FLEE        Flee
 CMB_MARK        >
 MENU_PARTY      Party
 MENU_PACK       Pack
+MENU_GAME       Game
 MENU_ITEM       Item
 MENU_EQUIP      Equip
 MENU_SKILL      Skill

@@ -504,7 +504,7 @@ menu_pack:
 .e      movem.l (sp)+,d1-d4/a0-a3
         rts
 
-; party_menu: (space) Pack, or a cat and then Item or Equip
+; party_menu: (space) Pack, a cat and then Item, Equip or Skill, or Game
 ;             -> NE = something was done
 party_menu:
         movem.l d1-d2/a1-a3,-(sp)
@@ -517,11 +517,19 @@ party_menu:
         bsr     menu_addt
         lea     p_size(a3),a3
         dbra    d1,.c
+        move.w  #T_MENU_GAME,d0 ; and the game menu (save, load, quit)
+        bsr     menu_addt
         move.w  #T_MENU_PARTY,d0
         bsr     text_get
         bsr     menu_run
         tst.w   d0
         bmi     .none
+        cmp.w   #NPARTY+1,d0
+        bne.s   .nogame
+        bsr     view_refresh
+        bsr     game_menu
+        bra     .none
+.nogame tst.w   d0
         bne.s   .cat
         move.w  #PG_PACK,v_page(a5) ; Pack: the pack page (I closes it)
         bra     .none

@@ -3,7 +3,7 @@
 Status: approved 2026-10-07 (open questions answered with the proposals, see section 8).
 Changes to the architecture below need approval (CLAUDE.md).
 
-Progress: M1 done (M1a, M1b, M1c), M2-M7 done.
+Progress: M1 done (M1a, M1b, M1c), M2-M7 done, M8a done.
 
 ## 1. Toolchain (taken over from FUSE RUNNER)
 
@@ -214,8 +214,7 @@ event table, Scratch-Mark texts, entry messages, visited flags. **DONE**
   message TEXT`; levelc.py checks targets across all levels. Marks are shown
   (in yellow) every time the cell is entered, messages only the first time.
 - Level state (open doors, seen messages, visited cells) lives in the loaded
-  level copy and is reset when a level is loaded again: to be kept with
-  save/load (M8).
+  level copy; since M8a every visited level is kept in memory and saved.
 - View classes per cell type (levelc.py: cellvc): none, wall, door, stairs
   down, stairs up; draw-list entries have a class mask (gfxc.py, 22 bytes).
 - WALLMAX raised to 28 KB (a set is now ~23 KB: sides 10 KB, stairs 6.5 KB,
@@ -309,6 +308,18 @@ fire); Gather finds fixed spots in the level data. Split in two steps:
   the gather spot of the cell, once). The other cats: Apply Moss (Scratch
   only, one moss). A fallen cat cannot use skills.
 **M8 – save/load, title, intro, menu.**
+Decided 2026-10-07: names are proposed and can be changed (roles fixed);
+saving any time outside a fight; 3 save slots; a title picture with menu.
+- **M8a save/load: DONE.** state.asm. Every visited level is kept in memory
+  (v_lvstore, 10 x LEVMAX), so doors, items, groups and messages stay as the
+  party left them (this solves the M3 note). Save files hum_sv1..3 on the
+  device the game was loaded from: party, pack, position and every kept
+  level (about 1.8 KB + 1.5 KB per visited level). ESC (or Game in the space
+  menu) opens the game menu: CONTINUE, SAVE GAME, LOAD GAME, QUIT (with a
+  question). play.sh keeps save files.
+- **M8b title, intro, names:** title picture loaded by BOOT, main menu
+  (NEW GAME, LOAD GAME, QUIT), intro text, name entry (keyboard and a letter
+  wheel for the joystick). OPTIONS waits until there is something to set.
 **M9 – levels 1-8 content**, mini-bosses, hazards, sneak step (L7), Elder Pale choice.
 **M10 – endings, sound, polish, distribution** (win image, README, MiSTer test).
 

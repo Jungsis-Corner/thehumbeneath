@@ -55,6 +55,11 @@ PF_POISON  equ  0               ; p_flags: poisoned
 PF_FEAR    equ  2               ; p_flags: afraid (no source yet)
 PF_FEATHER equ  3               ; p_flags: the feather was used on this level
 
+; level memory and saving
+LVSLOTS    equ  10              ; levels 0-9 can be kept
+SAVE_MISC  equ  12              ; save file: version .. kept levels
+SAVE_HEAD  equ  8+SAVE_MISC     ; save file: magic, length, misc
+
 ; input
 REP_FIRST equ   12              ; frames until a held key repeats
 REP_NEXT  equ   7               ; frames between repeats
@@ -141,6 +146,11 @@ v_pkeys rs.w    1               ; keys of the previous poll
 v_rep   rs.w    1               ; frames until a held key repeats
 v_level rs.w    1               ; current level number
 v_wsnum rs.w    1               ; wall set in v_walls (0 = none)
+v_dev   rs.w    1               ; device of the game files (see fopen)
+v_lvok  rs.w    1               ; bit n: level n kept in v_lvstore
+v_inlv  rs.w    1               ; 1 when v_map holds a level
+v_svn   rs.b    10              ; save file name 'hum_svN' (QDOS string)
+v_shdr  rs.b    SAVE_HEAD       ; save file header
 v_ssnum rs.w    1               ; sprite set in v_sprites (0 = none)
 v_pos   rs.w    1               ; player cell: y*32+x
 v_dir   rs.w    1               ; facing: 0 N, 1 E, 2 S, 3 W
@@ -179,6 +189,7 @@ v_map   rs.b    LEVMAX          ; current level file
 v_vbuf  rs.b    VIEWB*VIEW_H    ; view buffer, copied to the screen at once
 v_sprites rs.b  SPRMAX          ; current sprite set
 v_walls rs.b    WALLMAX         ; current wall set (must start below 32K)
+v_lvstore rs.b  LVSLOTS*LEVMAX  ; levels kept (above 32K: see lv_slot)
 v_size  rs.b    0               ; text file follows directly
         ifgt    v_walls-32767   ; buffers are reached with lea d16(a5)
         fail    "v_walls must start below 32K"
@@ -230,6 +241,7 @@ common:
         move.l  sp,a3
         bsr     fopen
         bne.s   .notxt
+        move.w  d4,d5           ; the device the game is on (for saving)
         move.l  a0,a2           ; a2 = channel
         lea     NAMEBUF(sp),a1
         moveq   #TXT_HEAD,d4
@@ -261,6 +273,7 @@ common:
         dbra    d0,.clr
         move.l  a5,v_heap(a5)
         move.l  a4,v_sp(a5)
+        move.w  d5,v_dev(a5)
         move.w  d7,v_mode(a5)
         move.l  a2,d0           ; text file open?
         beq.s   .head
@@ -393,8 +406,9 @@ mainloop:
         bra     mainloop
 .none   clr.w   v_rep(a5)
         bra     mainloop
-.esc    bsr     wait_esc        ; wait until ESC is released
-        bra     exit_prog
+.esc    bsr     wait_free       ; ESC: the game menu
+        bsr     game_menu
+        bra     mainloop
 
 ; do_keys: d2 = keys to act on (one action), d0 bit K_SHIFT = strafe
 do_keys:
@@ -471,8 +485,9 @@ level_load:
         tst.l   d0
         rts
 
-; enter_level: d0 = level number; loads the level and, if it uses another
-;              one, its wall set. A missing file ends the game.
+; enter_level: d0 = level number; the current level is kept, the new one
+;              comes from memory if it was visited, else from its file;
+;              then its wall and sprite set. A missing file ends the game.
 enter_level:
         movem.l d0-d1/a2,-(sp)
         lea     v_party+p_flags(a5),a2 ; feathers work again on a new level
@@ -480,11 +495,23 @@ enter_level:
 .fe     bclr    #PF_FEATHER,1(a2)
         lea     p_size(a2),a2
         dbra    d1,.fe
+        bsr     lv_keep
+        bsr     lv_fetch
+        beq.s   .sets
         bsr     level_load
-        beq.s   .walls
+        beq.s   .sets
         move.w  #T_NO_LEVEL,d1
-        bra.s   .fatal
-.walls  moveq   #0,d0
+        bra.s   level_fatal
+.sets   move.w  #1,v_inlv(a5)
+        bsr.s   level_sets
+        movem.l (sp)+,d0-d1/a2
+        rts
+
+; level_sets: the wall and sprite set of the level in v_map, unless they
+;             are loaded already
+level_sets:
+        movem.l d0-d1/a2,-(sp)
+        moveq   #0,d0
         move.b  v_map+LV_WALLS(a5),d0
         cmp.w   v_wsnum(a5),d0
         beq.s   .spr
@@ -506,10 +533,13 @@ enter_level:
         rts
 .noss   move.w  d1,d0
         move.w  #T_NO_SPRITES,d1
-        bra.s   .fatal
+        bra.s   level_fatal
 .nows   move.w  d1,d0
         move.w  #T_NO_WALLS,d1
-.fatal  lea     v_args(a5),a2   ; "... %d is missing.", wait for ESC, end
+        ; fallthrough
+
+level_fatal:                    ; d0 = number, d1 = "... %d is missing."
+        lea     v_args(a5),a2   ; wait for ESC, end
         ext.l   d0
         move.l  d0,(a2)
         move.w  d1,d0
@@ -959,11 +989,30 @@ leave:                          ; d0 = error code, d7 = mode, a4 = SP
 ;=====================================================================
 ; fopen: a2 = QDOS file name without device, a3 = buffer (NAMEBUF)
 ;        tries the default directory, then win1_, flp1_, mdv1_
-;        -> d0 = error (EQ = ok), a0 = channel
+;        -> d0 = error (EQ = ok), a0 = channel, d4 = device (0 = default
+;           directory, 1-3 = win1_, flp1_, mdv1_)
 fopen:
-        movem.l d1-d4/a1-a3,-(sp)
+        movem.l d1-d3/a1-a3,-(sp)
         moveq   #0,d4
-.try    lea     2(a3),a1
+.try    bsr.s   dev_name
+        moveq   #IO_OPEN,d0
+        moveq   #-1,d1
+        moveq   #1,d3           ; old file, shared
+        trap    #2
+        tst.l   d0
+        beq.s   .ok
+        addq.w  #1,d4
+        cmp.w   #4,d4
+        bne.s   .try
+.ok     movem.l (sp)+,d1-d3/a1-a3
+        tst.l   d0
+        rts
+
+; dev_name: d4 = device (0 = none), a2 = file name, a3 = buffer
+;           -> a0 = a3 = device + name as a QDOS string
+dev_name:
+        movem.l d0-d1/a1,-(sp)
+        lea     2(a3),a1
         moveq   #0,d1
         tst.w   d4
         beq.s   .nopre
@@ -983,17 +1032,7 @@ fopen:
         dbra    d0,.name
         move.w  d1,(a3)
         move.l  a3,a0
-        moveq   #IO_OPEN,d0
-        moveq   #-1,d1
-        moveq   #1,d3           ; old file, shared
-        trap    #2
-        tst.l   d0
-        beq.s   .ok
-        addq.w  #1,d4
-        cmp.w   #4,d4
-        bne.s   .try
-.ok     movem.l (sp)+,d1-d4/a1-a3
-        tst.l   d0
+        movem.l (sp)+,d0-d1/a1
         rts
 
 ; fread: a0 = channel, a1 = destination, d4.l = number of bytes
@@ -1402,6 +1441,7 @@ draw_map:
         include 'combat.asm'    ; fights
         include 'items.asm'     ; pack, items, gear, menus
         include 'skills.asm'    ; healer skills, moss
+        include 'state.asm'     ; level memory, save, load, game menu
 
 ;=====================================================================
 ; Party
@@ -1618,6 +1658,7 @@ txtname: qstr   'hum_txt'
 lvname: qstr    'hum_l0'
 wsname: qstr    'hum_w0'
 ssname: qstr    'hum_s0'
+svname: qstr    'hum_sv0'
 msgname: qstr   'con_512x120a0x136'
 notext: qstr    'hum_txt missing'
 
