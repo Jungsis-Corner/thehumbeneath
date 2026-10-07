@@ -13,18 +13,23 @@
 ; Test switches (vasm -D..., e.g. ./tools/emu.sh -DSTARTX=5 -DSTARTDIR=2):
 ;   STARTX, STARTY  start cell instead of the one in the level file
 ;   STARTDIR        start facing 0 N, 1 E, 2 S, 3 W
+;   DEBUG=1         render time in frames (1/50 s) in the panel
 ;=====================================================================
 
         include 'textid.inc'    ; T_... text ids         (tools/textc.py)
         include 'levels.inc'    ; level layout, CT_...   (tools/levelc.py)
+        include 'walls.inc'     ; view geometry, wall set layout (tools/gfxc.py)
+
+    ifnd DEBUG
+DEBUG   equ     0
+    endc
 
 ;---------------------------------------------------------------------
 ; Hardware / screen layout
 ;---------------------------------------------------------------------
 SCREEN  equ     $20000
 LINEB   equ     128             ; bytes per screen line
-VIEW_W  equ     48              ; viewport width in words (192 px)
-VIEW_H  equ     128             ; viewport height in lines
+VIEWB   equ     VIEW_W*2        ; bytes per line of the view buffer
 PANEL_X equ     48              ; party panel: first word column
 PANEL_W equ     16              ; party panel width in words (64 px)
 SEP_Y   equ     128             ; separator between view and messages
@@ -55,6 +60,8 @@ MT_DMODE equ    $10
 MT_IPCOM equ    $11
 MT_ALCHP equ    $18
 MT_RECHP equ    $19
+MT_LPOLL equ    $1c
+MT_RPOLL equ    $1d
 IO_OPEN  equ    $01
 IO_CLOSE equ    $02
 IO_FSTRG equ    $03
@@ -75,6 +82,7 @@ K_RIGHT equ     4
 K_SPACE equ     6
 K_DOWN  equ     7
 K_SHIFT equ     8               ; from KEYROW(7), added by readkeys
+K_MAP   equ     9               ; M (KEYROW(2)): debug map on/off
 K_MOVE  equ     (1<<K_UP)|(1<<K_DOWN)|(1<<K_LEFT)|(1<<K_RIGHT)
 
 ;---------------------------------------------------------------------
@@ -100,6 +108,7 @@ v_mode  rs.w    1               ; 0 = job, 1 = CALL
 v_sysv  rs.l    1               ; system variables (MT.INF)
 v_msg   rs.l    1               ; message window channel
 v_panel rs.l    1               ; party panel channel
+v_poll  rs.l    2               ; poll list linkage (50 Hz counter)
 v_text  rs.l    1               ; text file in memory (0 = not loaded)
 v_keys  rs.w    1               ; current keys (KEYROW(1) layout)
 v_pkeys rs.w    1               ; keys of the previous poll
@@ -108,9 +117,20 @@ v_level rs.w    1               ; current level number
 v_pos   rs.w    1               ; player cell: y*32+x
 v_dir   rs.w    1               ; facing: 0 N, 1 E, 2 S, 3 W
 v_args  rs.l    4               ; arguments for text_fmt
+v_mapon rs.w    1               ; 1 = debug map instead of the 3D view
+v_rtime rs.w    1               ; frames the last render took (DEBUG)
+v_fdx   rs.w    1               ; one step forward: dx, dy
+v_fdy   rs.w    1
+v_rdx   rs.w    1               ; one step to the right: dx, dy
+v_rdy   rs.w    1
+v_vmask rs.l    1               ; cells in view as bits: 1 = wall
+v_vtab  rs.b    VIEW_D*VIEW_L   ; cells in view: 1 = wall
+        rs.w    0
 v_name  rs.b    NAMEBUF         ; file name with device
 v_buf   rs.b    BUFLEN          ; formatted text
 v_map   rs.b    LEVMAX          ; current level file
+v_vbuf  rs.b    VIEWB*VIEW_H    ; view buffer, copied to the screen at once
+v_walls rs.b    WALLMAX         ; current wall set (must start below 32K)
 v_size  rs.b    0               ; text file follows directly
 
 ;---------------------------------------------------------------------
@@ -193,7 +213,8 @@ common:
         move.w  d7,v_mode(a5)
         move.l  a2,d0           ; text file open?
         beq.s   .head
-        lea     v_size(a5),a1   ; copy the header, read the rest
+        move.l  a5,a1           ; copy the header, read the rest
+        add.l   #v_size,a1
         move.l  a1,v_text(a5)
         lea     NAMEBUF(sp),a0
         moveq   #TXT_HEAD-1,d0
@@ -228,6 +249,12 @@ common:
         trap    #1
         bsr     cls
 
+        lea     v_poll(a5),a0   ; 50 Hz counter via poll list
+        lea     pollrt(pc),a1
+        move.l  a1,4(a0)
+        moveq   #MT_LPOLL,d0
+        trap    #1
+
         lea     msgname(pc),a0
         moveq   #C_BLACK,d5
         bsr     opench
@@ -261,7 +288,19 @@ start:
         bsr     msg_print
         bsr     wait_esc
         bra     exit_prog
-.ok     bsr     level_start
+.ok     moveq   #0,d0
+        move.b  v_map+LV_WALLS(a5),d0
+        bsr     walls_load
+        beq.s   .ok2
+        lea     v_args(a5),a2
+        moveq   #0,d0
+        move.b  v_map+LV_WALLS(a5),d0
+        move.l  d0,(a2)
+        moveq   #T_NO_WALLS,d0
+        bsr     msg_print
+        bsr     wait_esc
+        bra     exit_prog
+.ok2    bsr     level_start
         bsr     redraw
 
 mainloop:
@@ -269,7 +308,16 @@ mainloop:
         bsr     readkeys
         btst    #K_ESC,d0
         bne.s   .esc
-        move.w  d0,d1
+        move.w  v_pkeys(a5),d2  ; M: switch between map and 3D view
+        not.w   d2
+        and.w   d0,d2
+        btst    #K_MAP,d2
+        beq.s   .nomap
+        bchg    #0,v_mapon+1(a5)
+        bsr     clear_view
+        bsr     redraw
+        bra.s   mainloop
+.nomap  move.w  d0,d1
         and.w   #K_MOVE,d1
         beq.s   .none
         move.w  v_pkeys(a5),d2  ; keys pressed since the last poll
@@ -416,6 +464,9 @@ move_rel:
 ; Exit: close channels, Mode 4, free the heap, back to BASIC
 ;---------------------------------------------------------------------
 exit_prog:
+        lea     v_poll(a5),a0
+        moveq   #MT_RPOLL,d0
+        trap    #1
         move.l  v_msg(a5),a0
         moveq   #IO_CLOSE,d0
         trap    #2
@@ -652,13 +703,21 @@ readkeys:                       ; -> d0 = KEYROW(1), CTL2 mapped onto it
         lea     kr7(pc),a3      ; shift: strafe
         moveq   #MT_IPCOM,d0
         trap    #1
-        move.w  d1,d2
+        move.w  d1,-(sp)
+        lea     kr2(pc),a3      ; M: debug map
+        moveq   #MT_IPCOM,d0
+        trap    #1
+        move.w  d1,d3
+        move.w  (sp)+,d2
         move.w  (sp)+,d1
         move.w  (sp)+,d0
         btst    #0,d2
         beq.s   .sh
         bset    #K_SHIFT,d0
-.sh     btst    #1,d1           ; F1 = left
+.sh     btst    #6,d3
+        beq.s   .m
+        bset    #K_MAP,d0
+.m      btst    #1,d1           ; F1 = left
         beq.s   .f1
         bset    #K_LEFT,d0
 .f1     btst    #4,d1           ; F3 = right
@@ -681,6 +740,14 @@ readkeys:                       ; -> d0 = KEYROW(1), CTL2 mapped onto it
         move.l  d1,a0
         move.l  8(a0),12(a0)    ; next out = next in
 .q      movem.l (sp)+,d1-d3/a0-a3
+        rts
+
+pcount: dc.w    0               ; frames (50 Hz), counted by pollrt
+
+pollrt: move.l  a0,-(sp)        ; called by QDOS 50 times a second
+        lea     pcount(pc),a0
+        addq.w  #1,(a0)
+        move.l  (sp)+,a0
         rts
 
 frame:                          ; give the CPU away for one frame (20 ms)
@@ -749,7 +816,15 @@ draw_frame:                     ; placeholder layout: separator line
         bra.s   fill_rect
 
 redraw:                         ; after a step or turn
+        tst.w   v_mapon(a5)
+        beq.s   .view
         bsr.s   draw_map
+        bra.s   panel_show
+.view   move.w  pcount(pc),-(sp)
+        bsr     render
+        move.w  pcount(pc),d0
+        sub.w   (sp)+,d0
+        move.w  d0,v_rtime(a5)
         ; fallthrough
 
 panel_show:                     ; debug: position and facing in the panel
@@ -772,6 +847,15 @@ panel_show:                     ; debug: position and facing in the panel
         bsr     text_fmt
         move.l  v_panel(a5),a0
         bsr     print_str
+        ifne    DEBUG
+        moveq   #0,d0
+        move.w  v_rtime(a5),d0
+        move.l  d0,(a2)
+        moveq   #T_DEBUG_TIME,d0
+        bsr     text_fmt
+        move.l  v_panel(a5),a0
+        bsr     print_str
+        endc
         movem.l (sp)+,d0-d3/a0-a2
         rts
 
@@ -825,6 +909,8 @@ draw_map:
         movem.l (sp)+,d0-d7/a0-a4
         rts
 
+        include 'render.asm'    ; first-person view
+
 ;=====================================================================
 ; Data
 ;=====================================================================
@@ -832,6 +918,8 @@ colw:   dc.w    $0000,$0055,$00aa,$00ff ; colour -> word of 4 pixels
         dc.w    $aa00,$aa55,$aaaa,$aaff ; (G = even bits high, R/B low)
 kr1:    dc.b    9,1,0,0,0,0,1,2         ; IPC: KEYROW(1)
 kr0:    dc.b    9,1,0,0,0,0,0,2         ; IPC: KEYROW(0)
+kr2:    dc.b    9,1,0,0,0,0,2,2         ; IPC: KEYROW(2)
+steps:  dc.w    0,-1,1,0,0,1,-1,0       ; dx, dy of one step N, E, S, W
 kr7:    dc.b    9,1,0,0,0,0,7,2         ; IPC: KEYROW(7)
 doff:   dc.w    -32,1,32,-1             ; map offset of one step N, E, S, W
 arrows: dc.w    $2828,$aaaa,$2828,$2828 ; player on the debug map: N
@@ -844,6 +932,7 @@ devices: dc.b   'win1_flp1_mdv1_'
         even
 txtname: qstr   'hum_txt'
 lvname: qstr    'hum_l0'
+wsname: qstr    'hum_w0'
 msgname: qstr   'con_512x120a0x136'
 panelname: qstr 'con_128x128a384x0'
 notext: qstr    'hum_txt missing'

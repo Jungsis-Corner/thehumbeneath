@@ -3,7 +3,7 @@
 Status: approved 2026-10-07 (open questions answered with the proposals, see section 8).
 Changes to the architecture below need approval (CLAUDE.md).
 
-Progress: M1a, M1b done.
+Progress: M1 done (M1a, M1b, M1c).
 
 ## 1. Toolchain (taken over from FUSE RUNNER)
 
@@ -119,6 +119,13 @@ y 136-255  message window: QDOS console, CSIZE 2,0 = 6 px chars -> 42 columns, 1
   a single hard-coded fallback "hum_txt missing" if the text file itself cannot be loaded.
 
 ### 4.3 Graphics (wall set `hum_wN`)
+As built in M1c (the exact layout is documented at the top of tools/gfxc.py):
+`'HWS1'`, length.l, 128 floor/ceiling pattern words (one per viewport line),
+draw list (20 bytes per entry: cell, kind, shift, tile offset, 3 occluder sets),
+tiles with shared duplicate rows. Front tiles: plain words, drawn shifted for
+lateral cells. Side tiles: one run per line (skip, count, left/right edge
+mask, data), only the two edge words are masked. Original sketch below.
+
 - Native Mode 8 word format: 1 word = 4 pixels, G bit 15-2p, flash 14-2p, R 7-2p, B 6-2p.
 - **All wall edges are aligned to 4 pixels horizontally** → whole-word drawing, no bit shifts.
 - Tile = header (x in words, y, width in words, height, flags) + rows of data words;
@@ -142,6 +149,16 @@ y 136-255  message window: QDOS console, CSIZE 2,0 = 6 px chars -> 42 columns, 1
   Mode 8 pixel aspect. The exact numbers come from `gfxc.py`/`preview.py` and are tuned from PNG
   previews before they go into the asm code.
 - Beyond depth 3: dark fill (fog) – fits the mood and saves tiles.
+  Built as a black band of the floor/ceiling pattern (|y - centre| < 12).
+- Occlusion: for every draw-list entry gfxc.py stores up to three sets of
+  nearer front cells; when all cells of one set are walls the entry is skipped.
+  preview.py draws everything, so the pixel comparison also checks the culling.
+- Measured in sQLux at real speed: 4-8 frames (80-160 ms) per view. The
+  renderer is bound by memory bandwidth (68008, about 8 clocks per byte
+  access): floor/ceiling ~1 frame, screen copy ~2 frames, walls the rest.
+  Possible later: unrolled copies, movem for fill and copy, skip floor fill
+  under near front walls.
+- M1c draws every blocking cell type as wall (doors too) until M3.
 - Rendering into the 12 KB back buffer, then one copy to $20000 rows (128 bytes per row, viewport
   96 bytes wide) to avoid a visibly "building" picture.
 - Cell lookup: direction tables (dx,dy for forward and right per facing) → map offset arithmetic
@@ -162,6 +179,9 @@ Each one builds with make.sh, runs in sQLux, and ends with a size report.
   (cell flag and debug colour tables, included with the data).)
 - **M1c 3D view:** wall rendering at 4 depth steps (d0-d3) with one wall set, floor/ceiling,
   back buffer. Minimal HUD placeholder (frame + compass letter). Verified against preview.py PNGs.
+  **DONE** – HUD placeholder = separator line + debug panel (x, y, facing). Key M switches
+  to the 2D debug map. tools/viewtest.py walks a key sequence in the emulator and
+  compares every view with preview.py (34 of 34 views identical).
 
 **M2 – HUD and messages:** party panel with 4 cats (name, HP placeholder), message window with
 scrolling, %s/%d formatting, compass.
@@ -179,6 +199,7 @@ encounter trigger.
 ## 7. Testing
 
 - `tools/preview.py <level> x y dir` → PNG of the expected view (geometry check without emulator).
+- `tools/viewtest.py <keys>` → walks in the running emulator, compares each view with preview.py.
 - `tools/emu.sh` (sQLux, RAMTOP 640; also run with RAMTOP 256 to check the minimum memory),
   `tools/key.sh Up`, `tools/shot.sh m1c_step1` → compare screenshots with previews.
 - Test switches via `-D`: `STARTLV=n`, `STARTX/STARTY/STARTDIR`, `DEBUG=1` (render time in frames).

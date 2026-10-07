@@ -9,9 +9,11 @@
 TITLE           THE HUM BENEATH
 PRESS_ESC       Press ESC to quit.
 NO_LEVEL        Level file %d is missing.
+NO_WALLS        Wall set %d is missing.
 
 # --- Debug panel (milestone 1) ---
 DEBUG_POS       X %d\nY %d\n%s
+DEBUG_TIME      \n%d frames
 
 # --- Facing ---
 DIR_N           North

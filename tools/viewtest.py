@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+"""viewtest.py <keys> [x y dir]  - regression test of the 3D view.
+
+Start the game first (tools/emu.sh, test level 0). For every key of <keys>
+the key is pressed in the emulator, the move is simulated here with the same
+rules as the game, and the screenshot is compared pixel by pixel with
+preview.py. x y dir = start position when it is not the one of the level
+file (when the game was built with -DSTARTX/-DSTARTY/-DSTARTDIR).
+
+Keys: U forward, D back, L turn left, R turn right, l strafe left,
+      r strafe right.
+"""
+import os
+import subprocess
+import sys
+import time
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from levelc import CELLS  # noqa: E402
+
+T = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BLOCKING = {t for _, t, _, blk, _ in CELLS if blk}
+STEP = [(0, -1), (1, 0), (0, 1), (-1, 0)]
+
+
+def press(key, shift=False):
+    wid = subprocess.run(['xdotool', 'search', '--name', 'sQLux'], env=dict(
+        os.environ, DISPLAY=':9'), capture_output=True, text=True).stdout.split()[0]
+    env = dict(os.environ, DISPLAY=':9')
+    if shift:
+        subprocess.run(['xdotool', 'keydown', '--window', wid, 'Shift_L'], env=env)
+        time.sleep(0.1)
+    subprocess.run(['xdotool', 'keydown', '--window', wid, key], env=env)
+    time.sleep(0.1)
+    subprocess.run(['xdotool', 'keyup', '--window', wid, key], env=env)
+    if shift:
+        subprocess.run(['xdotool', 'keyup', '--window', wid, 'Shift_L'], env=env)
+    time.sleep(0.5)
+
+
+def main():
+    if len(sys.argv) not in (2, 5):
+        sys.exit(__doc__)
+    level = open(os.path.join(T, 'build', 'hum_l0'), 'rb').read()
+    if len(sys.argv) == 5:
+        x, y, d = int(sys.argv[2]), int(sys.argv[3]), 'NESW'.index(sys.argv[4])
+    else:
+        x, y, d = level[1024], level[1025], level[1026]
+    bad = 0
+    for n, k in enumerate(sys.argv[1]):
+        rel = {'U': 0, 'r': 1, 'D': 2, 'l': 3}.get(k)
+        if rel is not None:
+            dx, dy = STEP[(d + rel) & 3]
+            if (level[(y + dy) * 32 + x + dx] & 0x1f) not in BLOCKING:
+                x, y = x + dx, y + dy
+            press({'U': 'Up', 'D': 'Down', 'l': 'Left', 'r': 'Right'}[k], k in 'lr')
+        else:
+            d = (d + (1 if k == 'R' else -1)) & 3
+            press('Right' if k == 'R' else 'Left')
+        shot = os.path.join(T, 'emu', 'shots', 'vt_%02d.png' % n)
+        subprocess.run([os.path.join(T, 'tools', 'shot.sh'), 'vt_%02d' % n])
+        res = subprocess.run([sys.executable, os.path.join(T, 'tools', 'preview.py'),
+                              os.path.join(T, 'build', 'hum_l0'),
+                              os.path.join(T, 'build', 'hum_w1'), str(x), str(y),
+                              'NESW'[d], os.path.join(T, 'emu', 'shots', 'pv_%02d.png' % n),
+                              shot], capture_output=True, text=True)
+        ok = res.returncode == 0
+        bad += not ok
+        print('%2d %s  %2d,%2d %s  %s' % (n, k, x, y, 'NESW'[d], res.stdout.strip()))
+    print('viewtest: %d of %d views differ' % (bad, len(sys.argv[1])))
+    sys.exit(1 if bad else 0)
+
+
+if __name__ == '__main__':
+    main()
