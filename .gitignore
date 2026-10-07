@@ -1,0 +1,6 @@
+# generated / local
+build/
+emu/
+__pycache__/
+src/*.inc
+*:Zone.Identifier

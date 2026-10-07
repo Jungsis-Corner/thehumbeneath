@@ -1,0 +1,22 @@
+# THE HUM BENEATH - all game strings
+# One entry per line:  ID  text
+# - the build turns ID into the assembler constant T_ID (src/textid.inc)
+# - \n starts a new line, every line max. 40 characters
+#   (%s counts as 12 characters, %d as 6)
+# - ASCII only, placeholders: %s (name), %d (number)
+
+# --- System ---
+TITLE           THE HUM BENEATH
+PRESS_ESC       Press ESC to quit.
+
+# --- Navigation ---
+STEP            You step forward.
+BLOCKED         A wall blocks the way.
+TURN_LEFT       You turn left.
+TURN_RIGHT      You turn right.
+
+# --- Level entry ---
+ENTRY_1         Dust and old apples.
+
+# --- Scratch-Marks, level 1 ---
+MARK_1_1        WE WENT DOWN\nWE WERE NOT AFRAID
