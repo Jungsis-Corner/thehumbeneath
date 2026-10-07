@@ -32,7 +32,12 @@ panel_show:
         moveq   #PNL_COL,d0
         move.w  d6,d1
         moveq   #C_WHITE,d2
-        moveq   #C_BLUE,d3
+        moveq   #NPARTY,d3      ; the cat whose turn it is in yellow
+        sub.w   d7,d3
+        cmp.w   v_cact(a5),d3
+        bne.s   .nm
+        moveq   #C_YEL,d2
+.nm     moveq   #C_BLUE,d3
         bsr     pdraw
         move.w  p_role(a3),d0   ; role
         bsr     text_get

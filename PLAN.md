@@ -3,7 +3,7 @@
 Status: approved 2026-10-07 (open questions answered with the proposals, see section 8).
 Changes to the architecture below need approval (CLAUDE.md).
 
-Progress: M1 done (M1a, M1b, M1c), M2, M3, M4, M5 done.
+Progress: M1 done (M1a, M1b, M1c), M2-M6 done.
 
 ## 1. Toolchain (taken over from FUSE RUNNER)
 
@@ -242,7 +242,28 @@ encounter trigger. **DONE**
   between the depths, occlusion as for floor pictures.
 - textc.py: "@strlen n" (enemy names up to 16 characters).
 - Level header grew: LV_SPRITES, LV_GROUPS (offset of the group table).
-**M6 – combat:** turn-based rounds, actions, hits/misses, bleeding/poison, flee, victory, game over.
+**M6 – combat:** turn-based rounds, actions, hits/misses, bleeding/poison, flee, victory, game over. **DONE**
+Decided 2026-10-07 (all as proposed):
+- Order by speed, highest first, cats before enemies on equal speed; a cat
+  chooses when it is its turn: Attack / Defend / Flee (menu in the viewport,
+  up/down, confirm with space, enter or right - works with the joystick).
+- Rows (party.txt): Ashclaw and Sedgepelt front, Mossfern and Quickwhisker
+  back. Enemies aim at the front row with 75 %; back row attacks do half
+  damage.
+- Hit chance 75 % + 5 % x (attack - defence), 20-95 %; damage 1 + random
+  (attack) - defence/2, at least 1. Defend (shown as "keeps guard"): +3
+  defence and half damage until the cat's next turn.
+- Enemy hits make bleed (enemies.txt bleed) or poison (poison column) with
+  35 %. Every round and every 4 steps: bleeding 1-3 HP, poison 1 HP.
+- Targets are chosen automatically (first enemy still up).
+- Flee: 50 % + 10 % x (cat speed - enemy speed), 10-90 %; success: the party
+  steps back one cell, the group stays; failure: the party loses the rest of
+  the round. Mini-bosses (boss column) and a blocked cell behind: "You cannot
+  flee." and the cat chooses again.
+- Victory: XP = enemy XP x count for every standing cat; new ranks give the
+  gains of `rankup` in party.txt ("<cat> rises to <rank>.").
+- Test switch XPTEST (18 XP at the start). New enemy for tests: Sewer Rat
+  (poison) in test level 9.
 **M7 – items and healer skills:** inventory, Moss Pack, Gather, Herb Chew, gear effects.
 **M8 – save/load, title, intro, menu.**
 **M9 – levels 1-8 content**, mini-bosses, hazards, sneak step (L7), Elder Pale choice.

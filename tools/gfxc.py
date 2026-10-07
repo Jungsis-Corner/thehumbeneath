@@ -274,9 +274,11 @@ def build_sprites(names):
             continue
         if e['sprite'] not in sprites.ART:
             fail('%s: no picture "%s" in sprites.py' % (e['where'], e['sprite']))
-        for d in range(1, DEPTHS):
-            tiles.append(sprite_tile(sprites.ART[e['sprite']], sprites.SIZE[e['sprite']], d))
-            table += b'T' + bytes([len(tiles) - 1]) + b'\0\0'   # patched below
+        for d in range(1, DEPTHS):                    # same picture: stored once
+            t = sprite_tile(sprites.ART[e['sprite']], sprites.SIZE[e['sprite']], d)
+            if t not in tiles:
+                tiles.append(t)
+            table += b'T' + bytes([tiles.index(t)]) + b'\0\0'   # patched below
     head = 12 + len(table)
     offs, pos = [], head
     for t in tiles:

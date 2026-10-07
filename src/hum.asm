@@ -17,6 +17,7 @@
 ;   DEBUG=1         position and render time (frames of 1/50 s) in the panel
 ;   HPTEST          start with reduced hit points (to see the bar colours)
 ;   BLEEDTEST       start with bleeding cats (Scratch, Gash, Deep Wound)
+;   XPTEST          every cat starts with 18 XP (the next rank needs 20)
 ;=====================================================================
 
         include 'textid.inc'    ; T_... text ids         (tools/textc.py)
@@ -42,7 +43,6 @@ MAP_X   equ     8               ; debug map: first word column (32 cells x 4 px)
 
 ; enemies
 HUNT_RANGE equ  6               ; hunters follow the party within this distance
-ENC_PAUSE  equ  100             ; frames the enemy stays visible (no combat yet)
 
 ; input
 REP_FIRST equ   12              ; frames until a held key repeats
@@ -136,6 +136,13 @@ v_party rs.b    p_size*NPARTY
 v_page  rs.w    1               ; PG_VIEW, PG_MAP or PG_SHEET
 v_steps rs.w    1               ; steps since the last bleeding tick
 v_rand  rs.w    1               ; random number state
+v_cgrp  rs.l    1               ; combat: the enemy group
+v_cetab rs.l    1               ; combat: its enemy type (enemytab entry)
+v_cfoe  rs.w    9               ; combat: hit points of each enemy (0 = down)
+v_cact  rs.w    1               ; combat: cat whose turn it is + 1 (0 = none)
+v_csel  rs.w    1               ; combat: menu choice
+v_cend  rs.w    1               ; combat: 0 going on, 1 victory, 2 fled
+v_cskip rs.w    1               ; combat: the party lost the rest of the round
 v_rtime rs.w    1               ; frames the last render took (DEBUG)
 v_fdx   rs.w    1               ; one step forward: dx, dy
 v_fdy   rs.w    1
@@ -755,8 +762,7 @@ groups_act:
         rts
 
 ; encounter: a3 = group next to the party. The party turns to it,
-;            "<enemy> attacks!"; without combat (milestone 6) the group
-;            stays visible for a moment and is then removed.
+;            "<enemy> attacks!", then the fight.
 encounter:
         movem.l d0-d3/a0-a2,-(sp)
         moveq   #0,d0           ; direction from the party to the group
@@ -797,20 +803,8 @@ encounter:
         move.l  a1,4(a2)
         moveq   #T_GROUP_ATTACKS,d0
 .say    bsr     msg_print
-        moveq   #T_NO_COMBAT,d0 ; placeholder until milestone 6
-        bsr     msg_print
-        move.w  #ENC_PAUSE-1,d2
-.wait   bsr     frame
-        dbra    d2,.wait
-        bset    #GF_GONE,G_FLAGS(a3)
-        moveq   #0,d0
-        move.b  G_Y(a3),d0
-        lsl.w   #5,d0
-        moveq   #0,d1
-        move.b  G_X(a3),d1
-        add.w   d1,d0
-        lea     v_map(a5),a0
-        bclr    #CELL_GROUP,0(a0,d0.w)
+        bsr     pause
+        bsr     combat
         movem.l (sp)+,d0-d3/a0-a2
         rts
 
@@ -1252,6 +1246,7 @@ draw_map:
 
         include 'render.asm'    ; first-person view
         include 'hud.asm'       ; party panel, 4 px font
+        include 'combat.asm'    ; fights
 
 ;=====================================================================
 ; Party
@@ -1268,6 +1263,12 @@ party_init:
         move.w  #5,p_size+p_hp(a1)
         move.w  #2,2*p_size+p_hp(a1)
         clr.w   3*p_size+p_hp(a1)
+        endc
+        ifd     XPTEST
+        move.w  #18,p_xp(a1)
+        move.w  #18,p_size+p_xp(a1)
+        move.w  #18,2*p_size+p_xp(a1)
+        move.w  #18,3*p_size+p_xp(a1)
         endc
         ifd     BLEEDTEST       ; Ashclaw Deep Wound, Mossfern Scratch,
         move.w  #3,p_bleed(a1)  ; Quickwhisker Gash
@@ -1319,20 +1320,30 @@ wound_random:
 .e      movem.l (sp)+,d0-d3/a0-a3
         rts
 
-; bleed_step: after a step; every BLEED_STEPS steps bleeding cats lose
-;             1-3 hit points, a Deep Wound also lowers the maximum
+; bleed_step: after a step; every BLEED_STEPS steps a wound tick
 bleed_step:
-        movem.l d0-d3/a0-a3,-(sp)
         addq.w  #1,v_steps(a5)
         cmp.w   #BLEED_STEPS,v_steps(a5)
         blo.s   .e
         clr.w   v_steps(a5)
+        bsr.s   wound_tick
+        bra     party_check
+.e      rts
+
+; wound_tick: bleeding cats lose 1-3 hit points (a Deep Wound also lowers
+;             the maximum), poisoned cats 1; every BLEED_STEPS steps and
+;             every combat round
+wound_tick:
+        movem.l d0-d3/a0-a3,-(sp)
         lea     v_party(a5),a3
         moveq   #NPARTY-1,d3
-.cat    move.w  p_bleed(a3),d1
-        beq.s   .nx
-        tst.w   p_hp(a3)
+.cat    tst.w   p_hp(a3)
         ble.s   .nx
+        btst    #0,p_flags+1(a3)
+        beq.s   .bleed
+        subq.w  #1,p_hp(a3)     ; poison
+.bleed  move.w  p_bleed(a3),d1
+        beq.s   .fall
         sub.w   d1,p_hp(a3)
         cmp.w   #3,d1
         bne.s   .cap
@@ -1349,8 +1360,8 @@ bleed_step:
 .fall   bsr.s   fall_check
 .nx     lea     p_size(a3),a3
         dbra    d3,.cat
-        bsr.s   party_check
-.e      movem.l (sp)+,d0-d3/a0-a3
+        bsr     panel_show
+        movem.l (sp)+,d0-d3/a0-a3
         rts
 
 ; fall_check: a3 = cat; at 0 hit points or less it falls
@@ -1360,6 +1371,7 @@ fall_check:
         movem.l d0/a1-a2,-(sp)
         clr.w   p_hp(a3)
         clr.w   p_bleed(a3)
+        clr.w   p_flags(a3)
         lea     v_args(a5),a2   ; "%s falls."
         move.w  p_name(a3),d0
         bsr     text_get
@@ -1384,12 +1396,17 @@ party_check:
         bra     exit_prog
 .e      rts
 
-; cat_status: a3 = cat -> d0 = 0 unhurt, 1-3 bleeding, 4 fallen
+; cat_status: a3 = cat -> d0 = 0 unhurt, 1-3 bleeding, 4 fallen,
+;             5 poisoned (bleeding is shown first)
 cat_status:
         moveq   #4,d0
         tst.w   p_hp(a3)
         ble.s   .e
         move.w  p_bleed(a3),d0
+        bne.s   .e
+        btst    #0,p_flags+1(a3)
+        beq.s   .e
+        moveq   #5,d0
 .e      rts
 
 ;=====================================================================

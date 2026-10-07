@@ -10,11 +10,12 @@ One party member (all words):
   p_name p_role (text ids), p_rank (0..), p_xp, p_hp, p_hpmax (current
   maximum, lowered by a Deep Wound), p_hpbase (real maximum), p_atk, p_def,
   p_spd, p_find, p_bleed (0 none, 1 Scratch, 2 Gash, 3 Deep Wound),
-  p_flags (later: poison, stun, fear), p_fen, p_dry, p_glow (moss),
-  p_mosscap (moss of all kinds together)
+  p_flags (bit 0 poisoned; later stun, fear), p_fen, p_dry, p_glow (moss),
+  p_mosscap (moss of all kinds together), p_row (0 front, 1 back),
+  p_guard (1 = defends until its next turn in combat)
 
 One enemy type (all words): e_name e_plural (text ids), e_hp, e_atk, e_def,
-  e_spd, e_bleed, e_xp. The types are numbered in file order (ET_<id>).
+  e_spd, e_bleed, e_poison, e_boss, e_xp. The types are numbered in file order (ET_<id>).
 """
 import os
 import re
@@ -23,9 +24,10 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import enemies  # noqa: E402
 
-EFIELDS = ['name', 'plural', 'hp', 'atk', 'def', 'spd', 'bleed', 'xp']
+EFIELDS = ['name', 'plural', 'hp', 'atk', 'def', 'spd', 'bleed', 'poison', 'boss', 'xp']
 FIELDS = ['name', 'role', 'rank', 'xp', 'hp', 'hpmax', 'hpbase', 'atk', 'def',
-          'spd', 'find', 'bleed', 'flags', 'fen', 'dry', 'glow', 'mosscap']
+          'spd', 'find', 'bleed', 'flags', 'fen', 'dry', 'glow', 'mosscap', 'row',
+          'guard']
 NPARTY = 4
 
 
@@ -60,15 +62,20 @@ def main():
                 consts[key] = int(args[0])
             elif key == 'rank' and len(args) == 2:
                 ranks.append((text(where, args[0]), int(args[1])))
-            elif key == 'cat' and len(args) == 11:
+            elif key == 'rankup' and len(args) == 4:
+                consts['rankup'] = list(map(int, args))
+            elif key == 'cat' and len(args) == 12:
                 name, role = text(where, args[0]), text(where, args[1])
-                hp, atk, df, spd, find, cap, fen, dry, glow = map(int, args[2:])
+                if args[2] not in ('front', 'back'):
+                    fail('%s: row must be front or back' % where)
+                row = 0 if args[2] == 'front' else 1
+                hp, atk, df, spd, find, cap, fen, dry, glow = map(int, args[3:])
                 if fen + dry + glow > cap:
                     fail('%s: more moss than the cat can carry' % where)
                 cats.append(dict(name=name, role=role, rank=0, xp=0, hp=hp, hpmax=hp,
                                  hpbase=hp, atk=atk, def_=df, spd=spd, find=find,
                                  bleed=0, flags=0, fen=fen, dry=dry, glow=glow,
-                                 mosscap=cap))
+                                 mosscap=cap, row=row, guard=0))
             else:
                 fail('%s: cannot read "%s"' % (where, raw.strip()))
         except ValueError:
@@ -77,7 +84,7 @@ def main():
         fail('%s: %d cats needed' % (src, NPARTY))
     if not ranks or ranks[0][1] != 0 or any(a[1] >= b[1] for a, b in zip(ranks, ranks[1:])):
         fail('%s: ranks must start at 0 XP and rise' % src)
-    for k in ('bleedsteps', 'deepmin'):
+    for k in ('bleedsteps', 'deepmin', 'rankup'):
         if k not in consts:
             fail('%s: missing "%s"' % (src, k))
 
@@ -93,6 +100,8 @@ def main():
         f.write('BLEED_STEPS equ %d  ; steps per bleeding tick\n' % consts['bleedsteps'])
         f.write('DEEP_MIN    equ %d  ; percent of max HP a Deep Wound leaves\n'
                 % consts['deepmin'])
+        for k, v in zip(('HP', 'ATK', 'DEF', 'SPD'), consts['rankup']):
+            f.write('UP_%s      equ %d  ; gain per rank\n' % (k, v))
         for i, fld in enumerate(FIELDS):
             f.write('p_%-8s equ %d\n' % (fld, 2 * i))
         f.write('p_size     equ %d\n' % (2 * len(FIELDS)))

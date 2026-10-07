@@ -22,7 +22,10 @@ SPEED = ${EMUSPEED:-1}
 SOUND = 5
 EOI
 pgrep Xvfb >/dev/null || (Xvfb :9 -screen 0 1024x768x24 >/dev/null 2>&1 &); sleep 1
-pkill -x sqlux; sleep 0.5
+# stop only the test instance on :9 (a game window from play.sh stays open)
+for w in $(DISPLAY=:9 xdotool search --name sQLux 2>/dev/null); do
+  p=$(DISPLAY=:9 xdotool getwindowpid "$w" 2>/dev/null); [ -n "$p" ] && kill "$p"
+done; sleep 0.5
 (SDL_AUDIODRIVER=disk SDL_DISKAUDIOFILE="$T/emu/sound.raw" DISPLAY=:9 \
   "$TC/sQLux/build/sqlux" -f "$T/emu/sqlux.ini" >"$T/emu/sqlux.log" 2>&1 &)
 echo "sQLux started (RAMTOP ${EMURAM:-640} KB)"
