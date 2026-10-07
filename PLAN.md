@@ -3,7 +3,7 @@
 Status: approved 2026-10-07 (open questions answered with the proposals, see section 8).
 Changes to the architecture below need approval (CLAUDE.md).
 
-Progress: M1 done (M1a, M1b, M1c), M2 done.
+Progress: M1 done (M1a, M1b, M1c), M2 done, M3 done.
 
 ## 1. Toolchain (taken over from FUSE RUNNER)
 
@@ -192,7 +192,24 @@ position and render time. textc.py: "@width n" for shorter lines (names 12,
 panel 15). Party values are placeholders in hum.asm (partyinit), -DHPTEST
 lowers them to show the bar colours.
 **M3 – level features:** doors (open/locked), stairs between levels (load next hum_lN/hum_wN),
-event table, Scratch-Mark texts, entry messages, visited flags.
+event table, Scratch-Mark texts, entry messages, visited flags. **DONE**
+- Doors: a step forward into a closed door opens it (it stays open); other
+  directions: "A door blocks the way."; locked doors only report "The door is
+  locked." until keys exist (M7). Doors have own front tiles; their side faces
+  are plain wall; open doors are drawn like floor.
+- Stairs: drawn as floor opening ('>') or ceiling opening ('<') with a new tile
+  kind (flat run tiles per cell). Entering a stairs cell loads the target level
+  (and its wall set if it differs), the party keeps its facing.
+- Events in the level source: `event X Y stairs LEVEL TX TY | mark TEXT |
+  message TEXT`; levelc.py checks targets across all levels. Marks are shown
+  (in yellow) every time the cell is entered, messages only the first time.
+- Level state (open doors, seen messages, visited cells) lives in the loaded
+  level copy and is reset when a level is loaded again: to be kept with
+  save/load (M8).
+- View classes per cell type (levelc.py: cellvc): none, wall, door, stairs
+  down, stairs up; draw-list entries have a class mask (gfxc.py, 22 bytes).
+- WALLMAX raised to 28 KB (a set is now ~23 KB: sides 10 KB, stairs 6.5 KB,
+  doors 3 KB, fronts 1.5 KB). Test level 9 with wall set 2 tests the switch.
 **M4 – party data and status:** stats, ranks, bleeding tick per step, moss counters.
 **M5 – enemies on the map:** enemy groups placed in level, drawn in view (masked sprites per depth),
 encounter trigger.

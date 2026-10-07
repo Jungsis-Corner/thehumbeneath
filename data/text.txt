@@ -46,10 +46,19 @@ TURN_LEFT       You turn left.
 TURN_RIGHT      You turn right.
 STEP_BACK       You step back.
 STEP_SIDE       You step aside.
+DOOR_BLOCKS     A door blocks the way.
+DOOR_LOCKED     The door is locked.
+DOOR_OPENS      The door creaks open.
+STAIRS_DOWN     You go down the stairs.
+STAIRS_UP       You climb up the stairs.
+DRIPPING        You hear dripping water.
 
 # --- Level entry ---
 ENTRY_TEST      A cold test cellar. Walls, nothing else.
+ENTRY_TEST2     Wet stone. Water runs somewhere.
 ENTRY_1         Dust and old apples.
 
 # --- Scratch-Marks, level 1 ---
+MARK_SEEN       Scratch-Marks are carved here:
 MARK_1_1        WE WENT DOWN\nWE WERE NOT AFRAID
+MARK_1_2        The cellar is only the first step.

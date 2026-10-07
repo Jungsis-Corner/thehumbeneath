@@ -56,7 +56,7 @@ clear_view:                     ; viewport on the screen black
 
 render:
         movem.l d0-d7/a0-a6,-(sp)
-; --- which cells in view are walls: v_vtab[depth*VIEW_L + lateral+3]
+; --- view class of the cells in view: v_vtab[depth*VIEW_L + lateral+3]
         move.w  v_dir(a5),d0
         lsl.w   #2,d0
         lea     steps(pc),a0
@@ -72,7 +72,7 @@ render:
         lsr.w   #5,d4           ; player y
         lea     v_vtab(a5),a0
         lea     v_map(a5),a1
-        lea     celltab(pc),a2
+        lea     cellvc(pc),a2
         moveq   #0,d7           ; depth
 .dep    moveq   #-(VIEW_L/2),d6 ; lateral offset
 .lat    move.w  d7,d0
@@ -87,7 +87,7 @@ render:
         muls    v_rdy(a5),d2
         add.w   d2,d1
         add.w   d4,d1           ; cell y
-        moveq   #1,d3           ; outside the map: wall
+        moveq   #VC_WALL,d3     ; outside the map: wall
         cmp.w   #31,d0
         bhi.s   .put
         cmp.w   #31,d1
@@ -96,8 +96,7 @@ render:
         add.w   d0,d1
         moveq   #CELL_TYPE,d2
         and.b   0(a1,d1.w),d2
-        moveq   #CF_BLOCK,d3
-        and.b   0(a2,d2.w),d3
+        move.b  0(a2,d2.w),d3
 .put    move.b  d3,(a0)+
         addq.w  #1,d6
         cmp.w   #VIEW_L/2,d6
@@ -105,13 +104,16 @@ render:
         addq.w  #1,d7
         cmp.w   #VIEW_D,d7
         blt.s   .dep
-        lea     v_vtab(a5),a0   ; the same as bits: bit n = cell n
+        lea     v_vtab(a5),a0   ; solid cells (wall, door) as bits: bit n = cell n
         moveq   #0,d0
         moveq   #0,d1
         moveq   #VIEW_D*VIEW_L-1,d2
-.bits   tst.b   (a0)+
-        beq.s   .b0
-        bset    d1,d0
+.bits   move.b  (a0)+,d3
+        cmp.b   #VC_WALL,d3
+        beq.s   .b1
+        cmp.b   #VC_DOOR,d3
+        bne.s   .b0
+.b1     bset    d1,d0
 .b0     addq.w  #1,d1
         dbra    d2,.bits
         move.l  d0,v_vmask(a5)
@@ -133,19 +135,24 @@ render:
         dbra    d6,.bgl
         dbra    d7,.bg
 
-; --- walls, far to near; entries hidden by nearer walls are skipped
+; --- walls, doors, stairs, far to near; an entry is drawn when its class
+;     mask has the view class of its cell and no nearer walls hide it
         lea     HW_LIST(a3),a2
+        lea     v_vtab(a5),a1
 .next   moveq   #0,d0
         move.b  (a2)+,d0        ; cell
         cmp.b   #$ff,d0
         beq.s   .copy
         move.b  (a2)+,d1        ; kind
+        move.b  (a2)+,d4        ; class mask
+        addq.l  #1,a2
         move.w  (a2)+,d2        ; shift in words
         move.l  (a2)+,d3        ; tile offset
-        move.l  v_vmask(a5),d6
         lea     12(a2),a4       ; next entry
-        btst    d0,d6
-        beq.s   .skip           ; no wall in this cell
+        move.b  0(a1,d0.w),d5   ; view class of the cell
+        btst    d5,d4
+        beq.s   .skip
+        move.l  v_vmask(a5),d6
         moveq   #3-1,d7
 .occ    move.l  (a2)+,d4        ; occluder set
         beq.s   .draw
@@ -159,8 +166,9 @@ render:
         tst.b   d1
         bne.s   .side
         bsr     draw_front
-        bra.s   .next
+        bra.s   .drawn
 .side   bsr     draw_side
+.drawn  lea     v_vtab(a5),a1
         bra.s   .next
 .skip   move.l  a4,a2
         bra.s   .next

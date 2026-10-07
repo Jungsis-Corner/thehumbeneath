@@ -3,9 +3,10 @@
 
 Start the game first (tools/emu.sh, test level 0). For every key of <keys>
 the key is pressed in the emulator, the move is simulated here with the same
-rules as the game, and the screenshot is compared pixel by pixel with
-preview.py. x y dir = start position when it is not the one of the level
-file (when the game was built with -DSTARTX/-DSTARTY/-DSTARTDIR).
+rules as the game (a step forward into a closed door opens it), and the
+screenshot is compared pixel by pixel with preview.py. Stairs are not
+followed: keep the path away from them. x y dir = start position when it is
+not the one of the level file (game built with -DSTARTX/-DSTARTY/-DSTARTDIR).
 
 Keys: U forward, D back, L turn left, R turn right, l strafe left,
       r strafe right.
@@ -19,7 +20,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from levelc import CELLS  # noqa: E402
 
 T = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BLOCKING = {t for _, t, _, blk, _ in CELLS if blk}
+BLOCKING = {c[1] for c in CELLS if c[3]}
+TYPE = {c[2]: c[1] for c in CELLS}
 STEP = [(0, -1), (1, 0), (0, 1), (-1, 0)]
 
 
@@ -41,7 +43,7 @@ def press(key, shift=False):
 def main():
     if len(sys.argv) not in (2, 5):
         sys.exit(__doc__)
-    level = open(os.path.join(T, 'build', 'hum_l0'), 'rb').read()
+    level = bytearray(open(os.path.join(T, 'build', 'hum_l0'), 'rb').read())
     if len(sys.argv) == 5:
         x, y, d = int(sys.argv[2]), int(sys.argv[3]), 'NESW'.index(sys.argv[4])
     else:
@@ -51,16 +53,21 @@ def main():
         rel = {'U': 0, 'r': 1, 'D': 2, 'l': 3}.get(k)
         if rel is not None:
             dx, dy = STEP[(d + rel) & 3]
-            if (level[(y + dy) * 32 + x + dx] & 0x1f) not in BLOCKING:
+            cell = (y + dy) * 32 + x + dx
+            if (level[cell] & 0x1f) not in BLOCKING:
                 x, y = x + dx, y + dy
+            elif rel == 0 and (level[cell] & 0x1f) == TYPE['DOOR']:
+                level[cell] = level[cell] & 0xe0 | TYPE['DOOR_OPEN']
             press({'U': 'Up', 'D': 'Down', 'l': 'Left', 'r': 'Right'}[k], k in 'lr')
         else:
             d = (d + (1 if k == 'R' else -1)) & 3
             press('Right' if k == 'R' else 'Left')
         shot = os.path.join(T, 'emu', 'shots', 'vt_%02d.png' % n)
+        tmp = os.path.join(T, 'emu', 'vt_level')        # map with opened doors
+        open(tmp, 'wb').write(level)
         subprocess.run([os.path.join(T, 'tools', 'shot.sh'), 'vt_%02d' % n])
         res = subprocess.run([sys.executable, os.path.join(T, 'tools', 'preview.py'),
-                              os.path.join(T, 'build', 'hum_l0'),
+                              tmp,
                               os.path.join(T, 'build', 'hum_w1'), str(x), str(y),
                               'NESW'[d], os.path.join(T, 'emu', 'shots', 'pv_%02d.png' % n),
                               shot], capture_output=True, text=True)

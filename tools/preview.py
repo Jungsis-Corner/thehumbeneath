@@ -20,7 +20,7 @@ VIEW_W, VIEW_H, LAT, DEPTHS = 192, 128, 3, 4
 PALETTE = [(0, 0, 0), (0, 0, 255), (255, 0, 0), (255, 0, 255),
            (0, 255, 0), (0, 255, 255), (255, 255, 0), (255, 255, 255)]
 STEP = [(0, -1), (1, 0), (0, 1), (-1, 0)]
-BLOCKING = {t for _, t, _, blk, _ in CELLS if blk}
+VCLASS = {c[1]: c[5] for c in CELLS}
 
 
 def decode(word):
@@ -41,9 +41,9 @@ def view_table(level, x, y, d):
         for l in range(-LAT, LAT + 1):
             cx, cy = x + dep * fx + l * rx, y + dep * fy + l * ry
             if not (0 <= cx < 32 and 0 <= cy < 32):
-                walls.append(True)
+                walls.append(1)                 # outside: wall
             else:
-                walls.append((level[cy * 32 + cx] & 0x1f) in BLOCKING)
+                walls.append(VCLASS.get(level[cy * 32 + cx] & 0x1f, 0))
     return walls
 
 
@@ -52,13 +52,13 @@ def render(level, ws, x, y, d):
     buf = [[0] * VIEW_W for _ in range(VIEW_H)]
     for row in range(VIEW_H):
         buf[row] = decode(w16(8 + 2 * row)) * (VIEW_W // 4)
-    walls = view_table(level, x, y, d)
+    walls = view_table(level, x, y, d)     # view class per cell
     pos = 8 + 2 * VIEW_H
     while ws[pos] != 0xff:
-        cell, kind, shift, tile = struct.unpack_from('>BBhI', ws, pos)
-        pos += 20                       # occluder sets are not used here:
+        cell, kind, cmask, shift, tile = struct.unpack_from('>BBBxhI', ws, pos)
+        pos += 22                       # occluder sets are not used here:
                                         # drawing everything checks them
-        if not walls[cell]:
+        if not (cmask >> walls[cell]) & 1:
             continue
         x0, y0, w, h = struct.unpack_from('>HHHH', ws, tile)
         for i in range(h):

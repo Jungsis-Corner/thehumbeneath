@@ -11,6 +11,7 @@
 ; All game strings are in the external file hum_txt (see data/text.txt).
 ;
 ; Test switches (vasm -D..., e.g. ./tools/emu.sh -DSTARTX=5 -DSTARTDIR=2):
+;   STARTLV         first level (default 0, the test level)
 ;   STARTX, STARTY  start cell instead of the one in the level file
 ;   STARTDIR        start facing 0 N, 1 E, 2 S, 3 W
 ;   DEBUG=1         position and render time (frames of 1/50 s) in the panel
@@ -125,6 +126,7 @@ v_keys  rs.w    1               ; current keys (KEYROW(1) layout)
 v_pkeys rs.w    1               ; keys of the previous poll
 v_rep   rs.w    1               ; frames until a held key repeats
 v_level rs.w    1               ; current level number
+v_wsnum rs.w    1               ; wall set in v_walls (0 = none)
 v_pos   rs.w    1               ; player cell: y*32+x
 v_dir   rs.w    1               ; facing: 0 N, 1 E, 2 S, 3 W
 v_args  rs.l    4               ; arguments for text_fmt
@@ -287,28 +289,13 @@ common:
 ;=====================================================================
 start:
         bsr     draw_frame
+        bsr     party_init
+        ifd     STARTLV
+        moveq   #STARTLV,d0
+        else
         moveq   #0,d0           ; test level
-        bsr     level_load
-        beq.s   .ok
-        lea     v_args(a5),a2
-        clr.l   (a2)
-        moveq   #T_NO_LEVEL,d0
-        bsr     msg_print
-        bsr     wait_esc
-        bra     exit_prog
-.ok     moveq   #0,d0
-        move.b  v_map+LV_WALLS(a5),d0
-        bsr     walls_load
-        beq.s   .ok2
-        lea     v_args(a5),a2
-        moveq   #0,d0
-        move.b  v_map+LV_WALLS(a5),d0
-        move.l  d0,(a2)
-        moveq   #T_NO_WALLS,d0
-        bsr     msg_print
-        bsr     wait_esc
-        bra     exit_prog
-.ok2    bsr     party_init
+        endc
+        bsr     enter_level
         bsr     level_start
         lea     v_args(a5),a2   ; "<first cat> leads the way."
         move.w  v_party+p_name(a5),d0
@@ -410,6 +397,7 @@ level_load:
         moveq   #IO_FSTRG,d0
         moveq   #-1,d3
         trap    #3
+        and.l   #$ffff,d1       ; bytes read: only the low word is set
         move.l  d0,d4
         move.l  d1,-(sp)
         moveq   #IO_CLOSE,d0
@@ -426,6 +414,35 @@ level_load:
 .e      movem.l (sp)+,d1-d4/a0-a3
         tst.l   d0
         rts
+
+; enter_level: d0 = level number; loads the level and, if it uses another
+;              one, its wall set. A missing file ends the game.
+enter_level:
+        movem.l d0-d1/a2,-(sp)
+        bsr     level_load
+        beq.s   .walls
+        moveq   #T_NO_LEVEL,d1
+        bra.s   .fatal
+.walls  moveq   #0,d0
+        move.b  v_map+LV_WALLS(a5),d0
+        cmp.w   v_wsnum(a5),d0
+        beq.s   .e
+        clr.w   v_wsnum(a5)
+        move.w  d0,d1           ; (walls_load keeps d1)
+        bsr     walls_load
+        bne.s   .nows
+        move.w  d1,v_wsnum(a5)
+.e      movem.l (sp)+,d0-d1/a2
+        rts
+.nows   move.w  d1,d0
+        moveq   #T_NO_WALLS,d1
+.fatal  lea     v_args(a5),a2   ; "... %d is missing.", wait for ESC, end
+        ext.l   d0
+        move.l  d0,(a2)
+        move.w  d1,d0
+        bsr     msg_print
+        bsr     wait_esc
+        bra     exit_prog
 
 ; level_start: player to the start cell, show the entry text
 level_start:
@@ -454,8 +471,10 @@ level_start:
         bra     msg_print
 
 ; move_rel: d1 = direction relative to the facing (0 forward, 1 right,
-;           2 back, 3 left), d2 = text id shown when the step succeeds
+;           2 back, 3 left), d2 = text id shown when the step succeeds.
+;           A step forward into a closed door opens it.
 move_rel:
+        move.w  d1,d3           ; relative direction
         add.w   v_dir(a5),d1
         and.w   #3,d1
         add.w   d1,d1
@@ -467,13 +486,90 @@ move_rel:
         and.b   0(a0,d0.w),d1
         lea     celltab(pc),a1
         btst    #0,0(a1,d1.w)   ; CF_BLOCK
-        bne.s   .wall
+        bne.s   .block
         move.w  d0,v_pos(a5)
         bset    #CELL_SEEN,0(a0,d0.w)
+        move.l  d0,-(sp)
         move.w  d2,d0
+        bsr     msg_print
+        move.l  (sp)+,d0
+        btst    #CELL_EVENT,0(a0,d0.w)
+        bne     cell_events
+        rts
+.block  cmp.b   #CT_DOOR_LOCKED,d1
+        beq.s   .locked
+        cmp.b   #CT_DOOR,d1
+        bne.s   .wall
+        tst.w   d3
+        bne.s   .door
+        and.b   #~CELL_TYPE,0(a0,d0.w) ; closed -> open door
+        or.b    #CT_DOOR_OPEN,0(a0,d0.w)
+        moveq   #T_DOOR_OPENS,d0
+        bra     msg_print
+.door   moveq   #T_DOOR_BLOCKS,d0
+        bra     msg_print
+.locked moveq   #T_DOOR_LOCKED,d0
         bra     msg_print
 .wall   moveq   #T_BLOCKED,d0
         bra     msg_print
+
+; cell_events: the player has entered cell d0, which has events
+cell_events:
+        movem.l d0-d4/a0-a3,-(sp)
+        moveq   #31,d3
+        and.w   d0,d3           ; x
+        move.w  d0,d4
+        lsr.w   #5,d4           ; y
+        lea     v_map+LV_EVENT(a5),a3
+.ev     move.b  EV_X(a3),d0
+        cmp.b   #EV_END,d0
+        beq     .e
+        cmp.b   d3,d0
+        bne.s   .nx
+        cmp.b   EV_Y(a3),d4
+        bne.s   .nx
+        move.b  EV_TYPE(a3),d0
+        cmp.b   #EV_STAIRS,d0
+        beq.s   .stairs
+        cmp.b   #EV_MARK,d0
+        beq.s   .mark
+        bset    #0,EV_FLAGS(a3) ; message: only the first time
+        bne.s   .nx
+        move.w  EV_PARAM(a3),d0
+        bsr     msg_print
+        bra.s   .nx
+.mark   moveq   #T_MARK_SEEN,d0 ; Scratch-Mark: the carved text in yellow
+        bsr     msg_print
+        moveq   #C_YEL,d1
+        bsr     msg_ink
+        move.w  EV_PARAM(a3),d0
+        bsr     msg_print
+        moveq   #C_WHITE,d1
+        bsr     msg_ink
+.nx     addq.l  #EV_SIZE,a3
+        bra.s   .ev
+.stairs moveq   #T_STAIRS_DOWN,d0
+        move.w  v_pos(a5),d1
+        lea     v_map(a5),a0
+        moveq   #CELL_TYPE,d2
+        and.b   0(a0,d1.w),d2
+        cmp.b   #CT_STAIRS_DOWN,d2
+        beq.s   .down
+        moveq   #T_STAIRS_UP,d0
+.down   bsr     msg_print
+        move.w  EV_PARAM(a3),d1 ; level<<10 | y<<5 | x
+        move.w  d1,d0
+        moveq   #10,d2
+        lsr.w   d2,d0
+        bsr     enter_level     ; replaces the map: no more events here
+        and.w   #$3ff,d1
+        move.w  d1,v_pos(a5)
+        lea     v_map(a5),a0
+        bset    #CELL_SEEN,0(a0,d1.w)
+        move.w  LV_ENTRY(a0),d0
+        bsr     msg_print
+.e      movem.l (sp)+,d0-d4/a0-a3
+        rts
 
 ;---------------------------------------------------------------------
 ; Exit: close channels, Mode 4, free the heap, back to BASIC
@@ -562,6 +658,7 @@ fread:
         trap    #3
         tst.l   d0
         bne.s   .e
+        and.l   #$ffff,d1       ; bytes read: only the low word is set
         move.l  a2,a1
         add.l   d1,a1
         sub.l   d1,d4
@@ -651,6 +748,15 @@ print_str:
         moveq   #IO_SSTRG,d0
         bsr     io3
         movem.l (sp)+,d0-d3/a1
+        rts
+
+; msg_ink: d1 = ink colour of the message window
+msg_ink:
+        movem.l d0-d3/a0-a1,-(sp)
+        move.l  v_msg(a5),a0
+        moveq   #SD_SETIN,d0
+        bsr     io3
+        movem.l (sp)+,d0-d3/a0-a1
         rts
 
 ; msg_print: d0.w = text id, a2 = arguments
