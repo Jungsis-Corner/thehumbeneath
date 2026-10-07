@@ -158,7 +158,7 @@ poison_cat:
         beq.s   .no
         bset    #PF_POISON,p_flags+1(a3)
         bne.s   .no
-        moveq   #T_POISONED,d0
+        move.w  #T_POISONED,d0
         move.w  p_name(a3),d1
         bsr     name_msg
         moveq   #1,d0           ; NE (movem below keeps the flags)
@@ -191,12 +191,12 @@ use_item:
         beq.s   .wrap
         cmp.w   #IK_CALM,d1
         beq.s   .calm
-        moveq   #T_NOT_NOW,d0   ; herb, lure, key: not here
+        move.w  #T_NOT_NOW,d0   ; herb, lure, key: not here
         bsr     msg_print
         bra     .kept
 .heal   tst.w   p_hp(a3)
         bgt.s   .h1
-        moveq   #T_CANNOT_HELP,d0
+        move.w  #T_CANNOT_HELP,d0
         move.w  p_name(a3),d1
         bsr     name_msg
         bra     .kept
@@ -207,7 +207,7 @@ use_item:
         bge.s   .h2
         move.w  d2,p_hp(a3)
 .h2     move.w  d1,d2
-        moveq   #T_HEALED,d0
+        move.w  #T_HEALED,d0
         move.w  p_name(a3),d1
         bsr     name_msg
         cmp.w   #IK_STALE,d2    ; stale prey may make sick
@@ -215,16 +215,16 @@ use_item:
         bsr     rand100
         cmp.w   #25,d0
         bhs.s   .used
-        moveq   #T_STALE_SICK,d0
+        move.w  #T_STALE_SICK,d0
         bsr     msg_print
         bsr     poison_cat
         bra.s   .used
 .wrap   move.w  i_value(a0),p_wrap(a3)
-        moveq   #T_WRAPPED,d0
+        move.w  #T_WRAPPED,d0
         bsr     msg_print
         bra.s   .used
 .calm   bclr    #PF_FEAR,p_flags+1(a3)
-        moveq   #T_CALM,d0
+        move.w  #T_CALM,d0
         move.w  p_name(a3),d1
         bsr     name_msg
 .used   move.w  d3,d0
@@ -245,7 +245,7 @@ equip:
         moveq   #1,d1
         bsr     pack_add
         bne.s   .back
-        moveq   #T_PACK_FULL,d0
+        move.w  #T_PACK_FULL,d0
         bsr     msg_print
         bra.s   .e
 .back   lea     v_args(a5),a2   ; "Removed: <item>."
@@ -254,7 +254,7 @@ equip:
         move.w  i_name(a0),d0
         bsr     text_get
         move.l  a1,(a2)
-        moveq   #T_TAKES_OFF,d0
+        move.w  #T_TAKES_OFF,d0
         bsr     msg_print
         clr.w   p_gear(a3)
 .wear   tst.w   d2
@@ -271,7 +271,7 @@ equip:
         move.w  i_name(a0),d0
         bsr     text_get
         move.l  a1,4(a2)
-        moveq   #T_WEARS,d0
+        move.w  #T_WEARS,d0
         bsr     msg_print
 .e      movem.l (sp)+,d0-d2/a0-a2
         rts
@@ -354,7 +354,7 @@ menu_run:
         bne.s   .l1
         moveq   #C_WHITE,d2     ; the chosen one: white with a marker
         move.w  d1,-(sp)
-        moveq   #T_CMB_MARK,d0
+        move.w  #T_CMB_MARK,d0
         bsr     text_get        ; (changes d1)
         move.w  (sp)+,d1
         moveq   #1,d0
@@ -451,7 +451,7 @@ menu_pack:
         tst.w   d1
         beq.s   .list
         move.w  d0,-(sp)
-        moveq   #T_MENU_REMOVE,d0
+        move.w  #T_MENU_REMOVE,d0
         bsr     menu_addt
         move.w  (sp)+,d0
         clr.b   (a2)+
@@ -480,7 +480,7 @@ menu_pack:
         move.l  d0,4(a0)
         move.l  a2,-(sp)
         lea     v_args(a5),a2
-        moveq   #T_MENU_COUNT,d0
+        move.w  #T_MENU_COUNT,d0
         bsr     text_fmt
         move.l  (sp)+,a2
         bsr     menu_add
@@ -502,18 +502,36 @@ menu_pack:
 .e      movem.l (sp)+,d1-d4/a0-a3
         rts
 
-; party_menu: (space) a cat, then Item or Equip -> NE = something was done
+; party_menu: (space) Pack, or a cat and then Item or Equip
+;             -> NE = something was done
 party_menu:
         movem.l d1-d2/a1-a3,-(sp)
-.who    moveq   #T_MENU_PARTY,d0
-        bsr     menu_cats
+.who    bsr     menu_clear      ; Pack, the four cats
+        move.w  #T_MENU_PACK,d0
+        bsr     menu_addt
+        lea     v_party(a5),a3
+        moveq   #NPARTY-1,d1
+.c      move.w  p_name(a3),d0
+        bsr     menu_addt
+        lea     p_size(a3),a3
+        dbra    d1,.c
+        move.w  #T_MENU_PARTY,d0
+        bsr     text_get
+        bsr     menu_run
         tst.w   d0
-        bmi.s   .none
+        bmi     .none
+        bne.s   .cat
+        move.w  #PG_PACK,v_page(a5) ; Pack: the pack page (I closes it)
+        bra     .none
+.cat    subq.w  #1,d0
+        mulu    #p_size,d0
+        lea     v_party(a5),a3
+        add.w   d0,a3
         bsr     redraw
         bsr     menu_clear
-        moveq   #T_MENU_ITEM,d0
+        move.w  #T_MENU_ITEM,d0
         bsr     menu_addt
-        moveq   #T_MENU_EQUIP,d0
+        move.w  #T_MENU_EQUIP,d0
         bsr     menu_addt
         move.w  p_name(a3),d0
         bsr     text_get
@@ -542,13 +560,13 @@ party_menu:
         moveq   #1,d0           ; NE
         rts
 .back   bsr     redraw
-        bra.s   .who
+        bra     .who
 .none   bsr     redraw
         movem.l (sp)+,d1-d2/a1-a3
         moveq   #0,d0           ; EQ
         rts
 .empty  tst.w   v_mcount(a5)    ; nothing to choose: say so
         bne.s   .e1
-        moveq   #T_NOTHING,d0
+        move.w  #T_NOTHING,d0
         bsr     msg_print
 .e1     rts

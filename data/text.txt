@@ -145,6 +145,7 @@ CMB_ITEM        Item
 CMB_FLEE        Flee
 CMB_MARK        >
 MENU_PARTY      Party
+MENU_PACK       Pack
 MENU_ITEM       Item
 MENU_EQUIP      Equip
 MENU_REMOVE     (take off)
@@ -157,6 +158,18 @@ CMB_FOES        %d %s
 MENU_COUNT      %s x%d
 @digits 6
 @strlen 12
+
+# --- Pack page (key I, 4 px font) ---
+@width 40
+@digits 2
+PACK_TITLE      The pack - I closes
+PACK_USED       (%d of %d)
+PACK_MOSS       Moss: fen %d  dry %d  glow %d
+WORN            Worn:
+WORN_NONE       Worn: nothing
+# cat name (12) + item name (16): at most 12+2+16 = 30 characters
+WORN_BY         %s: %s
+@digits 6
 
 # --- Party sheet (key C, 4 px font) ---
 @width 40

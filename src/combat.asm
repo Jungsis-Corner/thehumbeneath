@@ -94,13 +94,13 @@ cat_turn:
         bsr     panel_show
         move.l  v_cetab(a5),a4
 .ask    bsr     menu_clear      ; Attack, Defend, Item, Flee
-        moveq   #T_CMB_ATTACK,d0
+        move.w  #T_CMB_ATTACK,d0
         bsr     menu_addt
-        moveq   #T_CMB_DEFEND,d0
+        move.w  #T_CMB_DEFEND,d0
         bsr     menu_addt
-        moveq   #T_CMB_ITEM,d0
+        move.w  #T_CMB_ITEM,d0
         bsr     menu_addt
-        moveq   #T_CMB_FLEE,d0
+        move.w  #T_CMB_FLEE,d0
         bsr     menu_addt
         move.w  p_name(a2),d0
         bsr     text_get
@@ -116,7 +116,7 @@ cat_turn:
         bsr     cat_attack
         bra     .e
 .guard  move.w  #1,p_guard(a2)
-        moveq   #T_DEFENDS,d0
+        move.w  #T_DEFENDS,d0
         move.w  p_name(a2),d1
         bsr     name_msg
         bra     .e
@@ -149,17 +149,17 @@ cat_turn:
         lea     v_map(a5),a0
         bset    #CELL_SEEN,0(a0,d5.w)
         move.w  #CE_FLED,v_cend(a5)
-        moveq   #T_FLEES,d0
+        move.w  #T_FLEES,d0
         bsr     msg_print
         bra.s   .e
 .fail   move.w  #1,v_cskip(a5)  ; the enemies get the rest of the round
-        moveq   #T_FLEE_FAILS,d0
+        move.w  #T_FLEE_FAILS,d0
         bsr     msg_print
         bra.s   .e
-.cannot moveq   #T_CANNOT_FLEE,d0
+.cannot move.w  #T_CANNOT_FLEE,d0
         bsr     msg_print
         bra     .ask
-.item   moveq   #T_CMB_ITEM,d0  ; which item, then on whom
+.item   move.w  #T_CMB_ITEM,d0  ; which item, then on whom
         bsr     text_get
         moveq   #0,d1
         bsr     menu_pack
@@ -167,11 +167,11 @@ cat_turn:
         bgt.s   .it1
         tst.w   v_mcount(a5)
         bne.s   .re
-        moveq   #T_NOTHING,d0
+        move.w  #T_NOTHING,d0
         bsr     msg_print
         bra.s   .re
 .it1    move.w  d0,d5
-        moveq   #T_MENU_WHO,d0
+        move.w  #T_MENU_WHO,d0
         bsr     menu_cats       ; -> a3
         tst.w   d0
         bmi.s   .re
@@ -190,7 +190,7 @@ cat_turn:
 
 ; cat_attack: a2 = cat, a4 = enemy type; the first enemy still up
 cat_attack:
-        moveq   #T_ATTACKS,d0
+        move.w  #T_ATTACKS,d0
         move.w  p_name(a2),d1
         bsr     name_msg
         bsr     pause
@@ -223,20 +223,20 @@ cat_attack:
         moveq   #1,d0
 .dmg    move.w  d0,d2
         sub.w   d2,(a1)
-        moveq   #T_HIT_FOR,d0
+        move.w  #T_HIT_FOR,d0
         move.w  e_name(a4),d1
         bsr     name_num_msg
         tst.w   (a1)
         bgt.s   .draw
         clr.w   (a1)
-        moveq   #T_FALLS,d0
+        move.w  #T_FALLS,d0
         move.w  e_name(a4),d1
         bsr     name_msg
         bsr     foes_left
         bne.s   .draw
         move.w  #CE_VICTORY,v_cend(a5)
 .draw   bra     foes_draw
-.miss   moveq   #T_MISSES,d0
+.miss   move.w  #T_MISSES,d0
         move.w  p_name(a2),d1
         bra     name_msg
 
@@ -256,7 +256,7 @@ foes_turn:
 ; foe_attack: a4 = enemy type
 foe_attack:
         movem.l d0-d7/a0-a4,-(sp)
-        moveq   #T_ATTACKS,d0
+        move.w  #T_ATTACKS,d0
         move.w  e_name(a4),d1
         bsr     name_msg
         bsr     pause
@@ -293,7 +293,7 @@ foe_attack:
         moveq   #1,d0
 .dmg    move.w  d0,d2
         sub.w   d2,p_hp(a3)
-        moveq   #T_HIT_FOR,d0
+        move.w  #T_HIT_FOR,d0
         move.w  p_name(a3),d1
         bsr     name_num_msg
         tst.w   p_hp(a3)
@@ -306,7 +306,7 @@ foe_attack:
         cmp.w   #WOUND_PCT,d0
         bhs.s   .poison
         move.w  d2,p_bleed(a3)
-        moveq   #T_BLEEDING,d0
+        move.w  #T_BLEEDING,d0
         move.w  p_name(a3),d1
         bsr     name_msg
 .poison tst.w   e_poison(a4)    ; or poison
@@ -319,7 +319,7 @@ foe_attack:
         bsr     panel_show
         bsr     party_check
         bra.s   .e
-.miss   moveq   #T_MISSES,d0
+.miss   move.w  #T_MISSES,d0
         move.w  e_name(a4),d1
         bsr     name_msg
 .e      bsr     pause
@@ -375,7 +375,7 @@ pick_target:
 ; victory: XP for every standing cat, ranks, the group is gone
 victory:
         movem.l d0-d3/a0-a3,-(sp)
-        moveq   #T_VICTORY,d0
+        move.w  #T_VICTORY,d0
         bsr     msg_print
         bsr     pause
         move.l  v_cgrp(a5),a3
@@ -385,7 +385,7 @@ victory:
         mulu    e_xp(a0),d3
         lea     v_args(a5),a2
         move.l  d3,(a2)
-        moveq   #T_GAIN_XP,d0
+        move.w  #T_GAIN_XP,d0
         bsr     msg_print
         lea     v_party(a5),a3
         moveq   #NPARTY-1,d2
@@ -424,7 +424,7 @@ victory:
         move.w  0(a0,d0.w),d0
         bsr     text_get
         move.l  a1,4(a2)
-        moveq   #T_RISES,d0
+        move.w  #T_RISES,d0
         bsr     msg_print
         bra.s   .rank
 .nx     lea     p_size(a3),a3
@@ -478,7 +478,7 @@ foes_draw:
 .pl     move.w  d1,d0
         bsr     text_get
         move.l  a1,4(a2)
-        moveq   #T_CMB_FOES,d0
+        move.w  #T_CMB_FOES,d0
         bsr     text_fmt
         moveq   #1,d0
         moveq   #1,d1

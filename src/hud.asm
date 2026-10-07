@@ -61,7 +61,7 @@ panel_show:
         move.l  d0,(a2)
         move.w  p_hpmax(a3),d0
         move.l  d0,4(a2)
-        moveq   #T_PANEL_HP,d0
+        move.w  #T_PANEL_HP,d0
         bsr     text_fmt
         moveq   #PNL_COL,d0
         move.w  d6,d1
@@ -95,7 +95,7 @@ panel_show:
         moveq   #0,d0
         move.w  v_rtime(a5),d0
         move.l  d0,8(a2)        ; frames of the last render
-        moveq   #T_DEBUG_POS,d0
+        move.w  #T_DEBUG_POS,d0
         bsr     text_fmt
         moveq   #PNL_COL,d0
         move.w  #DEBUG_Y,d1
@@ -111,7 +111,7 @@ sheet_show:
         bsr     clear_view
         lea     v_args(a5),a2
         moveq   #1,d6           ; y
-        moveq   #T_SHEET_TITLE,d0
+        move.w  #T_SHEET_TITLE,d0
         moveq   #C_YEL,d2
         bsr     .line
         addq.w  #1,d6
@@ -129,7 +129,7 @@ sheet_show:
         move.w  0(a0,d0.w),d0
         bsr     text_get
         move.l  a1,8(a2)
-        moveq   #T_SHEET_NAME,d0
+        move.w  #T_SHEET_NAME,d0
         moveq   #C_WHITE,d2
         bsr     .line
         moveq   #0,d0           ; hit points, XP, status
@@ -147,7 +147,7 @@ sheet_show:
 .ok     add.w   #T_STATUS_OK,d0
         bsr     text_get
         move.l  a1,12(a2)
-        moveq   #T_SHEET_HP,d0
+        move.w  #T_SHEET_HP,d0
         bsr     .line
         move.w  p_gear(a3),d0   ; gear on the same line from column 32
         beq.s   .ng             ; (the HP line has at most 31 characters,
@@ -170,7 +170,7 @@ sheet_show:
         move.l  d0,8(a2)
         move.w  p_find(a3),d0
         move.l  d0,12(a2)
-        moveq   #T_SHEET_STATS,d0
+        move.w  #T_SHEET_STATS,d0
         moveq   #C_CYAN,d2
         bsr     .line
         moveq   #0,d0           ; moss
@@ -182,7 +182,7 @@ sheet_show:
         move.l  d0,8(a2)
         move.w  p_mosscap(a3),d0
         move.l  d0,12(a2)
-        moveq   #T_SHEET_MOSS,d0
+        move.w  #T_SHEET_MOSS,d0
         moveq   #C_GREEN,d2
         bsr     .line
         addq.w  #1,d6
@@ -196,6 +196,131 @@ sheet_show:
         moveq   #C_BLACK,d3
         bsr     pdraw
         addq.w  #LINE_H,d6
+        rts
+
+; pack_show: the pack page in the viewport (key I): the items in two
+;            columns, who wears what, the moss of the whole party
+pack_show:
+        movem.l d0-d7/a0-a4,-(sp)
+        bsr     clear_view
+        lea     v_args(a5),a2
+        move.w  #T_PACK_TITLE,d0
+        bsr     text_get
+        moveq   #1,d0
+        moveq   #1,d1
+        moveq   #C_YEL,d2
+        moveq   #C_BLACK,d3
+        bsr     pdraw
+        lea     v_pack(a5),a3   ; slots in use
+        moveq   #0,d7
+        moveq   #PACK_SLOTS-1,d0
+.cnt    tst.b   (a3)
+        beq.s   .c1
+        addq.w  #1,d7
+.c1     addq.l  #2,a3
+        dbra    d0,.cnt
+        move.l  d7,(a2)
+        move.l  #PACK_SLOTS,4(a2)
+        move.w  #T_PACK_USED,d0
+        bsr     text_fmt
+        moveq   #36,d0
+        moveq   #1,d1
+        moveq   #C_WHITE,d2
+        bsr     pdraw
+        moveq   #1+LINE_H+2,d6  ; y of the item lines
+        tst.w   d7
+        bne.s   .items
+        move.w  #T_NOTHING,d0
+        bsr     text_get
+        moveq   #1,d0
+        move.w  d6,d1
+        bsr     pdraw
+        bra.s   .worn
+.items  lea     v_pack(a5),a3
+        moveq   #0,d5           ; item number on the page
+        moveq   #PACK_SLOTS-1,d4
+.it     moveq   #0,d0
+        move.b  (a3),d0
+        beq.s   .inx
+        bsr     item_rec        ; "<item> x<n>"
+        move.w  i_name(a0),d0
+        bsr     text_get
+        move.l  a1,(a2)
+        moveq   #0,d0
+        move.b  1(a3),d0
+        move.l  d0,4(a2)
+        move.w  #T_MENU_COUNT,d0
+        bsr     text_fmt
+        moveq   #1,d0           ; two columns: 1 and 24
+        btst    #0,d5
+        beq.s   .col
+        moveq   #24,d0
+.col    move.w  d5,d1
+        lsr.w   #1,d1
+        mulu    #LINE_H,d1
+        add.w   d6,d1
+        moveq   #C_CYAN,d2
+        bsr     pdraw
+        addq.w  #1,d5
+.inx    addq.l  #2,a3
+        dbra    d4,.it
+.worn   moveq   #1+LINE_H+2+PACK_SLOTS/2*LINE_H+3,d6 ; who wears what
+        move.w  #T_WORN,d0
+        lea     v_party(a5),a3
+        moveq   #NPARTY-1,d4
+.any    tst.w   p_gear(a3)
+        bne.s   .wt
+        lea     p_size(a3),a3
+        dbra    d4,.any
+        move.w  #T_WORN_NONE,d0
+.wt     bsr     text_get
+        moveq   #1,d0
+        move.w  d6,d1
+        moveq   #C_WHITE,d2
+        bsr     pdraw
+        addq.w  #LINE_H,d6
+        lea     v_party(a5),a3
+        moveq   #NPARTY-1,d4
+.cat    move.w  p_gear(a3),d0
+        beq.s   .cnx
+        bsr     item_rec        ; "<cat>: <item>"
+        move.w  i_name(a0),d0
+        bsr     text_get
+        move.l  a1,4(a2)
+        move.w  p_name(a3),d0
+        bsr     text_get
+        move.l  a1,(a2)
+        move.w  #T_WORN_BY,d0
+        bsr     text_fmt
+        moveq   #2,d0
+        move.w  d6,d1
+        moveq   #C_YEL,d2
+        bsr     pdraw
+        addq.w  #LINE_H,d6
+.cnx    lea     p_size(a3),a3
+        dbra    d4,.cat
+        addq.w  #3,d6           ; the moss of all cats together
+        moveq   #0,d0
+        moveq   #0,d1
+        moveq   #0,d2
+        lea     v_party(a5),a3
+        moveq   #NPARTY-1,d4
+.moss   add.w   p_fen(a3),d0
+        add.w   p_dry(a3),d1
+        add.w   p_glow(a3),d2
+        lea     p_size(a3),a3
+        dbra    d4,.moss
+        move.l  d0,(a2)
+        move.l  d1,4(a2)
+        move.l  d2,8(a2)
+        move.w  #T_PACK_MOSS,d0
+        bsr     text_fmt
+        moveq   #1,d0
+        move.w  d6,d1
+        moveq   #C_GREEN,d2
+        moveq   #C_BLACK,d3
+        bsr     pdraw
+        movem.l (sp)+,d0-d7/a0-a4
         rts
 
 ; hp_bar: d0 = column, d1 = y, d2 = hit points, d3 = maximum

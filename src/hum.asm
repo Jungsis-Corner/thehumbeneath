@@ -103,11 +103,13 @@ K_DOWN  equ     7
 K_SHIFT equ     8               ; from KEYROW(7), added by readkeys
 K_MAP   equ     9               ; M (KEYROW(2)): debug map on/off
 K_SHEET equ     10              ; C (KEYROW(2)): party sheet on/off
+K_PACK  equ     11              ; I (KEYROW(5)): pack page on/off
 
 ; pages shown in the viewport
 PG_VIEW  equ    0
 PG_MAP   equ    1
 PG_SHEET equ    2
+PG_PACK  equ    3
 K_MOVE  equ     (1<<K_UP)|(1<<K_DOWN)|(1<<K_LEFT)|(1<<K_RIGHT)
 
 ;---------------------------------------------------------------------
@@ -334,7 +336,7 @@ start:
         move.w  v_party+p_name(a5),d0
         bsr     text_get
         move.l  a1,(a2)
-        moveq   #T_PARTY_LEAD,d0
+        move.w  #T_PARTY_LEAD,d0
         bsr     msg_print
         bsr     redraw
 
@@ -351,6 +353,9 @@ mainloop:
         bne.s   .page
         moveq   #PG_SHEET,d1    ; C: party sheet
         btst    #K_SHEET,d2
+        bne.s   .page
+        moveq   #PG_PACK,d1     ; I: the pack
+        btst    #K_PACK,d2
         beq.s   .nomap
 .page   cmp.w   v_page(a5),d1   ; the same key again: back to the view
         bne.s   .set
@@ -394,33 +399,33 @@ do_keys:
         btst    #K_UP,d2
         beq.s   .n1
         moveq   #0,d1           ; forward
-        moveq   #T_STEP,d2
+        move.w  #T_STEP,d2
         bra     move_rel
 .n1     btst    #K_DOWN,d2
         beq.s   .n2
         moveq   #2,d1           ; back
-        moveq   #T_STEP_BACK,d2
+        move.w  #T_STEP_BACK,d2
         bra     move_rel
 .n2     btst    #K_LEFT,d2
         beq.s   .n3
         btst    #K_SHIFT,d0
         beq.s   turn_left
         moveq   #3,d1           ; strafe left
-        moveq   #T_STEP_SIDE,d2
+        move.w  #T_STEP_SIDE,d2
         bra     move_rel
 .n3     btst    #K_SHIFT,d0
         beq.s   turn_right
         moveq   #1,d1           ; strafe right
-        moveq   #T_STEP_SIDE,d2
+        move.w  #T_STEP_SIDE,d2
         bra     move_rel
 
 turn_left:
         subq.w  #1,v_dir(a5)
-        moveq   #T_TURN_LEFT,d0
+        move.w  #T_TURN_LEFT,d0
         bra.s   turn
 turn_right:
         addq.w  #1,v_dir(a5)
-        moveq   #T_TURN_RIGHT,d0
+        move.w  #T_TURN_RIGHT,d0
 turn:   and.w   #3,v_dir(a5)
         bra     msg_print
 
@@ -475,7 +480,7 @@ enter_level:
         dbra    d1,.fe
         bsr     level_load
         beq.s   .walls
-        moveq   #T_NO_LEVEL,d1
+        move.w  #T_NO_LEVEL,d1
         bra.s   .fatal
 .walls  moveq   #0,d0
         move.b  v_map+LV_WALLS(a5),d0
@@ -498,10 +503,10 @@ enter_level:
 .e      movem.l (sp)+,d0-d1/a2
         rts
 .noss   move.w  d1,d0
-        moveq   #T_NO_SPRITES,d1
+        move.w  #T_NO_SPRITES,d1
         bra.s   .fatal
 .nows   move.w  d1,d0
-        moveq   #T_NO_WALLS,d1
+        move.w  #T_NO_WALLS,d1
 .fatal  lea     v_args(a5),a2   ; "... %d is missing.", wait for ESC, end
         ext.l   d0
         move.l  d0,(a2)
@@ -574,9 +579,9 @@ move_rel:
         bne.s   .door
         and.b   #~CELL_TYPE,0(a0,d0.w) ; closed -> open door
         or.b    #CT_DOOR_OPEN,0(a0,d0.w)
-        moveq   #T_DOOR_OPENS,d0
+        move.w  #T_DOOR_OPENS,d0
         bra     msg_print
-.door   moveq   #T_DOOR_BLOCKS,d0
+.door   move.w  #T_DOOR_BLOCKS,d0
         bra     msg_print
 .locked move.w  d0,d2           ; a key for this door in the pack?
         moveq   #EV_LOCK,d1
@@ -591,16 +596,16 @@ move_rel:
         move.w  i_name(a0),d0
         bsr     text_get
         move.l  a1,(a2)
-        moveq   #T_UNLOCKS,d0
+        move.w  #T_UNLOCKS,d0
         bsr     msg_print
         lea     v_map(a5),a0
         and.b   #~CELL_TYPE,0(a0,d2.w)
         or.b    #CT_DOOR_OPEN,0(a0,d2.w)
-        moveq   #T_DOOR_OPENS,d0
+        move.w  #T_DOOR_OPENS,d0
         bra     msg_print
-.shut   moveq   #T_DOOR_LOCKED,d0
+.shut   move.w  #T_DOOR_LOCKED,d0
         bra     msg_print
-.wall   moveq   #T_BLOCKED,d0
+.wall   move.w  #T_BLOCKED,d0
         bra     msg_print
 .group  bsr     group_at        ; walked into an enemy group
         bra     encounter
@@ -658,7 +663,7 @@ cell_events:
         move.w  EV_PARAM(a3),d0
         bsr     msg_print
         bra.s   .nx
-.mark   moveq   #T_MARK_SEEN,d0 ; Scratch-Mark: the carved text in yellow
+.mark   move.w  #T_MARK_SEEN,d0 ; Scratch-Mark: the carved text in yellow
         bsr     msg_print
         moveq   #C_YEL,d1
         bsr     msg_ink
@@ -678,10 +683,10 @@ cell_events:
         bsr     pack_add
         bne.s   .took
         bsr     item_rec        ; (pack_add keeps d0 = item)
-        moveq   #T_PACK_FULL,d0
+        move.w  #T_PACK_FULL,d0
         cmp.w   #IK_MOSS,i_kind(a0)
         bne.s   .full
-        moveq   #T_MOSS_FULL,d0
+        move.w  #T_MOSS_FULL,d0
 .full   bsr     msg_print
         bra     .nx
 .took   bset    #0,EV_FLAGS(a3)
@@ -693,11 +698,11 @@ cell_events:
         move.l  a1,(a2)
         move.l  (sp)+,d1
         move.l  d1,4(a2)
-        moveq   #T_FOUND,d0
+        move.w  #T_FOUND,d0
         bsr     msg_print
         cmp.w   d1,d2           ; not all of the moss found room
         beq     .nx
-        moveq   #T_MOSS_FULL,d0
+        move.w  #T_MOSS_FULL,d0
         bsr     msg_print
         bra     .nx
 .trap   bset    #0,EV_FLAGS(a3) ; trap: only the first time
@@ -710,14 +715,14 @@ cell_events:
         lsr.w   d0,d1
         bsr     wound_random
         bra     .nx
-.stairs moveq   #T_STAIRS_DOWN,d0
+.stairs move.w  #T_STAIRS_DOWN,d0
         move.w  v_pos(a5),d1
         lea     v_map(a5),a0
         moveq   #CELL_TYPE,d2
         and.b   0(a0,d1.w),d2
         cmp.b   #CT_STAIRS_DOWN,d2
         beq.s   .down
-        moveq   #T_STAIRS_UP,d0
+        move.w  #T_STAIRS_UP,d0
 .down   bsr     msg_print
         move.w  EV_PARAM(a3),d1 ; level<<10 | y<<5 | x
         move.w  d1,d0
@@ -779,7 +784,7 @@ groups_act:
         bhi     .nx
         bset    #GF_SEEN,G_FLAGS(a3)
         bne.s   .seen
-        moveq   #T_SOMETHING_MOVES,d0
+        move.w  #T_SOMETHING_MOVES,d0
         bsr     msg_print
         bsr     .dist
 .seen   cmp.w   #1,d0
@@ -903,13 +908,13 @@ encounter:
         move.w  e_name(a0),d0   ; "<enemy> attacks!"
         bsr     text_get
         move.l  a1,(a2)
-        moveq   #T_ATTACKS,d0
+        move.w  #T_ATTACKS,d0
         bra.s   .say
 .many   move.l  d3,(a2)         ; "<n> <enemies> attack!"
         move.w  e_plural(a0),d0
         bsr     text_get
         move.l  a1,4(a2)
-        moveq   #T_GROUP_ATTACKS,d0
+        move.w  #T_GROUP_ATTACKS,d0
 .say    bsr     msg_print
         bsr     pause
         bsr     combat
@@ -1169,11 +1174,19 @@ readkeys:                       ; -> d0 = KEYROW(1), CTL2 mapped onto it
         moveq   #MT_IPCOM,d0
         trap    #1
         move.w  d1,-(sp)
+        lea     kr5(pc),a3      ; I: the pack
+        moveq   #MT_IPCOM,d0
+        trap    #1
+        move.w  d1,-(sp)
         lea     kr2(pc),a3      ; M: debug map
         moveq   #MT_IPCOM,d0
         trap    #1
         move.w  d1,d3
         move.w  (sp)+,d2
+        btst    #2,d2
+        beq.s   .ni
+        bset    #8,d3           ; (bit 8 of the row 2 word is free)
+.ni             move.w  (sp)+,d2
         move.w  (sp)+,d1
         move.w  (sp)+,d0
         btst    #0,d2
@@ -1185,7 +1198,10 @@ readkeys:                       ; -> d0 = KEYROW(1), CTL2 mapped onto it
 .m      btst    #3,d3
         beq.s   .c
         bset    #K_SHEET,d0
-.c      btst    #1,d1           ; F1 = left
+.c      btst    #8,d3
+        beq.s   .i
+        bset    #K_PACK,d0
+.i      btst    #1,d1           ; F1 = left
         beq.s   .f1
         bset    #K_LEFT,d0
 .f1     btst    #4,d1           ; F3 = right
@@ -1290,8 +1306,12 @@ redraw:                         ; after a step or turn
         bsr.s   draw_map
         bra     panel_show
 .nomap  cmp.w   #PG_SHEET,v_page(a5)
-        bne.s   .view
+        bne.s   .nosh
         bsr     sheet_show
+        bra     panel_show
+.nosh   cmp.w   #PG_PACK,v_page(a5)
+        bne.s   .view
+        bsr     pack_show
         bra     panel_show
 .view   move.w  pcount(pc),-(sp)
         bsr     render
@@ -1453,7 +1473,7 @@ wound_random:
         move.w  p_name(a3),d0
         bsr     text_get
         move.l  a1,(a2)
-        moveq   #T_BLEEDING,d0
+        move.w  #T_BLEEDING,d0
         bsr     msg_print
 .e      movem.l (sp)+,d0-d3/a0-a3
         rts
@@ -1526,7 +1546,7 @@ fall_check:
         bne.s   .q
         moveq   #1,d0
 .q      move.w  d0,p_hp(a3)
-        moveq   #T_REVIVE,d0
+        move.w  #T_REVIVE,d0
         move.w  p_name(a3),d1
         bsr     name_msg
         bra.s   .done
@@ -1538,7 +1558,7 @@ fall_check:
         move.w  p_name(a3),d0
         bsr     text_get
         move.l  a1,(a2)
-        moveq   #T_FALLS,d0
+        move.w  #T_FALLS,d0
         bsr     msg_print
 .done   movem.l (sp)+,d0-d1/a1-a2
 .e      rts
@@ -1552,7 +1572,7 @@ party_check:
         lea     p_size(a0),a0
         dbra    d0,.l
         bsr     panel_show
-        moveq   #T_GAME_OVER,d0
+        move.w  #T_GAME_OVER,d0
         bsr     msg_print
         bsr     wait_esc
         bra     exit_prog
@@ -1579,6 +1599,7 @@ colw:   dc.w    $0000,$0055,$00aa,$00ff ; colour -> word of 4 pixels
 kr1:    dc.b    9,1,0,0,0,0,1,2         ; IPC: KEYROW(1)
 kr0:    dc.b    9,1,0,0,0,0,0,2         ; IPC: KEYROW(0)
 kr2:    dc.b    9,1,0,0,0,0,2,2         ; IPC: KEYROW(2)
+kr5:    dc.b    9,1,0,0,0,0,5,2         ; IPC: KEYROW(5)
 steps:  dc.w    0,-1,1,0,0,1,-1,0       ; dx, dy of one step N, E, S, W
 kr7:    dc.b    9,1,0,0,0,0,7,2         ; IPC: KEYROW(7)
 doff:   dc.w    -32,1,32,-1             ; map offset of one step N, E, S, W

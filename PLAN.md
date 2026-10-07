@@ -284,6 +284,10 @@ fire); Gather finds fixed spots in the level data. Split in two steps:
   Items not taken yet are shown as a bundle on the floor (last picture of
   the sprite set, drawn like the enemies) and as yellow dots on the debug
   map; Gather spots stay hidden.
+  Pack page (decided 2026-10-07): key I (or "Pack" in the space menu)
+  shows all items with counts, who wears what and the party's moss.
+  Note: text ids are now above 127, so they are loaded with move.w (moveq
+  only reaches 127); make.sh fails on any vasm warning (-wfail).
 - **M7b healer skills:** Moss Pack, Press and Hold, Herb Chew, Starfolk
   Charm, Gather; other cats apply moss (Scratch only); Skill in the combat
   menu.
