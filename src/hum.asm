@@ -22,6 +22,8 @@
 ;   QUICKSTART      no title, names or intro: straight into the first level
 ;   NOENEMY         levels without enemy groups (to test the levels)
 ;   ANGRYTEST       the party has attacked a calm Pale One (Elder Pale test)
+;   SEED=n          the places of things in this game (see lv_shuffle)
+;   MAPALL          the map shows the whole level, groups and items too
 ;=====================================================================
 
         include 'textid.inc'    ; T_... text ids         (tools/textc.py)
@@ -216,6 +218,7 @@ v_mitem rs.b    MENU_MAX        ; menu: item of each line (pack menus)
 v_pack  rs.b    2*PACK_SLOTS    ; party pack: item, count
 v_deep  rs.w    1               ; deepest level reached (saved after the pack)
 v_story rs.w    1               ; story flags SF_... (saved after v_deep)
+v_seed  rs.w    1               ; places of this game (saved after v_story)
 v_sneak rs.w    1               ; 1 = the party sneaks (S key)
 v_cend  rs.w    1               ; combat: 0 going on, 1 victory, 2 fled
 v_cskip rs.w    1               ; combat: the party lost the rest of the round
@@ -539,6 +542,7 @@ level_load:
         blo.s   .e
         move.w  v_level(a5),d0  ; and its texts
         bsr     ltext_load
+        bsr     lv_shuffle
         ifd     NOENEMY         ; tests: no groups in the level
         move.w  v_map+LV_GROUPS(a5),d0
         lea     v_map(a5),a0
@@ -653,6 +657,78 @@ ltext_load:
         trap    #2
 .e      movem.l (sp)+,d0-d5/a0-a3
         rts
+
+; lv_shuffle: events and groups of the level in v_map that have other
+;             places get one of them (or keep the first); v_seed and the
+;             level decide, so the level looks the same at every load.
+;             Then the event and group bits of the cells are set anew.
+lv_shuffle:
+        movem.l d0-d5/a0-a3,-(sp)
+        lea     v_map(a5),a0
+        move.w  LV_GROUPS(a0),d0
+        lea     0(a0,d0.w),a1   ; groups
+        move.l  a1,a3
+.ge     cmp.b   #G_END,(a1)
+        beq.s   .gx
+        addq.l  #G_SIZE,a1
+        bra.s   .ge
+.gx     addq.l  #2,a1           ; the places
+        move.w  v_level(a5),d5  ; the generator: seed and level
+        mulu    #40503,d5
+        add.w   v_seed(a5),d5
+.pl     moveq   #0,d0
+        move.b  (a1)+,d0        ; kind (0 event, 1 group), $ff = end
+        bmi.s   .bits
+        moveq   #0,d1
+        move.b  (a1)+,d1        ; index
+        mulu    #6,d1           ; (EV_SIZE = G_SIZE)
+        lea     v_map+LV_EVENT(a5),a2
+        tst.b   d0
+        beq.s   .ev
+        move.l  a3,a2
+.ev     add.w   d1,a2
+        moveq   #0,d2
+        move.b  (a1)+,d2        ; number of other places
+        mulu    #25173,d5
+        add.w   #13849,d5
+        moveq   #0,d3
+        move.w  d5,d3
+        addq.w  #1,d2
+        mulu    d2,d3
+        swap    d3              ; 0 = the first place, 1..N another
+        subq.w  #1,d2
+        add.w   d2,d2
+        tst.w   d3
+        beq.s   .nx
+        add.w   d3,d3
+        move.b  -2(a1,d3.w),(a2)+ ; x, y
+        move.b  -1(a1,d3.w),(a2)
+.nx     add.w   d2,a1
+        bra.s   .pl
+.bits   move.l  a0,a1           ; event and group bits off
+        move.w  #32*32-1,d0
+.cl     and.b   #$ff-(1<<CELL_EVENT|1<<CELL_GROUP),(a1)+
+        dbra    d0,.cl
+        lea     v_map+LV_EVENT(a5),a1 ; and on where they are now
+        moveq   #CELL_EVENT,d2
+        bsr.s   .set
+        move.l  a3,a1
+        moveq   #CELL_GROUP,d2
+        bsr.s   .set
+        movem.l (sp)+,d0-d5/a0-a3
+        rts
+.set    cmp.b   #$ff,(a1)       ; a1 = table (x, y first, 6 bytes each)
+        beq.s   .se
+        moveq   #0,d0
+        move.b  1(a1),d0
+        lsl.w   #5,d0
+        moveq   #0,d1
+        move.b  (a1),d1
+        add.w   d1,d0
+        bset    d2,0(a0,d0.w)
+        addq.l  #6,a1
+        bra.s   .set
+.se     rts
 
 ; level_start: player to the start cell, show the entry text
 level_start:
@@ -2136,6 +2212,10 @@ mark_view:
 ; map_known: a1 = map cell, d4 = x, d5 = y -> NE = the party has seen it
 ;            (walked on it or next to it)
 map_known:
+        ifd     MAPALL          ; tests: the whole level is known
+        moveq   #1,d0           ; (NE; d0 is free here)
+        rts
+        endc
         btst    #CELL_SEEN,(a1)
         bne.s   .e
         tst.w   d4

@@ -48,22 +48,22 @@ map
 event 2 2 stairs 4 29 29
 # the fungus grove
 event 11 2 message GLOW_ROCK
-event 8 5 spores SPORES
-event 11 6 spores SPORES
-event 14 4 spores SPORES
-event 16 3 spores SPORES
-event 12 1 item HERB 2
+event 8 5 spores SPORES or 8 1 or 5 3
+event 11 6 spores SPORES or 13 8 or 8 4
+event 14 4 spores SPORES or 12 2 or 12 6
+event 16 3 spores SPORES or 14 5 or 19 4
+event 12 1 item HERB 2 or 13 4 or 15 3
 # the glowing pool: the resting spot
 event 19 5 message POOL
 event 21 5 rest
 event 25 5 mark MARK_5_1
 event 24 4 gather GLOWCAP_MOSS 2
-event 21 7 item COBWEB_WRAP 1
+event 21 7 item COBWEB_WRAP 1 or 21 2 or 18 5
 # the west caverns and the adder nest
-event 2 9 item GLOWCAP_MOSS 1
-event 2 12 spores SPORES
-event 1 18 item THISTLE_CHARM 1
-event 5 28 item FRESH_PREY 1
+event 2 9 item GLOWCAP_MOSS 1 or 4 12 or 2 5
+event 2 12 spores SPORES or 1 9 or 5 11
+event 1 18 item THISTLE_CHARM 1 or 3 16 or 5 19
+event 5 28 item FRESH_PREY 1 or 4 24 or 9 28
 # the cracked ledge: sinkholes into the deep cave
 event 14 13 sinkhole 14 21
 event 19 13 sinkhole 18 23
@@ -71,27 +71,27 @@ event 19 13 sinkhole 18 23
 event 15 26 message DEEP_CAVE
 event 13 22 mark MARK_5_2
 event 17 22 gather GLOWCAP_MOSS 2
-event 16 24 spores SPORES
+event 16 24 spores SPORES or 18 21 or 20 24
 # the toad cave
 event 22 12 message TOAD_CAVE
 event 24 17 message TOAD_CAVE
 event 29 12 gather GLOWCAP_MOSS 2
-event 29 14 item MARIGOLD_LEAF 1
+event 29 14 item MARIGOLD_LEAF 1 or 24 14 or 26 16
 # the way down
-event 30 30 item STALE_PREY 1
+event 30 30 item STALE_PREY 1 or 27 28 or 26 30
 event 29 29 stairs 6 2 2
 
 # enemies
-group 8 2 ADDER 1 guard
-group 13 3 SPORE_MOTH 2 flutter
-group 22 2 SPORE_MOTH 1 flutter
-group 3 12 ADDER 2 hunt
-group 4 18 ADDER 1 guard
-group 16 11 SPORE_MOTH 2 flutter
-group 26 13 CAVE_TOAD 1 guard
-group 29 15 CAVE_TOAD 2 guard
-group 24 19 CAVE_TOAD 1 guard
-group 16 23 ADDER 2 hunt
-group 10 28 SPORE_MOTH 2 flutter
-group 26 26 ADDER 1 guard
-group 27 30 SPORE_MOTH 1 flutter
+group 8 2 ADDER 1 guard or 9 5 or 11 1
+group 13 3 SPORE_MOTH 2 flutter or 10 2 or 16 2
+group 22 2 SPORE_MOTH 1 flutter or 18 3 or 21 6
+group 3 12 ADDER 2 hunt or 3 10 or 3 15
+group 4 18 ADDER 1 guard or 2 18 or 4 22
+group 16 11 SPORE_MOTH 2 flutter or 12 11 or 18 14
+group 26 13 CAVE_TOAD 1 guard or 24 15 or 22 14
+group 29 15 CAVE_TOAD 2 guard or 26 14 or 25 16
+group 24 19 CAVE_TOAD 1 guard or 23 15 or 24 24
+group 16 23 ADDER 2 hunt or 19 24 or 12 22
+group 10 28 SPORE_MOTH 2 flutter or 14 28 or 6 28
+group 26 26 ADDER 1 guard or 26 29 or 23 28
+group 27 30 SPORE_MOTH 1 flutter or 25 28 or 23 29

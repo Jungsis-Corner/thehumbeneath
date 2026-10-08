@@ -52,17 +52,17 @@ event 15 9 message DRIP_TUNNEL
 event 11 6 message MOSS_WALLS
 event 9 2 gather FEN_MOSS 2
 event 13 4 gather FEN_MOSS 2
-event 8 5 item FEN_MOSS 1
+event 8 5 item FEN_MOSS 1 or 11 4 or 9 1
 # north-east room
-event 28 1 item MARIGOLD_LEAF 1
+event 28 1 item MARIGOLD_LEAF 1 or 29 4 or 27 5
 event 19 5 gather HERB 2
 # south tunnels: broken grates
-event 1 18 trap 2 GRATE
-event 12 20 trap 2 GRATE
-event 16 15 trap 1 GRATE
-event 6 19 item COBWEB_WRAP 1
+event 1 18 trap 2 GRATE or 1 23 or 2 15
+event 12 20 trap 2 GRATE or 12 15 or 14 23
+event 16 15 trap 1 GRATE or 18 17 or 16 19
+event 6 19 item COBWEB_WRAP 1 or 5 18 or 7 20
 event 20 22 gather FEN_MOSS 2
-event 15 26 item FRESH_PREY 1
+event 15 26 item FRESH_PREY 1 or 17 23 or 16 29
 # the sluice gate
 event 23 24 message SLUICE
 event 28 23 item VALVE_WHEEL 1
@@ -70,12 +70,12 @@ event 30 30 mark MARK_2_2
 event 29 29 stairs 3 2 2
 
 # enemies
-group 9 8 EEL 1 swim
-group 20 8 EEL 1 swim
-group 26 18 EEL 2 swim
-group 10 3 LEECH 2 guard
-group 25 2 LEECH 1 guard
-group 6 15 SEWER_RAT 2 hunt
-group 12 22 SEWER_RAT 2 guard
-group 18 29 SEWER_RAT 3 hunt
+group 9 8 EEL 1 swim or 4 8 or 14 8
+group 20 8 EEL 1 swim or 16 8 or 24 8
+group 26 18 EEL 2 swim or 23 20 or 25 15
+group 10 3 LEECH 2 guard or 8 1 or 13 3
+group 25 2 LEECH 1 guard or 21 2 or 24 5
+group 6 15 SEWER_RAT 2 hunt or 3 13 or 10 15
+group 12 22 SEWER_RAT 2 guard or 15 23 or 12 17
+group 18 29 SEWER_RAT 3 hunt or 22 28 or 14 29
 group 25 26 GATE_RAT 1 guard

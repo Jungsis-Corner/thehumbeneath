@@ -57,20 +57,20 @@ event 14 13 gather GLOWCAP_MOSS 2
 event 12 14 gather GLOWCAP_MOSS 2
 event 15 12 gather FEN_MOSS 3
 # supplies
-event 2 12 item COBWEB_WRAP 1
-event 25 5 item MARIGOLD_LEAF 1
-event 3 18 item FRESH_PREY 1
-event 17 30 item HERB 2
-event 24 21 item MARIGOLD_LEAF 1
+event 2 12 item COBWEB_WRAP 1 or 5 11 or 7 12
+event 25 5 item MARIGOLD_LEAF 1 or 25 9 or 23 7
+event 3 18 item FRESH_PREY 1 or 5 15 or 7 17
+event 17 30 item HERB 2 or 13 30 or 16 27
+event 24 21 item MARIGOLD_LEAF 1 or 22 23 or 26 24
 # the way to the Heart
 event 28 22 message HEART
 
 # enemies
-group 9 8 ECHO_SHADE 1 hunt
-group 22 5 ECHO_SHADE 1 guard
-group 18 10 ECHO_SHADE 2 hunt
-group 6 17 ECHO_SHADE 1 hunt
-group 16 19 ECHO_SHADE 1 guard
-group 26 13 ECHO_SHADE 2 hunt
-group 17 25 ECHO_SHADE 1 guard
+group 9 8 ECHO_SHADE 1 hunt or 10 11 or 8 12
+group 22 5 ECHO_SHADE 1 guard or 20 7 or 23 9
+group 18 10 ECHO_SHADE 2 hunt or 21 11 or 20 8
+group 6 17 ECHO_SHADE 1 hunt or 5 14 or 8 15
+group 16 19 ECHO_SHADE 1 guard or 20 18 or 18 16
+group 26 13 ECHO_SHADE 2 hunt or 24 15 or 27 9
+group 17 25 ECHO_SHADE 1 guard or 16 29 or 16 21
 group 28 26 HOLLOW_KEEPER 1 guard

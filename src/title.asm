@@ -143,6 +143,11 @@ new_init:                       ; a new party, nothing visited
         clr.w   v_inlv(a5)
         clr.w   v_deep(a5)
         clr.w   v_story(a5)
+        bsr     rand            ; where things are in this game
+        move.w  d0,v_seed(a5)
+        ifd     SEED            ; tests: always the same places
+        move.w  #SEED,v_seed(a5)
+        endc
         ifd     ANGRYTEST       ; as if a calm Pale One had been attacked
         move.w  #1<<SF_PATTACK,v_story(a5)
         endc

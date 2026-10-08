@@ -58,6 +58,11 @@ Level source:
                                    come closer when the party is near,
                                    swimmers too, but only through water,
                                    flutterers twice a turn and erratic
+    ... or X Y [or X Y ...]        other places (up to 7) for a group (not a
+                                   mini-boss) or an item, trap, boards,
+                                   rubble, spores or cobweb event (not a
+                                   key item); every new game picks one of
+                                   them or the first place, see lv_shuffle
 
 Every stairs cell needs a stairs or exit event. A stairs target must be an
 open cell of a level compiled in the same run; a level that is not built
@@ -77,7 +82,9 @@ hum_lN layout:
                  boards param = damage<<12 | text id, cobweb/exit = text id
     groups       6 bytes each: x, y, enemy type, count, mode (0 guard,
                  1 hunt), flags (0; at run time bit 0 = gone, bit 1 = seen);
-                 ends with $FF
+                 ends with $FF,0
+    places       other places: kind (0 event, 1 group), index in its table,
+                 number N, then N times x, y; ends with $FF
 """
 import os
 import re
@@ -90,7 +97,7 @@ import items  # noqa: E402
 
 SIZE = 32
 MAPLEN = SIZE * SIZE
-LEVMAX = 1536                 # level buffer in the game (map + header + events)
+LEVMAX = 2048                 # level buffer in the game (map + header + events)
 LV_GROUPS = MAPLEN + 8        # offset of the group table offset
 DIRS = 'NESW'
 
@@ -127,9 +134,13 @@ EVENTS = {'stairs': 1, 'mark': 2, 'message': 3, 'trap': 4, 'item': 5, 'gather': 
 ITEM_IDS = {it['id']: i + 1 for i, it in enumerate(items.read())}
 MODES = {'guard': 0, 'hunt': 1, 'swim': 2, 'flutter': 3, 'listen': 4}
 MAXGROUPS = 16
+MAXPLACES = 7                     # other places of one event or group
+MOVABLE = ('item', 'trap', 'boards', 'rubble', 'spores', 'cobweb')
 MAXDOORS = 40                     # LVD_NDOORS in hum.asm
 MAXEVENTS = 64                    # flags kept per level (state.asm)
 ENEMY_IDS = {e['id']: i for i, e in enumerate(enemies.read())}
+KEY_ITEMS = {ITEM_IDS[it['id']] for it in items.read() if it['kind'] == 'key'}
+BOSSES = {i for i, e in enumerate(enemies.read()) if e['boss']}
 
 
 def fail(msg):
@@ -161,7 +172,24 @@ def parse(path, textids):
         if raw.lstrip().startswith('#') or not raw.strip():
             continue
         line = raw.split('#', 1)[0].strip()
+        line, *others = line.split(' or ')
+        places = []
+        for o in others:
+            xy = o.split()
+            if len(xy) != 2 or not all(a.isdigit() for a in xy):
+                fail('%s: ... or X Y' % where)
+            places.append((int(xy[0]), int(xy[1])))
+        if len(places) > MAXPLACES:
+            fail('%s: more than %d other places' % (where, MAXPLACES))
         key, *args = line.split()
+        if places:
+            if key == 'group':
+                lv.setdefault('alts', []).append((1, len(lv['groups']), places, where))
+            elif key == 'event' and len(args) > 2 and args[2] in MOVABLE:
+                lv.setdefault('alts', []).append((0, len(lv['events']), places, where))
+            else:
+                fail('%s: only groups and %s events can have other places'
+                     % (where, ', '.join(MOVABLE)))
         if key == 'number':
             lv['number'] = int(args[0])
         elif key == 'start':
@@ -306,7 +334,46 @@ def check(lv):
         if mode == MODES['swim'] and rows[y][x] != '~':
             fail('%s: swimmers start in the water' % where)
         cells.add((x, y))
+    check_places(lv, seen)
     return len(seen)
+
+
+def check_places(lv, seen):
+    """other places: open, reachable, not the start or stairs, and never a
+    cell another event (or group) may stand on"""
+    rows, (sx, sy, _) = lv['rows'], lv['start']
+    ev_cells, gr_cells = {}, {}
+    for i, e in enumerate(lv['events']):
+        ev_cells.setdefault((e[0], e[1]), set()).add(i)
+    for i, g in enumerate(lv['groups']):
+        gr_cells.setdefault((g[0], g[1]), set()).add(i)
+    for kind, i, places, where in lv.get('alts', []):
+        for p in places:
+            (ev_cells, gr_cells)[kind].setdefault(p, set()).add(i)
+    for kind, i, places, where in lv.get('alts', []):
+        if kind == 0:
+            _, _, ek, param, _ = lv['events'][i]
+            if ek == 'item' and param >> 8 in KEY_ITEMS:
+                fail('%s: a key item keeps its place' % where)
+        else:
+            _, _, t, _, mode, _ = lv['groups'][i]
+            if t in BOSSES:
+                fail('%s: a mini-boss keeps its place' % where)
+        for x, y in places:
+            if not (0 < x < SIZE - 1 and 0 < y < SIZE - 1):
+                fail('%s: place %d,%d outside the map' % (where, x, y))
+            c = rows[y][x]
+            if kind == 0 and c != '.':
+                fail('%s: place %d,%d is not floor' % (where, x, y))
+            if kind == 1 and (c not in '.~' or (mode == MODES['swim']) != (c == '~')):
+                fail('%s: place %d,%d does not suit the group' % (where, x, y))
+            if (x, y) not in seen:
+                fail('%s: place %d,%d is not reachable' % (where, x, y))
+            if (x, y) == (sx, sy):
+                fail('%s: place %d,%d is the start' % (where, x, y))
+            if len((ev_cells, gr_cells)[kind][(x, y)]) > 1:
+                fail('%s: place %d,%d is shared with another %s'
+                     % (where, x, y, ('event', 'group')[kind]))
 
 
 def check_links(levels):
@@ -339,6 +406,9 @@ def build(lv):
         data[y * SIZE + x] |= 0x80
         data += bytes([x, y, t, count, mode, 0])
     data += b'\xff\0'
+    for kind, i, places, _ in lv.get('alts', []):
+        data += bytes([kind, i, len(places)]) + bytes(c for p in places for c in p)
+    data += b'\xff'
     if len(data) > LEVMAX:
         fail('level larger than %d bytes' % LEVMAX)
     return bytes(data)
@@ -416,9 +486,9 @@ def main():
         data = build(lv)
         name = 'hum_l%d' % n
         open(os.path.join(outdir, name), 'wb').write(data)
-        print('levelc: %s -> %s, %d bytes, %d reachable cells, %d events'
+        print('levelc: %s -> %s, %d bytes, %d reachable cells, %d events, %d movable'
               % (os.path.basename(lv['path']), name, len(data), lv['open'],
-                 len(lv['events'])))
+                 len(lv['events']), len(lv.get('alts', []))))
     write_inc(inc, levels)
 
 

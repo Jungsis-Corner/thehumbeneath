@@ -65,31 +65,31 @@ event 27 7 message BADGER_DEN
 event 25 2 message TOTEM_NICHE
 event 25 2 item PALE_TOTEM 1
 # supplies
-event 10 10 item ECHO_PEBBLE 1
-event 19 13 item ECHO_PEBBLE 1
-event 2 18 item HERB 2
+event 10 10 item ECHO_PEBBLE 1 or 7 12 or 8 7
+event 19 13 item ECHO_PEBBLE 1 or 17 15 or 21 11
+event 2 18 item HERB 2 or 3 15 or 4 17
 event 3 14 gather FEN_MOSS 2
-event 9 24 item MARIGOLD_LEAF 1
-event 7 28 item FRESH_PREY 1
+event 9 24 item MARIGOLD_LEAF 1 or 7 26
+event 7 28 item FRESH_PREY 1 or 9 25 or 4 29
 # the Elder's hall
 event 23 24 mark MARK_7_3
 event 28 24 message ELDER_HALL
 event 28 25 lock PALE_TOTEM
-event 30 28 item COBWEB_WRAP 1
+event 30 28 item COBWEB_WRAP 1 or 27 30 or 27 27
 event 29 29 stairs 8 2 2
 
 # enemies
-group 17 2 PALE_ONE 1 listen
-group 12 9 PALE_ONE 2 listen
-group 10 16 PALE_ONE 1 listen
-group 19 15 PALE_ONE 2 listen
-group 12 21 PALE_ONE 1 listen
-group 16 26 PALE_ONE 1 listen
-group 25 9 PALE_ONE 2 listen
-group 6 11 WARREN_RAT 3 hunt
-group 4 18 WARREN_RAT 2 hunt
-group 24 19 WARREN_RAT 3 hunt
-group 3 27 WARREN_RAT 2 hunt
-group 26 4 STALKER_BADGER 1 guard
-group 28 22 STALKER_BADGER 1 guard
+group 17 2 PALE_ONE 1 listen or 19 4 or 14 1
+group 12 9 PALE_ONE 2 listen or 16 10 or 14 12
+group 10 16 PALE_ONE 1 listen or 12 19 or 8 14
+group 19 15 PALE_ONE 2 listen or 16 16 or 15 14
+group 12 21 PALE_ONE 1 listen or 9 20 or 12 23
+group 16 26 PALE_ONE 1 listen or 13 25 or 20 27
+group 25 9 PALE_ONE 2 listen or 26 11 or 22 7
+group 6 11 WARREN_RAT 3 hunt or 8 9 or 8 13
+group 4 18 WARREN_RAT 2 hunt or 2 16
+group 24 19 WARREN_RAT 3 hunt or 25 15 or 22 21
+group 3 27 WARREN_RAT 2 hunt or 3 25 or 6 29
+group 26 4 STALKER_BADGER 1 guard or 27 8 or 23 2
+group 28 22 STALKER_BADGER 1 guard or 24 21 or 26 20
 group 28 26 ELDER_PALE 1 guard

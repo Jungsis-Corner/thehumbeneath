@@ -3,7 +3,7 @@
 Status: approved 2026-10-07 (open questions answered with the proposals, see section 8).
 Changes to the architecture below need approval (CLAUDE.md).
 
-Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9 done (levels 1-8, three endings), M9.9 (balance, polish) done.
+Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9 done (levels 1-8, three endings), M9.9 (balance, polish) done, M9.10 (random places) done.
 
 ## 1. Toolchain (taken over from FUSE RUNNER)
 
@@ -109,6 +109,12 @@ y 136-255  message window: QDOS console, CSIZE 2,0 = 6 px chars -> 42 columns, 1
   plus header and event lines. `levelc.py` checks size, closed outer border, start cell is floor,
   stairs reachable (flood fill) – build fails on errors.
 - Border cells must be walls, so movement needs no bounds check.
+- Other places (M9.10): after the group table (`$FF,0`) a table of entries
+  `kind (0 event, 1 group), index, N, N x (x, y)`, ends with `$FF`. Source:
+  `... or X Y [or X Y ...]` after a group or an item/trap/boards/rubble/
+  spores/cobweb event (not key items, not mini-bosses). `lv_shuffle` picks one
+  place per entry at every load of the file, from v_seed and the level
+  number, so a level and its kept changes always fit together. LEVMAX 2048.
 
 ### 4.2 Texts (`hum_txt`)
 - Source `data/text.txt`, one entry per line: `ID_NAME  text`, `#` comments, `\n` allowed for
@@ -512,6 +518,15 @@ draws a level source as PNG for review.
     30 % of its hits make a cat afraid; an afraid cat loses half of its
     turns; fear ends with the fight; Poppy Seed calms.
   - Test switch ANGRYTEST. 91.4 KB in use, tested at 384 KB.
+- **M9.10 Random places: DONE** (2026-10-08, variant 1 of three for replay
+  value: hand-made maps stay, story marks, keys, locks and mini-bosses stay
+  fixed). Every group and every item, trap, boards, rubble, spores or cobweb
+  event of levels 1-8 has two other places in the same room (no door
+  between, not within 4 steps of where the party arrives, never a cell
+  another event or group may use; checked by levelc). A new game draws
+  v_seed; it is saved after the story flags (SAVE_VER 5, older saves are
+  shown as empty). Test switches SEED=n and MAPALL (the map shows all).
+  mapview.py shows other places in lower case.
 **M10 – endings, sound, polish, distribution** (win image, README, MiSTer test).
 
 ## 7. Testing

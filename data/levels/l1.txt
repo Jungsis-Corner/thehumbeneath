@@ -48,39 +48,39 @@ event 3 6 message TUT_1
 event 3 10 message TUT_2
 event 5 13 message TUT_3
 # store room: herbs in the crates, the smell of apples
-event 10 3 item HERB 1
-event 11 5 item HERB 1
+event 10 3 item HERB 1 or 12 1 or 8 5
+event 11 5 item HERB 1 or 10 1 or 15 4
 event 8 6 message APPLES
 # cobweb hall: webs slow the party, spiders, the first Scratch-Mark
-event 17 2 cobweb WEBS
-event 21 5 cobweb WEBS
-event 17 7 cobweb WEBS
+event 17 2 cobweb WEBS or 21 1 or 19 5
+event 21 5 cobweb WEBS or 22 2 or 20 1
+event 17 7 cobweb WEBS or 22 7 or 18 3
 event 22 8 mark MARK_1_1
-event 16 8 item COBWEB_WRAP 1
+event 16 8 item COBWEB_WRAP 1 or 19 9 or 17 4
 # rat nest
 event 25 6 message RAT_SMELL
-event 30 9 item FRESH_PREY 1
+event 30 9 item FRESH_PREY 1 or 30 4 or 27 10
 # apple hall: rotten apples, a loose board on the way south
 event 8 14 message APPLE_RACKS
-event 14 11 item STALE_PREY 1
-event 11 19 boards 2 BOARDS
-event 18 19 boards 1 BOARDS
+event 14 11 item STALE_PREY 1 or 12 14 or 17 13
+event 11 19 boards 2 BOARDS or 8 17 or 13 17
+event 18 19 boards 1 BOARDS or 20 21 or 17 22
 # west cellar
-event 1 29 item MARIGOLD_LEAF 1
+event 1 29 item MARIGOLD_LEAF 1 or 1 24 or 5 28
 event 5 15 gather HERB 1
 # south rooms: the Cellar Key in the closet
 event 9 28 item CELLAR_KEY 1
-event 21 29 item BRAMBLE_COLLAR 1
+event 21 29 item BRAMBLE_COLLAR 1 or 17 28 or 20 26
 # lair: the second Scratch-Mark at the stairs down
 event 28 30 mark MARK_1_2
 event 27 19 lock CELLAR_KEY
 event 29 29 stairs 2 2 2
 
 # enemies
-group 21 2 GIANT_SPIDER 1 guard
-group 17 6 GIANT_SPIDER 1 guard
-group 28 3 RAT 3 hunt
-group 2 25 RAT 2 guard
-group 20 14 RAT 2 hunt
-group 13 23 RAT 2 guard
+group 21 2 GIANT_SPIDER 1 guard or 17 1 or 19 4
+group 17 6 GIANT_SPIDER 1 guard or 14 4 or 20 8
+group 28 3 RAT 3 hunt or 30 6 or 25 2
+group 2 25 RAT 2 guard or 1 21 or 5 27
+group 20 14 RAT 2 hunt or 19 10 or 21 11
+group 13 23 RAT 2 guard or 11 20 or 9 22
 group 24 25 OLD_WHISKERLESS 1 guard

@@ -51,48 +51,48 @@ event 20 2 message CARVED
 event 3 5 message CRYPT
 event 1 6 mark MARK_6_1
 event 9 5 message CRYPT
-event 7 7 item COBWEB_WRAP 1
+event 7 7 item COBWEB_WRAP 1 or 10 6 or 8 5
 event 11 6 mark MARK_6_4
 event 13 5 gather DRY_MOSS 2
-event 17 7 item LANTERN_SHARD 1
-event 19 7 item POPPY_SEED 1
+event 17 7 item LANTERN_SHARD 1 or 17 12 or 14 6
+event 19 7 item POPPY_SEED 1 or 21 10 or 21 5
 event 20 6 mark MARK_6_6
 event 25 2 message EMPTY_NICHE
-event 28 6 item FRESH_PREY 1
+event 28 6 item FRESH_PREY 1 or 24 5 or 25 7
 # the pillared hall
 event 21 8 message WINGS
 event 14 11 collapse 5 25
 # the middle chambers
-event 3 12 trap 3 SPIKES
-event 5 13 item MARIGOLD_LEAF 1
+event 3 12 trap 3 SPIKES or 2 15 or 1 10
+event 5 13 item MARIGOLD_LEAF 1 or 4 16 or 2 14
 event 9 15 mark MARK_6_5
-event 8 17 trap 3 SPIKES
+event 8 17 trap 3 SPIKES or 10 14 or 8 21
 event 27 13 mark MARK_6_2
 event 29 15 gather DRY_MOSS 2
-event 5 20 item DRY_MOSS 2
+event 5 20 item DRY_MOSS 2 or 1 21 or 3 17
 # the long corridor: a floor that gives way above the south rooms
 event 24 19 collapse 22 28
-event 17 22 trap 3 SPIKES
+event 17 22 trap 3 SPIKES or 17 27 or 19 19
 event 14 23 gather DRY_MOSS 2
 # the older hall below
 event 8 24 message LOWER_HALL
 event 1 30 mark MARK_6_3
 event 1 25 message DUST
 event 13 29 mark MARK_6_7
-event 11 30 item COBWEB_WRAP 1
-event 16 30 item HERB 2
+event 11 30 item COBWEB_WRAP 1 or 8 29 or 6 30
+event 16 30 item HERB 2 or 17 26 or 18 28
 event 29 29 stairs 7 2 2
 
 # enemies
-group 11 2 BONE_RAT 2 guard
-group 3 6 BONE_RAT 1 guard
-group 15 6 SHADE_CAT 1 hunt
-group 26 6 BONE_RAT 3 guard
-group 9 10 WRAITH_OWL 1 flutter
-group 3 14 BONE_RAT 2 guard
-group 15 14 SHADE_CAT 2 hunt
-group 27 14 WRAITH_OWL 1 flutter
-group 3 20 BONE_RAT 2 hunt
-group 9 26 WRAITH_OWL 2 flutter
-group 22 29 SHADE_CAT 2 guard
-group 29 28 WRAITH_OWL 2 guard
+group 11 2 BONE_RAT 2 guard or 16 2 or 7 1
+group 3 6 BONE_RAT 1 guard or 1 7 or 5 7
+group 15 6 SHADE_CAT 1 hunt or 17 8 or 17 5
+group 26 6 BONE_RAT 3 guard or 25 3 or 24 7
+group 9 10 WRAITH_OWL 1 flutter or 12 11 or 6 11
+group 3 14 BONE_RAT 2 guard or 2 11 or 1 16
+group 15 14 SHADE_CAT 2 hunt or 17 11 or 16 18
+group 27 14 WRAITH_OWL 1 flutter or 26 17 or 29 16
+group 3 20 BONE_RAT 2 hunt or 2 16 or 3 23
+group 9 26 WRAITH_OWL 2 flutter or 8 23 or 6 27
+group 22 29 SHADE_CAT 2 guard or 25 30 or 20 27
+group 29 28 WRAITH_OWL 2 guard or 26 27

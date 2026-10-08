@@ -5,7 +5,8 @@ Walls grey, floor dark, doors brown (locked: red), stairs green (down) and
 cyan (up), the start yellow. Markers: E enemy group (B mini-boss), I item,
 G gather spot, M Scratch-Mark, T trap or hazard, N noise, R resting spot,
 ! message,
-X exit.
+X exit. Other places of a group or event (` or X Y`) show the same marker
+in lower case.
 """
 import os
 import sys
@@ -40,9 +41,17 @@ def main():
                          fill=COL.get(c, (110, 110, 120)), outline=(0, 0, 0))
     labels = {}
     for line in lines:
-        f = line.split('#', 1)[0].split()
+        code, *others = line.split('#', 1)[0].split(' or ')
+        f = code.split()
         if not f:
             continue
+        for o in others:
+            x, y = map(int, o.split())
+            if f[0] == 'event':
+                m = MARK.get(f[3], '?').lower()
+            else:
+                m = 'e%s' % f[4]
+            labels.setdefault((x, y), []).append(m)
         if f[0] == 'start':
             x, y = int(f[1]), int(f[2])
             dr.rectangle([x * CELL + 4, y * CELL + 4, x * CELL + CELL - 5, y * CELL + CELL - 5],
@@ -55,7 +64,8 @@ def main():
     for (x, y), marks in labels.items():
         t = ''.join(marks)
         if t:
-            colour = (255, 80, 80) if t.startswith(('E', 'B')) else (255, 255, 255)
+            colour = {'E': (255, 80, 80), 'B': (255, 80, 80), 'e': (150, 60, 60)}.get(
+                t[0], (150, 150, 150) if t.islower() else (255, 255, 255))
             dr.text((x * CELL + 2, y * CELL + 4), t[:3], fill=colour)
     for n in range(0, 32, 4):
         dr.text((n * CELL + 2, 1), str(n), fill=(255, 255, 0))
