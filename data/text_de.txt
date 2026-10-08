@@ -40,9 +40,9 @@ GM_LOAD         LADEN
 GM_SOUND_ON     TON: AN
 GM_SOUND_OFF    TON: AUS
 GM_QUIT         BEENDEN
-SLOT_USED       Platz %d: Ebene %d, %d%%
+SLOT_USED       Platz %d: Ebene %d, %d%% geschafft
 SLOT_EMPTY      Platz %d: leer
-SLOT_AUTO       Auto: Ebene %d, %d%%
+SLOT_AUTO       Auto: Ebene %d, %d%% geschafft
 SLOT_NOAUTO     Auto: leer
 AUTOSAVED       (Das Spiel wurde gespeichert: Auto.)
 SAVED           Gespeichert.
@@ -321,7 +321,8 @@ WORN_BY         %s: %s
 # --- Party sheet (key C) ---
 SHEET_TITLE     Die Katzen - C schließt
 SHEET_NAME      %s, %s, %s
-SHEET_HP        LP %d/%d  EP %d  %s
+SHEET_HP        LP %d/%d  EP %d/%d  %s
+SHEET_HP_MAX    LP %d/%d  EP %d  %s
 SHEET_STATS     Ang %d  Abw %d  Tem %d  Fund %d
 SHEET_MOSS      Moos: Moor %d tr. %d Glüh %d max %d
 
@@ -355,7 +356,7 @@ TEST_MARK       EIN TESTZEICHEN\nZWEI ZEILEN
 ENTRY_1         Staub und alte Äpfel.
 MARK_1_1        WIR GINGEN HINAB\nWIR HATTEN KEINE ANGST
 MARK_1_2        Der Keller ist nur der erste Schritt.
-EXIT_1          Das Lager liegt hinter euch. Folgt ihm.
+EXIT_1          Das Lager liegt hinter euch.\nFolgt dem Hum.
 TUT_1           Pfeiltasten: gehen und drehen.
 TUT_2           LEER: Menü I: Beutel C: Katzen M: Karte
 TUT_3           ESC: Spiel speichern, laden, beenden.

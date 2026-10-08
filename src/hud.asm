@@ -136,35 +136,34 @@ sheet_show:
         move.w  #T_SHEET_NAME,d0
         moveq   #C_WHITE,d2
         bsr     .line
-        moveq   #0,d0           ; hit points, XP, status
-        move.w  p_hp(a3),d0
+        moveq   #0,d0           ; hit points, XP (and the XP of the next
+        move.w  p_hp(a3),d0     ; rank), status
         move.l  d0,(a2)
         move.w  p_hpmax(a3),d0
         move.l  d0,4(a2)
         move.w  p_xp(a3),d0
         move.l  d0,8(a2)
-        bsr     cat_status
+        lea     12(a2),a0
+        move.w  #T_SHEET_HP_MAX,d4
+        move.w  p_rank(a3),d0
+        cmp.w   #NRANKS-1,d0
+        bhs.s   .top
+        add.w   d0,d0
+        lea     rankxp+2(pc),a1
+        moveq   #0,d1
+        move.w  0(a1,d0.w),d1
+        move.l  d1,(a0)+
+        move.w  #T_SHEET_HP,d4
+.top    bsr     cat_status
         moveq   #C_WHITE,d2
         tst.w   d0
         beq.s   .ok
         moveq   #C_RED,d2
 .ok     add.w   #T_STATUS_OK,d0
         bsr     text_get
-        move.l  a1,12(a2)
-        move.w  #T_SHEET_HP,d0
+        move.l  a1,(a0)
+        move.w  d4,d0
         bsr     .line
-        move.w  p_gear(a3),d0   ; gear on the same line from column 32
-        beq.s   .ng             ; (the HP line has at most 31 characters,
-        bsr     item_rec        ; an item name at most 16)
-        move.w  i_name(a0),d0
-        bsr     text_get
-        moveq   #32,d0
-        move.w  d6,d1
-        subq.w  #LINE_H,d1
-        moveq   #C_YEL,d2
-        moveq   #C_BLACK,d3
-        bsr     pdraw
-.ng
         moveq   #0,d0           ; attack, defence, speed, find
         move.w  p_atk(a3),d0
         move.l  d0,(a2)
@@ -177,6 +176,18 @@ sheet_show:
         move.w  #T_SHEET_STATS,d0
         moveq   #C_CYAN,d2
         bsr     .line
+        move.w  p_gear(a3),d0   ; gear on the same line from column 32
+        beq.s   .ng             ; (the stats line has at most 31 characters,
+        bsr     item_rec        ; an item name at most 16)
+        move.w  i_name(a0),d0
+        bsr     text_get
+        moveq   #32,d0
+        move.w  d6,d1
+        subq.w  #LINE_H,d1
+        moveq   #C_YEL,d2
+        moveq   #C_BLACK,d3
+        bsr     pdraw
+.ng
         moveq   #0,d0           ; moss
         move.w  p_fen(a3),d0
         move.l  d0,(a2)

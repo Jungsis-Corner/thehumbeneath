@@ -17,9 +17,13 @@ All x edges are multiples of 4, so every tile starts on a screen word.
 hum_wN layout (big-endian):
   'HWS1', length.l
   HW_BG:   VIEW_H words, floor/ceiling pattern per viewport line
+  HW_FLOOR: 2 x tile offset.l (0 = none): the floor picture (a front tile)
+           for the cells in a checkerboard; the game takes the second one
+           when the party stands on an odd cell (x + y), so the floor stays
+           put in the world while the party walks
   HW_LIST: draw list, far to near, 22 bytes per entry:
            cell.b (d*7 + l+3), kind.b (0 front, 1 run tile, 2 enemy),
-           class mask.b (bit n = drawn when the cell has view class n), 0.b,
+           class mask.w (bit n = drawn when the cell has view class n),
            shift.w (words), tile.l (offset from file start; kind 2: the
            depth 1-3, the picture comes from the sprite set),
            3 x occluder set.l (bit n = view cell n, 0 = unused): the entry is
@@ -47,6 +51,7 @@ import struct
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import deco  # noqa: E402
 import enemies  # noqa: E402
 import sprites  # noqa: E402
 
@@ -56,7 +61,7 @@ HW = [96, 64, 40, 24, 16]          # half width of plane 0..4 (multiples of 2)
 HH = [72, 48, 30, 18, 12]          # half height of plane 0..4
 DEPTHS = 4                         # cell depths 0..3
 LAT = 3                            # lateral offsets -3..3
-WALLMAX = 32768                    # wall set buffer in the game
+WALLMAX = 65536                    # wall set buffer in the game
 SPRMAX = 16384                     # sprite set buffer in the game
 SPRITE_LIGHT = (0.70, 0.18)        # enemy pictures: light at depth 1, loss per cell
                                    # (eyes always glow at full brightness)
@@ -72,6 +77,8 @@ SPRITESETS = {                     # set number: sprite names (the bundle is add
 }
 MAGIC = b'HWS1'
 ENTRY = 22                         # bytes per draw list entry
+DECO_DEPTH = 3                     # wall pictures up to depth 2 (3 is nearly dark)
+DECO_LIGHT = 1.6                   # wall pictures: brighter than the plain wall
 
 BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
 
@@ -260,6 +267,104 @@ class EarthSet(StoneSet):
         return dither(x, y, lt, self.stone)
 
 
+# ---------------------------------------------------------------------------
+# Floors: a = across the cell, b = into it (0 = near edge), odd = the cell
+# is odd in the checkerboard, n = a number of the cell (for variety).
+# -> None (plain floor) or (colour, intensity factor)
+# ---------------------------------------------------------------------------
+def speck(a, b, n, k, cut):
+    """small dots spread over the cell"""
+    h = (int(a * k) * 7 + int(b * k) * 13 + n * 5) % 17
+    return h < cut and (a * k) % 1 < 0.5 and (b * k) % 1 < 0.5
+
+
+def floor_earth(a, b, odd, n):
+    if speck(a, b, n, 7, 3):
+        return (WHITE, 0.9)                         # pebbles
+    if odd and 0.2 < a < 0.8 and 0.25 < b < 0.75 and speck(a, b, n, 3, 9):
+        return (RED, 1.5)                           # trodden earth
+    return None
+
+
+def floor_wet(a, b, odd, n):
+    if b < 0.06 or (a + (0.5 if int(b * 2) else 0)) % 0.5 < 0.04:
+        return (BLACK, 0)                           # brick joints
+    if odd and ((a - 0.5) / 0.32) ** 2 + ((b - 0.5) / 0.3) ** 2 < 1:
+        return (CYAN, 1.6) if (a * 9 + b * 3) % 1 < 0.2 else (BLUE, 1.7)
+    return None
+
+
+def floor_slabs(a, b, odd, n):
+    if a < 0.05 or b < 0.07:
+        return (BLACK, 0)
+    if odd:
+        return (WHITE, 0.8) if speck(a, b, n, 5, 2) else (None, 0.75)
+    return None
+
+
+def floor_gravel(a, b, odd, n):
+    if odd and 0.38 < b < 0.62:
+        return (YEL, 1.3) if (a * 6) % 1 > 0.08 else (BLACK, 0)   # a sleeper
+    if speck(a, b, n, 9, 5):
+        return (WHITE, 1.0)
+    return None
+
+
+def floor_moss(a, b, odd, n):
+    r = ((a - 0.5) / 0.3) ** 2 + ((b - 0.5) / 0.32) ** 2
+    if odd and r < 0.12:
+        return (CYAN, 4.0)                          # a small glowing cap
+    if r < 1 and speck(a, b, n, 6, 12):
+        return (GREEN, 1.8)                         # moss tufts
+    return None
+
+
+def floor_dust(a, b, odd, n):
+    if a < 0.04 or b < 0.06:
+        return (BLACK, 0)
+    if odd and abs(b - 0.45 - (a - 0.5) * 0.4) < 0.05 and 0.25 < a < 0.75:
+        return (WHITE, 2.4)                         # a bone in the dust
+    if speck(a, b, n, 8, 2):
+        return (WHITE, 1.4)
+    return None
+
+
+def floor_straw(a, b, odd, n):
+    if odd and abs((a * 3 + b * 1.3) % 1 - 0.5) < 0.05 and 0.15 < b < 0.85:
+        return (YEL, 2.2)                           # old straw
+    if speck(a, b, n, 6, 3):
+        return (MAG, 1.4)
+    return None
+
+
+FLOORS = {1: floor_earth, 2: floor_wet, 3: floor_slabs, 4: floor_gravel,
+          5: floor_moss, 6: floor_dust, 7: floor_straw, 8: floor_moss}
+
+
+def floor_picture(ws, style, parity):
+    """the floor below the horizon in perspective, as a front tile"""
+    img = {}
+    for y in range(CY, VIEW_H):
+        r = y + 0.5 - CY
+        light = (y - CY - ws.fog + 1) / (CY - ws.fog)
+        if light <= 0 or r < HH[DEPTHS]:
+            continue
+        d = max(k for k in range(DEPTHS) if HH[k] > r)
+        t = (1 / r - 1 / HH[d]) / (1 / HH[d + 1] - 1 / HH[d])
+        hw = 1 / (1 / HW[d] + t * (1 / HW[d + 1] - 1 / HW[d]))
+        for x in range(VIEW_W):
+            lat = (x + 0.5 - CX) / (2 * hw)
+            cl = int((lat + 0.5) // 1)
+            res = style(lat + 0.5 - cl, t, (cl + d + parity) & 1, (cl * 3 + d * 5) & 15)
+            i = ws.floor_i * light
+            if res is None:
+                img[x, y] = dither(x, y, i, ws.floor)
+            else:
+                colour, f = res
+                img[x, y] = dither(x, y, min(i * f, 1.0), ws.floor if colour is None else colour)
+    return img
+
+
 # Dark caves (decided 2026-10-07): little light that fades quickly, black
 # ceiling, a wide dark band at the horizon, dark stone colours.
 DARK = dict(light0=0.48, lightz=0.13, side=0.65, fog=20)
@@ -291,8 +396,9 @@ WALLSETS = {
 }
 
 # view classes, as in levelc.py
-VC_WALL, VC_DOOR, VC_DOWN, VC_UP, VC_WATER = 1, 2, 3, 4, 5
-SOLID = 1 << VC_WALL | 1 << VC_DOOR
+VC_WALL, VC_DOOR, VC_DOWN, VC_UP, VC_WATER, VC_DECOA, VC_DECOB, VC_MARK = range(1, 9)
+DECOS = 1 << VC_DECOA | 1 << VC_DECOB | 1 << VC_MARK   # walls with a picture
+SOLID = 1 << VC_WALL | 1 << VC_DOOR | DECOS
 
 
 # ---------------------------------------------------------------------------
@@ -350,6 +456,46 @@ def flat_face(tex, d, l, ceiling):
             if c is not None:
                 img[x, y] = c
     return img
+
+
+def deco_tex(ws, dc, side):
+    """texture of a wall with the decoration dc: None outside its box"""
+    def tex(x, y, u, v, z):
+        if not dc.inside(u, v):
+            return None
+        c = dc.colour(u, v)
+        if c is None:
+            return ws.wall(x, y, u, v, z, side)
+        colour, i, glow = c          # (pictures stand out a little from the wall)
+        return dither(x, y, min(i if glow else ws.light(z, side) * i * DECO_LIGHT + 0.06, 1.0),
+                      colour)
+    return tex
+
+
+def front_deco(ws, dc, d):
+    """the part of the front face at depth d that the decoration covers,
+    a box from an even word to an even word: draw_front copies long words,
+    so a tile clipped at the edge of the view must keep an even width"""
+    x0, x1 = CX - HW[d], CX + HW[d]
+    u0, u1, v0, v1 = dc.box
+    xa = max((x0 + int(u0 * (x1 - x0))) // 8 * 8, x0)
+    xb = min(-(-(x0 + int(u1 * (x1 - x0) + 0.999)) // 8) * 8, x1)
+    ya = max(int(CY - HH[d] + v0 * 2 * HH[d]), 0)
+    yb = min(int(CY - HH[d] + v1 * 2 * HH[d] + 0.999), VIEW_H)
+    tex = deco_tex(ws, dc, False)
+    img = {}
+    for y in range(ya, yb):
+        for x in range(xa, xb):
+            u = (x + 0.5 - x0) / (x1 - x0)
+            v = (y + 0.5 - (CY - HH[d])) / (2 * HH[d])
+            c = tex(x, y, u, v, d)
+            img[x, y] = ws.wall(x, y, u, v, d, False) if c is None else c
+    return img
+
+
+def side_deco(ws, dc, d, l):
+    img = side_face(deco_tex(ws, dc, True), d, l)
+    return {k: c for k, c in img.items() if c is not None}
 
 
 def mid(table, d):
@@ -427,6 +573,7 @@ def build_sprites(names):
 
 
 def make_tile(img, masked):
+    """(a front tile must start on an even word and have an even width)"""
     """Pixel dict -> tile bytes (word aligned box, duplicate rows shared)."""
     if not img:
         return None
@@ -443,6 +590,8 @@ def make_tile(img, masked):
         words = [encode([img.get((wx * 4 + p, y)) for p in range(4)])
                  for wx in range(wx0, wx1)]
         if not masked:
+            if wx0 & 1 or w & 1:
+                fail('front tile not on long words')
             if any(m for m, _ in words):
                 fail('front tile with a hole')
             row = b''.join(struct.pack('>H', dt) for _, dt in words)
@@ -504,7 +653,8 @@ def occluders(kind, d, l):
     return (sets + [0, 0, 0])[:3]
 
 
-def build(ws):
+def build(ws, n):
+    decos = list(zip((VC_DECOA, VC_DECOB), deco.SETS[n])) + [(VC_MARK, deco.MARK)]
     bg = b''
     for y in range(VIEW_H):
         _, word = encode([ws.background(x, y) for x in range(4)])
@@ -514,6 +664,9 @@ def build(ws):
         fronts[VC_WALL, d] = make_tile(front_face(
             lambda x, y, u, v, z: ws.wall(x, y, u, v, z, False), d), False)
         fronts[VC_DOOR, d] = make_tile(front_face(ws.door, d), False)
+        if d < DECO_DEPTH:
+            for vc, dc in decos:
+                fronts[vc, d] = make_tile(front_deco(ws, dc, d), False)
     entries = []          # cell, kind, class mask, shift, tile, occluder sets
     for d in range(DEPTHS - 1, -1, -1):                 # far to near
         order = [l for a in range(LAT, -1, -1) for l in sorted({-a, a})]
@@ -546,28 +699,39 @@ def build(ws):
                 sh = l * 2 * HW[d] // 4
                 x0 = CX // 4 - HW[d] // 4 + sh
                 if x0 < VIEW_W // 4 and x0 + 2 * HW[d] // 4 > 0:
-                    for vc in (VC_WALL, VC_DOOR):
-                        entries.append((cell, 0, 1 << vc, sh, fronts[vc, d],
-                                        occluders('front', d, l)))
+                    occ = occluders('front', d, l)
+                    entries.append((cell, 0, 1 << VC_WALL | DECOS, sh, fronts[VC_WALL, d], occ))
+                    entries.append((cell, 0, 1 << VC_DOOR, sh, fronts[VC_DOOR, d], occ))
+                    for vc, _ in decos[:3 if d < DECO_DEPTH else 0]:  # the picture over it
+                        entries.append((cell, 0, 1 << vc, sh, fronts[vc, d], occ))
             if l != 0:
                 side = lambda x, y, u, v, z: ws.wall(x, y, u, v, z, True)
                 t = make_tile(side_face(side, d, l), True)
                 if t:
-                    entries.append((cell, 1, SOLID, 0, t, occluders('side', d, l)))
+                    occ = occluders('side', d, l)
+                    entries.append((cell, 1, SOLID, 0, t, occ))
+                    for vc, dc in decos[:3 if d < DECO_DEPTH else 0]:
+                        t = make_tile(side_deco(ws, dc, d, l), True)
+                        if t:
+                            entries.append((cell, 1, 1 << vc, 0, t, occ))
     tiles = []
     for e in entries:                                   # identical tiles once
         if e[1] != 2 and e[4] not in tiles:
             tiles.append(e[4])
-    list_at = 8 + len(bg)
+    floors = [make_tile(floor_picture(ws, FLOORS[n], p), False) for p in (0, 1)]
+    tiles += floors
+    list_at = 8 + len(bg) + 8
     tiles_at = list_at + ENTRY * (len(entries) + 1)
     offs, pos = {}, tiles_at
     for t in tiles:
         offs[t] = pos
         pos += len(t)
-    lst = b''.join(struct.pack('>BBBxhIIII', c, k, m, sh, t if k == 2 else offs[t], *occ)
+    floor_at = [offs[t] for t in floors]
+    lst = b''.join(struct.pack('>BBHhIIII', c, k, m, sh, t if k == 2 else offs[t], *occ)
                    for c, k, m, sh, t, occ in entries)
-    lst += struct.pack('>BBBxhIIII', 0xff, 0, 0, 0, 0, 0, 0, 0)
-    data = MAGIC + struct.pack('>I', pos) + bg + lst + b''.join(tiles)
+    lst += struct.pack('>BBHhIIII', 0xff, 0, 0, 0, 0, 0, 0, 0)
+    data = MAGIC + struct.pack('>I', pos) + bg + struct.pack('>II', *floor_at) + lst \
+        + b''.join(tiles)
     if len(data) > WALLMAX:
         fail('wall set %d bytes, more than WALLMAX %d' % (len(data), WALLMAX))
     return data, len(entries)
@@ -578,7 +742,7 @@ def main():
         fail(__doc__.splitlines()[0])
     outdir, inc = sys.argv[1:]
     for n, ws in WALLSETS.items():
-        data, count = build(ws)
+        data, count = build(ws, n)
         open(os.path.join(outdir, 'hum_w%d' % n), 'wb').write(data)
         print('gfxc: hum_w%d, %d bytes, %d draw entries' % (n, len(data), count))
     for n, names in SPRITESETS.items():
@@ -594,7 +758,8 @@ def main():
         f.write('VIEW_D   equ %d  ; depths in the view table\n' % DEPTHS)
         f.write('WALLMAX  equ %d\n' % WALLMAX)
         f.write("HW_MAGIC equ 'HWS1'\nHW_LEN   equ 4\nHW_BG    equ 8\n")
-        f.write('HW_LIST  equ %d\n' % (8 + 2 * VIEW_H))
+        f.write('HW_FLOOR equ %d\n' % (8 + 2 * VIEW_H))
+        f.write('HW_LIST  equ %d\n' % (8 + 2 * VIEW_H + 8))
         f.write('HW_ENTRY equ %d  ; bytes per draw list entry\n' % ENTRY)
         f.write('SPRMAX   equ %d\n' % SPRMAX)
         f.write("HS_MAGIC equ 'HSS1'\nHS_LEN   equ 4\nHS_COUNT equ 8\nHS_TABLE equ 12\n")

@@ -128,7 +128,9 @@ render:
         cmp.b   #VC_WALL,d3
         beq.s   .b1
         cmp.b   #VC_DOOR,d3
-        bne.s   .b0
+        beq.s   .b1
+        cmp.b   #VC_DECOA,d3    ; walls with a picture
+        blo.s   .b0
 .b1     bset    d1,d0
 .b0     addq.w  #1,d1
         dbra    d2,.bits
@@ -191,6 +193,22 @@ render:
         dbra    d6,.bgl
         dbra    d7,.bg
 
+; --- the floor picture: the second one when the party stands on an odd
+;     cell, so the checkerboard of the floor stays put in the world
+        move.w  v_pos(a5),d0
+        move.w  d0,d1
+        lsr.w   #5,d1
+        add.w   d1,d0           ; x + y
+        and.w   #1,d0
+        lsl.w   #2,d0
+        add.w   #HW_FLOOR,d0
+        move.l  0(a3,d0.w),d0
+        beq.s   .nofl
+        lea     0(a3,d0.l),a1
+        moveq   #0,d2
+        bsr     draw_front
+.nofl
+
 ; --- walls, doors, stairs, enemies, far to near. A wall entry is drawn
 ;     when its class mask has the view class of its cell, an enemy entry
 ;     when a group stands in the cell; then the occluder sets are checked.
@@ -200,8 +218,7 @@ render:
         cmp.b   #$ff,d0
         beq     .copy
         move.b  (a2)+,d1        ; kind
-        move.b  (a2)+,d4        ; class mask
-        addq.l  #1,a2
+        move.w  (a2)+,d4        ; class mask
         move.w  (a2)+,d2        ; shift in words
         move.l  (a2)+,d3        ; tile offset (enemy: depth)
         lea     12(a2),a4       ; next entry
@@ -359,10 +376,25 @@ draw_front:
 .e      rts
 
 ; draw_sprite: a1 = enemy picture, d2 = shift in words; masked like a side
-; tile, clipped like a front tile (uses d0-d7, a0, a6; keeps a2-a4)
+; tile, clipped like a front tile (uses d0-d7, a0, a6; keeps a2-a4).
+; v_fx: FX_HIT draws it white, FX_ATTACK red and ATK_DROP lines lower
+; (it leaps at the party)
+FX_HIT    equ   1
+FX_ATTACK equ   2
+ATK_DROP  equ   6
+FX_WHITE  equ   $aaff           ; a word of 4 white pixels
+FX_RED    equ   $00aa           ; ... of 4 red pixels
 draw_sprite:
         movem.w (a1),d4-d7      ; x0, y0, w, h
-        add.w   d2,d4           ; x = x0 + shift
+        cmp.w   #FX_ATTACK,v_fx(a5)
+        bne.s   .y
+        addq.w  #ATK_DROP,d5
+        move.w  #VIEW_H,d0      ; cut off at the bottom of the view
+        sub.w   d5,d0
+        cmp.w   d0,d7
+        bls.s   .y
+        move.w  d0,d7
+.y        add.w   d2,d4           ; x = x0 + shift
         moveq   #0,d0           ; first visible column c0
         tst.w   d4
         bpl.s   .l
@@ -395,14 +427,30 @@ draw_sprite:
         add.l   d0,d3
         lea     0(a1,d3.l),a6
         move.w  d1,d5
+        tst.w   v_fx(a5)
+        bne.s   .fx
 .col    move.w  (a6)+,d4
         and.w   d4,(a0)
         move.w  (a6)+,d4
         or.w    d4,(a0)+
         dbra    d5,.col
-        add.w   d2,a0
+.nx     add.w   d2,a0
         dbra    d7,.row
 .e      rts
+.fx     move.l  d0,-(sp)        ; (d0 = c0, needed for every row)
+        move.w  #FX_WHITE,d0    ; one colour where the picture is
+        cmp.w   #FX_HIT,v_fx(a5)
+        beq.s   .fc
+        move.w  #FX_RED,d0
+.fc     move.w  (a6)+,d4
+        and.w   d4,(a0)
+        not.w   d4
+        and.w   d0,d4
+        or.w    d4,(a0)+
+        addq.l  #2,a6
+        dbra    d5,.fc
+        move.l  (sp)+,d0
+        bra.s   .nx
 
 ; draw_side: a1 = side tile, one run of words per line
 ; (uses d0-d7, a0, a4, a6; keeps a2-a3)
@@ -443,4 +491,68 @@ draw_side:
         move.w  d0,(a4)
 .nx     lea     VIEWB(a0),a0
         dbra    d7,.row
+        rts
+
+; foe_fx: d0 = FX_HIT or FX_ATTACK, d1 = frames: the enemies in the view
+;         drawn that way for a moment, then as before
+foe_fx:
+        movem.l d0-d1,-(sp)
+        move.w  d0,v_fx(a5)
+        bsr     render
+        subq.w  #1,d1
+.w      bsr     frame
+        dbra    d1,.w
+        clr.w   v_fx(a5)
+        bsr     render
+        bra.s   fx_foes
+
+; view_shake: the view (v_vbuf) jumps right and left and back: a blow
+view_shake:
+        movem.l d0-d1,-(sp)
+        moveq   #SHAKE_W,d0
+        bsr.s   view_copy
+        moveq   #1,d1
+.a      bsr     frame
+        dbra    d1,.a
+        moveq   #-SHAKE_W,d0
+        bsr.s   view_copy
+        moveq   #1,d1
+.b      bsr     frame
+        dbra    d1,.b
+        moveq   #0,d0
+        bsr.s   view_copy
+fx_foes tst.w   v_fight(a5)     ; in a fight: the enemy line again
+        beq.s   .e
+        bsr     foes_draw
+.e      movem.l (sp)+,d0-d1
+        rts
+SHAKE_W equ     1               ; words
+
+; view_copy: d0 = shift in words (+ right, - left): v_vbuf to the screen,
+;            the uncovered edge black
+view_copy:
+        movem.l d0-d3/a0-a1,-(sp)
+        lea     v_vbuf(a5),a0
+        lea     SCREEN,a1
+        move.w  #VIEW_H-1,d3
+.row    moveq   #VIEW_W-1,d1    ; destination column
+        moveq   #0,d2
+.col    move.w  d1,d2
+        sub.w   d0,d2           ; source column
+        bmi.s   .blk
+        cmp.w   #VIEW_W,d2
+        bhs.s   .blk
+        add.w   d2,d2
+        move.w  0(a0,d2.w),d2
+        bra.s   .put
+.blk    moveq   #0,d2
+.put    move.w  d1,-(sp)
+        add.w   d1,d1
+        move.w  d2,0(a1,d1.w)
+        move.w  (sp)+,d1
+        dbra    d1,.col
+        lea     VIEWB(a0),a0
+        lea     LINEB(a1),a1
+        dbra    d3,.row
+        movem.l (sp)+,d0-d3/a0-a1
         rts

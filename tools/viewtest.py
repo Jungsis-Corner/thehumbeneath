@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """viewtest.py <keys> [x y dir]  - regression test of the 3D view.
 
-Start the game first: tools/emu.sh -DQUICKSTART (straight into test level 0). For every key of <keys>
+Start the game first: tools/emu.sh -DQUICKSTART -DNOENEMY (straight into
+test level 0, without enemy groups: hunters would move at random). For every key of <keys>
 the key is pressed in the emulator, the move is simulated here with the same
 rules as the game (a step forward into a closed door opens it, items on
 an entered cell are taken), and the
@@ -38,13 +39,15 @@ def press(key, shift=False):
     subprocess.run(['xdotool', 'keyup', '--window', wid, key], env=env)
     if shift:
         subprocess.run(['xdotool', 'keyup', '--window', wid, 'Shift_L'], env=env)
-    time.sleep(0.5)
+    time.sleep(0.9)
 
 
 def main():
     if len(sys.argv) not in (2, 5):
         sys.exit(__doc__)
     level = bytearray(open(os.path.join(T, 'build', 'hum_l0'), 'rb').read())
+    groups = int.from_bytes(level[1032:1034], 'big')
+    level[groups] = 0xff                            # no groups (NOENEMY)
     if len(sys.argv) == 5:
         x, y, d = int(sys.argv[2]), int(sys.argv[3]), 'NESW'.index(sys.argv[4])
     else:

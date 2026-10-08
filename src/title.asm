@@ -112,22 +112,100 @@ title_note:
         movem.l (sp)+,d0-d5/a1
         rts
 
+; pic_page: d0 = picture n (hum_pN), d1 = title text id (-1 = none):
+;           the picture, the title under it, "Press a key."; nothing when
+;           the picture is missing
+PIC_ROW equ     19              ; first text row under a picture
+pic_page:
+        movem.l d0-d3/a0-a2,-(sp)
+        move.w  d1,d3
+        lea     v_buf(a5),a2    ; 'hum_pN'
+        move.l  a2,a0
+        lea     picname(pc),a1
+        moveq   #2+6-1,d1
+.cp     move.b  (a1)+,(a0)+
+        dbra    d1,.cp
+        add.b   d0,-1(a0)
+        bsr.s   pic_show
+        bne.s   .e
+        moveq   #PIC_ROW,d1
+        tst.w   d3
+        bmi.s   .key
+        move.w  d3,d0
+        moveq   #C_YEL,d2
+        bsr     full_line
+.key    move.w  #T_PRESS_KEY,d0
+        moveq   #FULL_ROWS-2,d1
+        moveq   #C_CYAN,d2
+        bsr     full_line
+        bsr     wait_key
+.e      movem.l (sp)+,d0-d3/a0-a2
+        rts
+
+; pic_show: a2 = file name (QDOS string) of a packed picture (tools/pics.py)
+;           -> EQ = it is on the screen, the rest of the screen black.
+;           It is read into the wall set buffer first (the wall set is
+;           loaded again when it is needed).
+PIC_MAGIC equ   'HSC1'
+pic_show:
+        movem.l d1-d4/a0-a3,-(sp)
+        bsr     cls
+        clr.w   v_wsnum(a5)
+        lea     v_name(a5),a3
+        bsr     fopen
+        bne.s   .e
+        lea     v_walls(a5),a1
+        moveq   #12,d4          ; magic, length, lines
+        bsr     fread
+        bne.s   .cl
+        moveq   #-1,d0
+        cmp.l   #PIC_MAGIC,(a1)
+        bne.s   .cl
+        move.l  4(a1),d4
+        cmp.l   #WALLMAX,d4
+        bhi.s   .cl
+        sub.l   #12,d4
+        bls.s   .cl
+        lea     12(a1),a1
+        bsr     fread
+.cl     move.l  d0,d4
+        moveq   #IO_CLOSE,d0
+        trap    #2
+        move.l  d4,d0
+        bne.s   .e
+        lea     v_walls(a5),a0  ; unpack (PackBits) into the screen
+        moveq   #0,d1
+        move.w  8(a0),d1        ; lines
+        mulu    #128,d1
+        lea     12(a0),a0
+        lea     SCREEN,a1
+        lea     0(a1,d1.l),a2   ; end
+.nx     cmp.l   a2,a1
+        bhs.s   .ok
+        moveq   #0,d2
+        move.b  (a0)+,d2
+        bmi.s   .rep
+.lit    move.b  (a0)+,(a1)+     ; n+1 bytes as they are
+        dbra    d2,.lit
+        bra.s   .nx
+.rep    neg.b   d2              ; the next byte 257-n times
+        move.b  (a0)+,d3
+.r      move.b  d3,(a1)+
+        dbra    d2,.r
+        bra.s   .nx
+.ok     moveq   #0,d0
+.e      movem.l (sp)+,d1-d4/a0-a3
+        tst.l   d0
+        rts
+
 ; title_show: the title picture from hum_scr straight into the screen
 ;             (only the title, in big letters, if there is no picture)
 title_show:
         movem.l d0-d4/a0-a3,-(sp)
-        bsr     cls
         lea     scrname(pc),a2
-        lea     v_name(a5),a3
-        bsr     fopen
-        bne.s   .none
-        lea     SCREEN,a1
-        move.l  #32768,d4
-        bsr     fread
-        moveq   #IO_CLOSE,d0
-        trap    #2
-        bra.s   .e
-.none   move.w  #T_TITLE,d0
+        bsr     pic_show
+        beq.s   .e
+        move.w  #T_TITLE,d0
         moveq   #8,d1
         moveq   #C_WHITE,d2
         bsr     full_line
@@ -502,6 +580,9 @@ full_line:
 ; intro: the intro text of STORY.md, then a key
 intro:
         movem.l d0-d2,-(sp)
+        moveq   #0,d0           ; the picture first
+        moveq   #-1,d1          ; (no title line)
+        bsr     pic_page
         bsr     full_clear
         move.w  #T_INTRO,d0
         moveq   #3,d1
@@ -532,6 +613,11 @@ ending:
         moveq   #100,d1         ; a moment to read the last messages
 .w      bsr     frame
         dbra    d1,.w
+        move.w  d7,d0           ; its picture with its title
+        addq.w  #1,d0
+        move.w  d7,d1
+        add.w   #T_END_A_TITLE,d1
+        bsr     pic_page
         bsr     full_clear
         lea     v_args(a5),a2
         move.w  d7,d0

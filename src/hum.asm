@@ -54,8 +54,9 @@ HUNT_RANGE equ  6               ; hunters follow the party within this distance
 PACK_SLOTS equ  12              ; kinds of items in the party pack
 PACK_MAX   equ  99              ; items of one kind
 MENU_MAX   equ  16              ; menu lines
-MENU_LEN   equ  24              ; bytes per menu line (zero-terminated)
-MENU_W     equ  24              ; menu box width in words
+MENU_LEN   equ  40              ; bytes per menu line (zero-terminated)
+MENU_W     equ  24              ; menu box width in words (at least; longer
+                                ; lines make it wider, see menu_width)
 PF_POISON  equ  0               ; p_flags: poisoned
 PF_FEAR    equ  2               ; p_flags: afraid (Wraith Owls; ends with the fight)
 PF_FEATHER equ  3               ; p_flags: the feather was used on this level
@@ -193,7 +194,7 @@ v_shdr  rs.b    SAVE_HEAD       ; save file header
 v_ssnum rs.w    1               ; sprite set in v_sprites (0 = none)
 v_pos   rs.w    1               ; player cell: y*32+x
 v_dir   rs.w    1               ; facing: 0 N, 1 E, 2 S, 3 W
-v_args  rs.l    4               ; arguments for text_fmt
+v_args  rs.l    6               ; arguments for text_fmt (at most 6)
 v_party rs.b    p_size*NPARTY
 v_page  rs.w    1               ; PG_VIEW, PG_MAP or PG_SHEET
 v_steps rs.w    1               ; steps since the last bleeding tick
@@ -214,11 +215,14 @@ v_humc  rs.w    1               ; actions since the last Hum pulse
 v_regen rs.w    1               ; steps since the last hit point regained
 v_pounce rs.w   1               ; combat: the attack is a pounce
 v_mute  rs.w    1               ; 1 = sound off
+v_fx    rs.w    1               ; enemies drawn as FX_HIT or FX_ATTACK (render)
 v_mwait rs.w    1               ; frames until the next note
 v_mptr  rs.l    1               ; next note of the tune, 0 = none
 v_beep  rs.b    16              ; IPC block of a note
 v_mcount rs.w   1               ; menu: number of lines
 v_mtxt  rs.b    MENU_MAX*MENU_LEN ; menu: the lines
+v_mw    rs.w    1               ; menu: box width in words
+v_mwold rs.w    1               ; width of the box drawn before
 v_mitem rs.b    MENU_MAX        ; menu: item of each line (pack menus)
 v_pack  rs.b    2*PACK_SLOTS    ; party pack: item, count
 v_deep  rs.w    1               ; deepest level reached (saved after the pack)
@@ -2701,6 +2705,7 @@ svname: qstr    'hum_sv0'
 msgname: qstr   'con_512x120a0x136'
 fullname: qstr  'con_512x256a0x0'
 scrname: qstr   'hum_scr'
+picname: qstr   'hum_p0'
 wheel:  dc.b    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-',39
 wheel_end:
         even

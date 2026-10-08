@@ -51,6 +51,8 @@ Level source:
                                    the level are turned, the locked doors with
                                    `lock X Y VALVE_WHEEL` open
     test yes                       a test level: not counted for the progress
+    deco PERCENT                   walls with pictures (default 12 %; the
+                                   walls next to Scratch-Marks always)
     hum yes                        the Hum pulses here (stuns the party now
                                    and then; LV_FLAGS bit LF_HUM)
     group X Y ENEMY COUNT guard|hunt|swim|flutter   enemy group (ENEMY = id from
@@ -102,8 +104,8 @@ LV_GROUPS = MAPLEN + 8        # offset of the group table offset
 DIRS = 'NESW'
 
 # view classes (how a cell is drawn in the first-person view)
-VC_NONE, VC_WALL, VC_DOOR, VC_DOWN, VC_UP, VC_WATER = range(6)
-VC_NAMES = ['NONE', 'WALL', 'DOOR', 'DOWN', 'UP', 'WATER']
+VC_NONE, VC_WALL, VC_DOOR, VC_DOWN, VC_UP, VC_WATER, VC_DECOA, VC_DECOB, VC_MARK = range(9)
+VC_NAMES = ['NONE', 'WALL', 'DOOR', 'DOWN', 'UP', 'WATER', 'DECOA', 'DECOB', 'MARK']
 
 # char, type, name, blocks movement, debug map colour (0-7), view class
 CELLS = [
@@ -122,6 +124,11 @@ CELLS = [
     ('<', 12, 'STAIRS_UP', 0, 4, VC_UP),
     ('~', 13, 'WATER', 0, 1, VC_WATER),
     ('S', 14, 'SECRET', 1, 7, VC_WALL),
+    # walls with a picture of the wall set (tools/deco.py); placed by
+    # decorate(), or by hand with these characters
+    ('*', 15, 'DECO_A', 1, 7, VC_DECOA),
+    ('+', 16, 'DECO_B', 1, 7, VC_DECOB),
+    ('=', 17, 'MARK_WALL', 1, 7, VC_MARK),
 ]
 BY_CHAR = {c[0]: c for c in CELLS}
 BY_TYPE = {c[1]: c for c in CELLS}
@@ -214,6 +221,10 @@ def parse(path, textids):
             lv['test'] = args == ['yes']
         elif key == 'hum':
             lv['hum'] = args == ['yes']
+        elif key == 'deco':
+            if len(args) != 1 or not args[0].isdigit() or int(args[0]) > 50:
+                fail('%s: deco PERCENT (0-50)' % where)
+            lv['deco'] = int(args[0])
         elif key == 'event':
             if len(args) < 3 or args[2] not in EVENTS:
                 fail('%s: event X Y %s ...' % (where, '|'.join(EVENTS)))
@@ -389,8 +400,50 @@ def check_links(levels):
                 fail('%s: target cell %d,%d of level %d is not open' % (where, tx, ty, n))
 
 
+DECO = 12                         # % of the walls next to open cells
+
+
+def decorate(lv):
+    """Wall cells that get a picture: the carved wall next to every
+    Scratch-Mark (the one seen along the longest open line), then some of
+    the walls next to open cells, never two side by side."""
+    rows = [list(r) for r in lv['rows']]
+    for x, y, kind, _, _ in lv['events']:
+        if kind != 'mark':
+            continue
+        best = None
+        for dx, dy in ((0, -1), (1, 0), (0, 1), (-1, 0)):
+            if rows[y + dy][x + dx] != '#':
+                continue
+            n, cx, cy = 0, x - dx, y - dy            # open cells looking at it
+            while 0 < cx < SIZE - 1 and 0 < cy < SIZE - 1 and n < 4 \
+                    and not blocks(rows[cy][cx]):
+                n, cx, cy = n + 1, cx - dx, cy - dy
+            if best is None or n > best[0]:
+                best = (n, x + dx, y + dy)
+        if best:
+            rows[best[2]][best[1]] = '='
+    pct = lv.get('deco', DECO)
+    for y in range(SIZE):
+        for x in range(SIZE):
+            if rows[y][x] != '#':
+                continue
+            if not any(0 <= x + dx < SIZE and 0 <= y + dy < SIZE
+                       and not blocks(rows[y + dy][x + dx])
+                       for dx, dy in ((0, -1), (1, 0), (0, 1), (-1, 0))):
+                continue
+            if any(rows[y + dy][x + dx] in '*+='
+                   for dy in (-1, 0, 1) for dx in (-1, 0, 1)
+                   if 0 <= x + dx < SIZE and 0 <= y + dy < SIZE):
+                continue
+            h = (x * 73 + y * 151 + lv['number'] * 37 + x * y * 11) % 100
+            if h < pct:
+                rows[y][x] = '*' if (x + 2 * y) % 3 else '+'
+    return rows
+
+
 def build(lv):
-    data = bytearray(BY_CHAR[c][1] for row in lv['rows'] for c in row)
+    data = bytearray(BY_CHAR[c][1] for row in decorate(lv) for c in row)
     sx, sy, d = lv['start']
     data += bytes([sx, sy, d, lv['wallset'], lv['sprites'], 1 if lv.get('hum') else 0])
     data += lv['entry'].to_bytes(2, 'big') + b'\0\0'      # group table offset

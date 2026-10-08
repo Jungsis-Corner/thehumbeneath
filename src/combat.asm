@@ -317,6 +317,9 @@ cat_attack:
 .dmg    move.w  d0,d2
         moveq   #S_HIT,d0
         bsr     sound
+        moveq   #FX_HIT,d0      ; the enemy flashes white
+        moveq   #HIT_FRAMES,d1
+        bsr     foe_fx
         sub.w   d2,(a1)
         move.w  d2,v_echo(a5)   ; what an Echo Shade copies
         move.w  #T_HIT_FOR,d0
@@ -358,6 +361,8 @@ cat_attack:
         bra     name_msg
 
 ; foes_turn: every enemy still up attacks
+HIT_FRAMES equ  4               ; an enemy flashes when it is hit
+
 foes_turn:
         movem.l d0-d7/a0-a4,-(sp)
         move.l  v_cetab(a5),a4
@@ -376,7 +381,9 @@ foe_attack:
         move.w  #T_ATTACKS,d0
         move.w  e_name(a4),d1
         bsr     name_msg
-        bsr     pause
+        moveq   #FX_ATTACK,d0   ; it leaps at the party, glowing red
+        moveq   #CMB_PAUSE,d1
+        bsr     foe_fx
         bsr     pick_target     ; -> a3 = cat
         cmp.w   #TR_ECHO,e_trait(a4) ; an Echo Shade copies the last action
         bne.s   .def0
@@ -427,6 +434,7 @@ foe_attack:
 .dmg    move.w  d0,d2
         moveq   #S_HURT,d0
         bsr     sound
+        bsr     view_shake
         sub.w   d2,p_hp(a3)
         move.w  #T_HIT_FOR,d0
         move.w  p_name(a3),d1

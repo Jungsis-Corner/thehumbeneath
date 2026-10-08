@@ -364,6 +364,37 @@ menu_addt:
         move.l  (sp)+,a1
         rts
 
+; menu_width: a3 = title -> v_mw = box width in words: MENU_W, or wider
+;             for the longest line (marker and margins: 3 more)
+menu_width:
+        movem.l d0-d2/a0,-(sp)
+        moveq   #MENU_W,d2
+        move.l  a3,a0
+        moveq   #2,d0           ; (the title has no marker)
+        bsr.s   .len
+        lea     v_mtxt(a5),a0
+        moveq   #0,d1
+.ln     cmp.w   v_mcount(a5),d1
+        bhs.s   .e
+        moveq   #3,d0
+        move.l  a0,-(sp)
+        bsr.s   .len
+        move.l  (sp)+,a0
+        lea     MENU_LEN(a0),a0
+        addq.w  #1,d1
+        bra.s   .ln
+.e      move.w  d2,v_mw(a5)
+        movem.l (sp)+,d0-d2/a0
+        rts
+.len    tst.b   (a0)+           ; d2 = max(d2, d0 + length)
+        beq.s   .l1
+        addq.w  #1,d0
+        bra.s   .len
+.l1     cmp.w   d0,d2
+        bhs.s   .l2
+        move.w  d0,d2
+.l2     rts
+
 ; menu_run: a1 = title -> d0 = chosen line, -1 = cancelled
 ;           up/down choose; space, enter or right confirm; left or ESC
 ;           cancel (all of it works with the joystick)
@@ -372,6 +403,7 @@ menu_run:
         move.l  a1,a3
         bsr     wait_free       ; a key still held is not a choice
         clr.w   v_msel(a5)
+        bsr     menu_width
         moveq   #0,d4           ; d4 = column of the box
         tst.w   v_intitle(a5)
         beq.s   .draw
@@ -396,12 +428,16 @@ menu_run:
         tst.w   v_intitle(a5)
         bne.s   .box
         cmp.w   v_mtop(a5),d1   ; a larger box was here: view first
+        bhi.s   .ref
+        move.w  v_mwold(a5),d2  ; (d0 = column of the box)
+        cmp.w   v_mw(a5),d2
         bls.s   .box
-        bsr     view_refresh
+.ref    bsr     view_refresh
 .box    move.w  d6,v_mtop(a5)
+        move.w  v_mw(a5),v_mwold(a5)
         move.w  d4,-(sp)
         move.w  d6,d1
-        moveq   #MENU_W,d2
+        move.w  v_mw(a5),d2
         move.w  d7,d3
         moveq   #C_BLACK,d4
         bsr     fill_rect

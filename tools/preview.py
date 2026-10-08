@@ -96,9 +96,12 @@ def render(level, ws, ss, x, y, d):
         buf[row] = decode(w16(8 + 2 * row)) * (VIEW_W // 4)
     walls = view_table(level, x, y, d)     # view class per cell
     groups = group_table(level, x, y, d)
-    pos = 8 + 2 * VIEW_H
+    floor = struct.unpack_from('>I', ws, 8 + 2 * VIEW_H + 4 * ((x + y) & 1))[0]
+    if floor:                           # the floor picture of the cell's colour
+        blit(buf, ws, floor, 0, False)
+    pos = 8 + 2 * VIEW_H + 8
     while ws[pos] != 0xff:
-        cell, kind, cmask, shift, tile = struct.unpack_from('>BBBxhI', ws, pos)
+        cell, kind, cmask, shift, tile = struct.unpack_from('>BBHhI', ws, pos)
         pos += 22                       # occluder sets are not used here:
                                         # drawing everything checks them
         if kind == 2:                   # item and/or enemy: tile = depth

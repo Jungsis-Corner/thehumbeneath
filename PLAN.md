@@ -3,7 +3,7 @@
 Status: approved 2026-10-07 (open questions answered with the proposals, see section 8).
 Changes to the architecture below need approval (CLAUDE.md).
 
-Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9 done (levels 1-8, three endings), M9.9 (balance, polish) done, M9.10 (random places) done, M10a (sound) done, M10b (German) done.
+Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9 done (levels 1-8, three endings), M9.9 (balance, polish) done, M9.10 (random places) done, M10a (sound) done, M10b (German) done, M10c (graphics) done.
 
 ## 1. Toolchain (taken over from FUSE RUNNER)
 
@@ -548,6 +548,40 @@ draws a level source as PNG for review.
   or hum_tde is missing. Saves hold no text and work in both languages.
   Names: the cats are Aschkralle, Moosfarn, Flinkschnurr, Seggenpelz;
   "der Hum" keeps its English name. tools/emu.sh: EMULANG=de.
+- **M10c Graphics: DONE** (2026-10-08).
+  - Wall pictures (tools/deco.py): every wall set has two (cellar: shelf,
+    roots; drains: pipe, grate; cistern: iron ring, water gauge; rail
+    tunnel: lantern, pit prop; glowcaps: caps, crystal vein; bone halls:
+    cat relief, skulls; warren: burrow, claw marks; heart: glowing vein,
+    moss curtain) and the carved Scratch-Mark wall. New cell types DECO_A
+    15, DECO_B 16, MARK_WALL 17 (map chars * + =; view classes 6-8):
+    levelc puts the mark wall next to every Scratch-Mark (the wall seen
+    along the longest open line) and decorates about 12 % of the walls next
+    to open cells (`deco PERCENT` per level), never two side by side. The
+    pictures are extra tiles over the plain wall (front: a box from an even
+    word to an even word, sides: one run per line), up to depth 2. The
+    class mask of a draw list entry is now a word.
+  - Floors: HW_FLOOR holds two floor pictures (front tiles of the whole
+    width) for a checkerboard of the cells; the game takes the second one
+    on odd cells (x + y), so the floor stays put in the world. One style
+    per wall set (earth, wet bricks, slabs, gravel with sleepers, moss with
+    glowing caps, dust with bones, straw).
+  - Fights: an enemy that is hit flashes white (v_fx FX_HIT), an attacking
+    enemy leaps 6 lines nearer and glows red (FX_ATTACK); the view shakes
+    when a cat is hurt (view_shake). No extra picture data.
+  - Pictures: intro (four cats on the ridge), the endings (sunrise with
+    cats and Pale Ones; one cat at the shut door; cats curled up round the
+    Heart) in tools/pics.py, hum_p0..hum_p3; the intro and every ending
+    start with their picture. All screens, the title too, are packed
+    (PackBits, 'HSC1') and unpacked into the screen by pic_show (read
+    into the wall set buffer first).
+  - WALLMAX 65536 (was 32768): wall sets are 38-55 KB now. Render time
+    unchanged (about 5 frames). RAM in use 126 KB, all game files 535 KB
+    (fits a 720 KB floppy).
+  - Small fixes from playing: the party sheet shows "XP 38/40" (XP of
+    the next rank; the worn item moved to the stats line); menu boxes get
+    as wide as their longest line (MENU_LEN 40, at least MENU_W); save
+    slots say "level 1, 14% done"; v_args holds 6 arguments.
 
 ## 7. Testing
 

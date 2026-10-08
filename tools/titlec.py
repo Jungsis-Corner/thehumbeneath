@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 """titlec.py <hum_scr> [preview.png]
 
-Draws the title picture as a raw Mode 8 screen (32768 bytes, 128 bytes per
-line) that the game loads straight into the screen memory: the title in big
-letters, the moor at night with the abandoned farmstead, the open cellar
-door and four pairs of cat eyes in the grass. Lines from MENU_TOP down stay
-black for the main menu.
+Draws the title picture: the title in big letters, the moor at night with
+the abandoned farmstead, the open cellar door and four pairs of cat eyes in
+the grass. Lines from MENU_TOP down stay black for the main menu. Next to
+hum_scr it writes the pictures of the intro and the endings, hum_p0..hum_p3
+(tools/pics.py). All are packed (see pics.py); the game unpacks them
+straight into the screen memory. preview.png: the title, and preview_pN.png.
 """
 import os
 import random
 import struct
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import pics  # noqa: E402
 
 # 5x7 letters for the title (only the ones it needs)
 BIG = {
@@ -151,23 +155,40 @@ def draw():
     return p
 
 
+def preview(p, path):
+    from PIL import Image
+    pal = [(0, 0, 0), (0, 0, 255), (255, 0, 0), (255, 0, 255),
+           (0, 255, 0), (0, 255, 255), (255, 255, 0), (255, 255, 255)]
+    img = Image.new('RGB', (W, H))
+    for y in range(H):
+        for x in range(W):
+            img.putpixel((x, y), pal[p.px[y][x]])
+    img.resize((W * 4, H * 3), Image.NEAREST).save(path)
+
+
+def write(p, lines, path):
+    screen = p.encode()
+    data = pics.pack(screen, lines)
+    assert pics.unpack(data) == screen[:lines * 128] + bytes(32768 - lines * 128)
+    open(path, 'wb').write(data)
+    return len(data)
+
+
 def main():
     if len(sys.argv) not in (2, 3):
         sys.exit(__doc__)
     p = draw()
-    data = p.encode()
-    assert len(data) == 32768
-    open(sys.argv[1], 'wb').write(data)
+    n = write(p, MENU_TOP, sys.argv[1])
+    sizes = ['hum_scr %d' % n]
+    out = os.path.dirname(sys.argv[1])
+    for i, fn in enumerate(pics.PICTURES):
+        q = fn()
+        sizes.append('hum_p%d %d' % (i, write(q, pics.PIC_H, os.path.join(out, 'hum_p%d' % i))))
+        if len(sys.argv) == 3:
+            preview(q, sys.argv[2].replace('.png', '_p%d.png' % i))
     if len(sys.argv) == 3:
-        from PIL import Image
-        pal = [(0, 0, 0), (0, 0, 255), (255, 0, 0), (255, 0, 255),
-               (0, 255, 0), (0, 255, 255), (255, 255, 0), (255, 255, 255)]
-        img = Image.new('RGB', (W, H))
-        for y in range(H):
-            for x in range(W):
-                img.putpixel((x, y), pal[p.px[y][x]])
-        img.resize((W * 4, H * 3), Image.NEAREST).save(sys.argv[2])
-    print('titlec: hum_scr, %d bytes' % len(data))
+        preview(p, sys.argv[2])
+    print('titlec: %s bytes (packed)' % ', '.join(sizes))
 
 
 if __name__ == '__main__':

@@ -48,9 +48,9 @@ GM_SOUND_ON     SOUND: ON
 GM_SOUND_OFF    SOUND: OFF
 GM_QUIT         QUIT
 @digits 1
-SLOT_USED       Slot %d: level %d, %d%%
+SLOT_USED       Slot %d: level %d, %d%% done
 SLOT_EMPTY      Slot %d: empty
-SLOT_AUTO       Auto: level %d, %d%%
+SLOT_AUTO       Auto: level %d, %d%% done
 SLOT_NOAUTO     Auto: empty
 AUTOSAVED       (The game was saved: Auto.)
 @digits 6
@@ -355,7 +355,8 @@ WORN_BY         %s: %s
 @digits 3
 SHEET_TITLE     The party - C closes
 SHEET_NAME      %s, %s, %s
-SHEET_HP        HP %d/%d  XP %d  %s
+SHEET_HP        HP %d/%d  XP %d/%d  %s
+SHEET_HP_MAX    HP %d/%d  XP %d  %s
 SHEET_STATS     Att %d  Def %d  Spd %d  Find %d
 SHEET_MOSS      Moss: fen %d dry %d glow %d max %d
 

@@ -9,7 +9,7 @@ T=$(cd "$(dirname "$0")/.." && pwd)
 TC=${TOOLCHAIN:-$HOME/toolchain}
 mkdir -p "$T/emu/mdv1" "$T/emu/shots"
 VASMOPT="$*" TOOLCHAIN="$TC" "$T/src/make.sh" || exit 1
-cp "$T/build/thehum" "$T/build/hum_txt" "$T/build/hum_tde" "$T/build/hum_scr" "$T"/build/hum_l* "$T"/build/hum_w* "$T"/build/hum_s? "$T/emu/mdv1/"
+cp "$T/build/thehum" "$T/build/hum_txt" "$T/build/hum_tde" "$T/build/hum_scr" "$T"/build/hum_p? "$T"/build/hum_l* "$T"/build/hum_w* "$T"/build/hum_s? "$T/emu/mdv1/"
 rm -f "$T/emu/mdv1/hum_cfg"; [ "$EMULANG" = de ] && printf '\0\1' > "$T/emu/mdv1/hum_cfg"
 printf '10 EXEC_W mdv1_thehum\n' > "$T/emu/mdv1/BOOT"; cp "$T/emu/mdv1/BOOT" "$T/emu/mdv1/boot"
 cat > "$T/emu/sqlux.ini" <<EOI

@@ -44,6 +44,7 @@ def main():
     walls = [size(p) for p in sorted(glob.glob(os.path.join(b, 'hum_w*')))]
     sprs = [size(p) for p in sorted(glob.glob(os.path.join(b, 'hum_s?')))]
     title = size(os.path.join(b, 'hum_scr'))
+    pics_ = [size(p) for p in sorted(glob.glob(os.path.join(b, 'hum_p?')))]
     vars_ = listing_symbol(os.path.join(b, 'hum.lst'), 'v_size')
     ram = code + vars_ + text
     rows = [
@@ -53,12 +54,16 @@ def main():
         ('Levels (%d files)' % len(levels), sum(levels)),
         ('Graphics (%d wall sets)' % len(walls), sum(walls)),
         ('Graphics (%d sprite sets)' % len(sprs), sum(sprs)),
-        ('Title picture (hum_scr, loaded to screen)', title),
+        ('Title picture (hum_scr, packed, unpacked to screen)', title),
+        ('Pictures (%d, hum_pN, packed)' % len(pics_), sum(pics_)),
     ]
     print('--- memory report ---')
     for name, n in rows:
         print('  %-46s %7d bytes' % (name, n))
     print('  %-46s %7d bytes (%.1f KB)' % ('RAM in use (game)', ram, ram / 1024))
+    files = sum(size(p) for p in glob.glob(os.path.join(b, 'hum_*')) + [os.path.join(b, 'thehum')]
+                if not p.endswith(('hum_bin', 'hum.lst')))
+    print('  %-46s %7d bytes (%.1f KB)' % ('Game files on disk', files, files / 1024))
 
 
 if __name__ == '__main__':
