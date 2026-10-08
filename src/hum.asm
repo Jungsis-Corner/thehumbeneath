@@ -134,11 +134,13 @@ K_MOVE  equ     (1<<K_UP)|(1<<K_DOWN)|(1<<K_LEFT)|(1<<K_RIGHT)
 ;---------------------------------------------------------------------
 ; Text file hum_txt
 ;---------------------------------------------------------------------
-TXT_MAGIC equ   'HTX1'
-TXT_LEN   equ   4               ; offset of length.l
+TXT_MAGIC equ   'HTX2'
+TXT_LEN   equ   4               ; offset of length.l (the part kept in memory)
 TXT_COUNT equ   8               ; offset of count.w
-TXT_OFFS  equ   10              ; offset of the offset table
+TXT_SECT  equ   10              ; offset of the level blocks: 10 x (start, length)
+TXT_OFFS  equ   10+4*10         ; offset of the offset table
 TXT_HEAD  equ   10              ; bytes read before the heap exists
+FS_POSAB  equ   $42             ; QDOS: set the file position
 
 NAMEBUF equ     48              ; room for device + file name (QDOS string)
 BUFLEN  equ     512             ; formatted text (the intro is long)
@@ -155,6 +157,9 @@ v_sysv  rs.l    1               ; system variables (MT.INF)
 v_msg   rs.l    1               ; message window channel
 v_poll  rs.l    2               ; poll list linkage (50 Hz counter)
 v_text  rs.l    1               ; text file in memory (0 = not loaded)
+v_txtres rs.l   1               ; length of the part in memory
+v_ltstart rs.w  1               ; level text block: file offset, length
+v_ltlen rs.w    1
 v_keys  rs.w    1               ; current keys (KEYROW(1) layout)
 v_pkeys rs.w    1               ; keys of the previous poll
 v_rep   rs.w    1               ; frames until a held key repeats
@@ -171,6 +176,7 @@ v_slow  rs.w    1               ; 1: the enemies get one more move (cobwebs)
 v_lastdir rs.w  1               ; direction of the party's last step
 v_prog  rs.w    5               ; progress: %, depth, explored %, marks, bosses
 v_cname rs.b    NPARTY*NAME_LEN ; the cats' names
+v_ltext rs.b    (LTEXT_MAX+1)&~1 ; the text block of the current level
 v_svn   rs.b    10              ; save file name 'hum_svN' (QDOS string)
 v_shdr  rs.b    SAVE_HEAD       ; save file header
 v_ssnum rs.w    1               ; sprite set in v_sprites (0 = none)
@@ -303,6 +309,7 @@ common:
         move.l  a5,a1           ; copy the header, read the rest
         add.l   #v_size,a1
         move.l  a1,v_text(a5)
+        move.l  d6,v_txtres(a5)
         lea     NAMEBUF(sp),a0
         moveq   #TXT_HEAD-1,d0
 .cp     move.b  (a0)+,(a1)+
@@ -498,6 +505,8 @@ level_load:
 .len    moveq   #-1,d0
         cmp.l   #LV_EVENT+1,d1  ; at least map, header, end of events
         blo.s   .e
+        move.w  v_level(a5),d0  ; and its texts
+        bsr     ltext_load
         ifd     NOENEMY         ; tests: no groups in the level
         move.w  v_map+LV_GROUPS(a5),d0
         lea     v_map(a5),a0
@@ -578,6 +587,40 @@ level_fatal:                    ; d0 = number, d1 = "... %d is missing."
         bsr     msg_print
         bsr     wait_esc
         bra     exit_prog
+
+; ltext_load: d0 = level; its block of the text file into v_ltext
+;             (on any error the level texts are just missing)
+ltext_load:
+        movem.l d0-d5/a0-a3,-(sp)
+        clr.w   v_ltlen(a5)
+        move.l  v_text(a5),a1
+        lsl.w   #2,d0
+        move.w  TXT_SECT(a1,d0.w),d5 ; start
+        move.w  TXT_SECT+2(a1,d0.w),d4 ; length
+        beq.s   .e
+        move.w  d5,v_ltstart(a5)
+        lea     txtname(pc),a2
+        lea     v_name(a5),a3
+        move.w  d4,-(sp)
+        bsr     fopen
+        movem.w (sp)+,d4        ; (movem keeps the flags of fopen)
+        bne.s   .e
+        moveq   #FS_POSAB,d0
+        moveq   #0,d1
+        move.w  d5,d1
+        moveq   #-1,d3
+        trap    #3
+        tst.l   d0
+        bne.s   .cl
+        lea     v_ltext(a5),a1
+        and.l   #$ffff,d4
+        bsr     fread
+        bne.s   .cl
+        move.w  d4,v_ltlen(a5)
+.cl     moveq   #IO_CLOSE,d0
+        trap    #2
+.e      movem.l (sp)+,d0-d5/a0-a3
+        rts
 
 ; level_start: player to the start cell, show the entry text
 level_start:
@@ -1296,7 +1339,20 @@ text_get:                       ; (keeps all other registers)
         add.w   d0,d0
         move.w  TXT_OFFS(a1,d0.w),d0
         and.l   #$ffff,d0
+        cmp.l   v_txtres(a5),d0 ; in the part kept in memory?
+        bhs.s   .level
         add.l   d0,a1
+        move.l  (sp)+,d0
+        rts
+.level  sub.w   v_ltstart(a5),d0 ; in the block of the current level?
+        bcs.s   .none
+        cmp.w   v_ltlen(a5),d0
+        bhs.s   .none
+        lea     v_ltext(a5),a1
+        add.l   d0,a1
+        move.l  (sp)+,d0
+        rts
+.none   lea     notxt(pc),a1    ; another level's text: not loaded
         move.l  (sp)+,d0
         rts
 .name   sub.w   #NAME_ID,d0
@@ -1936,6 +1992,7 @@ arrows: dc.w    $2828,$aaaa,$2828,$2828 ; player on the debug map: N
         dc.w    $2828,$2828,$aaaa,$2828 ; S
         dc.w    $2020,$aaaa,$2020,$0000 ; W
 newline: dc.b   10
+notxt:  dc.b    0
         even
 devices: dc.b   'win1_flp1_mdv1_'
         even

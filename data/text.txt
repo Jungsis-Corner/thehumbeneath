@@ -125,36 +125,17 @@ NO_NEED         %s does not need it.
 NOT_ABLE        %s is in no state for that.
 
 # --- Level 1: The Root Cellar ---
-EXIT_1          The camp is behind you. Follow the Hum.
-TUT_1           Cursor keys walk and turn the party.
-TUT_2           SPACE: party menu. I: pack. C: cats.
-TUT_3           ESC: save, load or quit the game.
-APPLES          Crates of old apples line the walls.
-APPLE_RACKS     Old apples rot on wooden racks.
-WEBS            Cobwebs cling to your fur.
-RAT_SMELL       The air smells of rats.
-BOARDS          A board breaks under your paws!
 NOT_YET         Rubble blocks the way down.
 
 # --- Level 2: The Drain Tunnels ---
 WATER_COLD      Cold water reaches your bellies.
-ECHOES          Every sound comes back twice.
-MOSS_WALLS      Green moss grows on the wet walls.
-GRATE           A broken grate bites into a paw.
-SLUICE          A rusted sluice gate. Something waits.
-DRIP_TUNNEL     Water drips from the ceiling.
 
 # --- Level 3: The Old Cistern ---
-PALE_LIGHT      Pale light falls from far above.
-ECHO_TRAP       Your steps ring out. Something wakes.
-SLIPPERY        The wet stone is slippery. You slide!
 VALVE_EMPTY     A valve socket. Its wheel is missing.
 VALVE_TURN      You fit a Valve Wheel and turn it.
 VALVE_DONE      This valve is open.
 CISTERN_OPEN    Far off, a heavy door grinds open.
 DOOR_VALVES     The door does not move. Valves hold it.
-CISTERN_DOOR    A heavy iron door bars the way.
-MOSS_CORNER     Moss grows thick in this corner.
 
 # --- Traps ---
 TRAP_GLASS      Broken glass cuts into a paw.
@@ -314,17 +295,74 @@ STAIRS_UP       You climb up the stairs.
 DRIPPING        You hear dripping water.
 
 # --- Level entry ---
-ENTRY_TEST      A cold test cellar. Walls, nothing else.
-ENTRY_TEST2     Wet stone. Water runs somewhere.
-ENTRY_1         Dust and old apples.
-ENTRY_2         Dark water runs below.
-ENTRY_3         Your steps echo for a long time.
 
 # --- Scratch-Marks, level 1 ---
 MARK_SEEN       Scratch-Marks are carved here:
+TEST_MARK       A TEST MARK\nTWO LINES
+
+# =====================================================================
+# Texts of single levels: the game loads only the block of the level it
+# is on ("@level N"). Texts the code uses itself stay global above.
+# =====================================================================
+
+@level 1
+@width 40
+@digits 6
+@strlen 12
+# --- The Root Cellar ---
+ENTRY_1         Dust and old apples.
 MARK_1_1        WE WENT DOWN\nWE WERE NOT AFRAID
 MARK_1_2        The cellar is only the first step.
+EXIT_1          The camp is behind you. Follow the Hum.
+TUT_1           Cursor keys walk and turn the party.
+TUT_2           SPACE: party menu. I: pack. C: cats.
+TUT_3           ESC: save, load or quit the game.
+APPLES          Crates of old apples line the walls.
+APPLE_RACKS     Old apples rot on wooden racks.
+WEBS            Cobwebs cling to your fur.
+RAT_SMELL       The air smells of rats.
+BOARDS          A board breaks under your paws!
+
+@level 2
+@width 40
+@digits 6
+@strlen 12
+# --- The Drain Tunnels ---
+ENTRY_2         Dark water runs below.
 MARK_2_1        FOLLOW THE WATER\nIT KNOWS THE WAY
 MARK_2_2        The gate rat guards what we left behind.
+ECHOES          Every sound comes back twice.
+MOSS_WALLS      Green moss grows on the wet walls.
+GRATE           A broken grate bites into a paw.
+SLUICE          A rusted sluice gate. Something waits.
+DRIP_TUNNEL     Water drips from the ceiling.
+
+@level 3
+@width 40
+@digits 6
+@strlen 12
+# --- The Old Cistern ---
+ENTRY_3         Your steps echo for a long time.
 MARK_3_1        THE HUM IS CALM HERE\nWE SLEPT WELL
 MARK_3_2        Three wheels. Three turns. Do not rush.
+PALE_LIGHT      Pale light falls from far above.
+ECHO_TRAP       Your steps ring out. Something wakes.
+SLIPPERY        The wet stone is slippery. You slide!
+CISTERN_DOOR    A heavy iron door bars the way.
+MOSS_CORNER     Moss grows thick in this corner.
+
+@level 0
+@width 40
+@digits 6
+@strlen 12
+# --- test level 0 ---
+ENTRY_TEST      A cold test cellar. Walls, nothing else.
+
+@level 9
+@width 40
+@digits 6
+@strlen 12
+# --- test level 9 ---
+ENTRY_TEST2     Wet stone. Water runs somewhere.
+
+@global

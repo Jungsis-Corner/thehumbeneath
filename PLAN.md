@@ -387,6 +387,13 @@ draws a level source as PNG for review.
   level 3, three valves in the north, east and south halls.
   Tests: switch NOENEMY (no groups), tools/walkto.py (keys for a path).
   Memory: 74.3 KB - the text file (4.8 KB) has to be loaded in parts next.
+- **Text blocks per level (memory):** data/text.txt marks texts of one
+  level with "@level N"; hum_txt stays one file: the global part (kept in
+  memory) and a block per level that the game reads with FS.POSAB when it
+  loads the level (v_ltext, LTEXT_MAX). Texts used by the code stay global.
+  Test levels use a global TEST_MARK. 74.9 -> 73.9 KB now, and every new
+  level's texts no longer add to the memory in use. Fixed on the way: the
+  entry text of the first level was cleared at the start (since M8b).
 **M10 – endings, sound, polish, distribution** (win image, README, MiSTer test).
 
 ## 7. Testing

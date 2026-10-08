@@ -6,7 +6,8 @@ Data     = hum_txt + level files hum_l*
 Graphics = wall sets hum_w*, sprite sets hum_s?, title picture hum_scr
 RAM      = what the running game occupies: code + heap block
            (v_size from the listing, which already holds the level buffer
-           LEVMAX, the view buffer and the buffers WALLMAX and SPRMAX, + text)
+           LEVMAX, the view buffer, WALLMAX, SPRMAX and the level text block,
+           + the global part of the text file)
 """
 import glob
 import os
@@ -32,7 +33,11 @@ def listing_symbol(lst, name):
 def main():
     b = sys.argv[1] if len(sys.argv) > 1 else 'build'
     code = size(os.path.join(b, 'hum_bin'))
-    text = size(os.path.join(b, 'hum_txt'))
+    text_all = size(os.path.join(b, 'hum_txt'))
+    text = text_all
+    if text_all:                    # only the global part stays in memory
+        with open(os.path.join(b, 'hum_txt'), 'rb') as f:
+            text = int.from_bytes(f.read(8)[4:8], 'big')
     levels = [size(p) for p in sorted(glob.glob(os.path.join(b, 'hum_l*')))]
     walls = [size(p) for p in sorted(glob.glob(os.path.join(b, 'hum_w*')))]
     sprs = [size(p) for p in sorted(glob.glob(os.path.join(b, 'hum_s?')))]
@@ -42,7 +47,7 @@ def main():
     rows = [
         ('Code (hum_bin)', code),
         ('Heap (vars, level, view, wall, sprite buffers)', vars_),
-        ('Text (hum_txt)', text),
+        ('Text in memory (hum_txt: %d in all)' % text_all, text),
         ('Levels (%d files)' % len(levels), sum(levels)),
         ('Graphics (%d wall sets)' % len(walls), sum(walls)),
         ('Graphics (%d sprite sets)' % len(sprs), sum(sprs)),

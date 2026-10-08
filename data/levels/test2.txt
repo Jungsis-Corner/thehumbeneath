@@ -40,6 +40,6 @@ map
 ################################
 
 event 2 2 stairs 0 23 30
-event 3 4 mark MARK_1_1
+event 3 4 mark TEST_MARK
 group 6 3 GIANT_SPIDER 2 hunt
 group 1 9 SEWER_RAT 2 guard

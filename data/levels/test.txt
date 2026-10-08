@@ -42,8 +42,8 @@ map
 #................#.....>.......#
 ################################
 
-event 5 2 mark MARK_1_1
-event 12 1 mark MARK_1_2
+event 5 2 mark TEST_MARK
+event 12 1 mark TEST_MARK
 event 10 1 message DRIPPING
 event 14 1 trap 2 TRAP_GLASS
 event 16 1 trap 1 TRAP_THORNS

@@ -187,9 +187,9 @@ new_start:                      ; the first level
         moveq   #1,d0           ; the game: level 1
         endc
         endc
+        bsr     game_screen     ; (first: it clears the message window)
         bsr     enter_level
         bsr     level_start
-        bsr     game_screen
         lea     v_args(a5),a2   ; "<first cat> leads the way."
         move.w  v_party+p_name(a5),d0
         bsr     text_get
