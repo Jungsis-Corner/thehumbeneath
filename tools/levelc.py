@@ -30,9 +30,10 @@ Level source:
                                    more move (cobwebs slow the party)
     event X Y exit TEXT            on stairs that lead nowhere (yet): TEXT
     test yes                       a test level: not counted for the progress
-    group X Y ENEMY COUNT guard|hunt   enemy group (ENEMY = id from
+    group X Y ENEMY COUNT guard|hunt|swim   enemy group (ENEMY = id from
                                    data/enemies.txt); guards stay, hunters
-                                   come closer when the party is near
+                                   come closer when the party is near,
+                                   swimmers too, but only through water
 
 Every stairs cell needs a stairs or exit event. A stairs target must be an
 open cell of a level compiled in the same run; a level that is not built
@@ -70,8 +71,8 @@ LV_GROUPS = MAPLEN + 8        # offset of the group table offset
 DIRS = 'NESW'
 
 # view classes (how a cell is drawn in the first-person view)
-VC_NONE, VC_WALL, VC_DOOR, VC_DOWN, VC_UP = range(5)
-VC_NAMES = ['NONE', 'WALL', 'DOOR', 'DOWN', 'UP']
+VC_NONE, VC_WALL, VC_DOOR, VC_DOWN, VC_UP, VC_WATER = range(6)
+VC_NAMES = ['NONE', 'WALL', 'DOOR', 'DOWN', 'UP', 'WATER']
 
 # char, type, name, blocks movement, debug map colour (0-7), view class
 CELLS = [
@@ -88,7 +89,7 @@ CELLS = [
     ('L', 10, 'DOOR_LOCKED', 1, 2, VC_DOOR),
     ('>', 11, 'STAIRS_DOWN', 0, 4, VC_DOWN),
     ('<', 12, 'STAIRS_UP', 0, 4, VC_UP),
-    ('~', 13, 'WATER', 0, 1, VC_NONE),
+    ('~', 13, 'WATER', 0, 1, VC_WATER),
     ('S', 14, 'SECRET', 1, 7, VC_WALL),
 ]
 BY_CHAR = {c[0]: c for c in CELLS}
@@ -98,7 +99,7 @@ CF_BLOCK = 1
 EVENTS = {'stairs': 1, 'mark': 2, 'message': 3, 'trap': 4, 'item': 5, 'gather': 6,
           'lock': 7, 'boards': 8, 'cobweb': 9, 'exit': 10}
 ITEM_IDS = {it['id']: i + 1 for i, it in enumerate(items.read())}
-MODES = {'guard': 0, 'hunt': 1}
+MODES = {'guard': 0, 'hunt': 1, 'swim': 2}
 MAXGROUPS = 16
 MAXDOORS = 40                     # LVD_NDOORS in hum.asm
 MAXEVENTS = 64                    # flags kept per level (state.asm)
@@ -146,7 +147,7 @@ def parse(path, textids):
         elif key == 'group':
             if (len(args) != 5 or args[2] not in ENEMY_IDS or args[4] not in MODES
                     or not 1 <= int(args[3]) <= 9):
-                fail('%s: group X Y ENEMY COUNT(1-9) guard|hunt' % where)
+                fail('%s: group X Y ENEMY COUNT(1-9) guard|hunt|swim' % where)
             lv['groups'].append((int(args[0]), int(args[1]), ENEMY_IDS[args[2]],
                                  int(args[3]), MODES[args[4]], where))
         elif key == 'entry':
@@ -253,10 +254,13 @@ def check(lv):
         fail('%s: more than %d groups' % (path, MAXGROUPS))
     cells = set()
     for x, y, _, _, _, where in lv['groups']:
-        if not (0 <= x < SIZE and 0 <= y < SIZE) or rows[y][x] != '.':
-            fail('%s: a group needs a floor cell' % where)
+        if not (0 <= x < SIZE and 0 <= y < SIZE) or rows[y][x] not in '.~':
+            fail('%s: a group needs a floor or water cell' % where)
         if (x, y) in cells or (x, y) == (sx, sy):
             fail('%s: cell %d,%d is taken' % (where, x, y))
+    for x, y, _, _, mode, where in lv['groups']:
+        if mode == MODES['swim'] and rows[y][x] != '~':
+            fail('%s: swimmers start in the water' % where)
         cells.add((x, y))
     return len(seen)
 
@@ -324,7 +328,7 @@ def write_inc(path, levels):
                 % sum(1 << n for n, lv in levels.items() if lv.get('test')))
         f.write('G_SIZE   equ 6\nG_X      equ 0\nG_Y      equ 1\nG_TYPE   equ 2\n'
                 'G_COUNT  equ 3\nG_MODE   equ 4\nG_FLAGS  equ 5\nG_END    equ $ff\n'
-                'GM_GUARD equ 0\nGM_HUNT  equ 1\nGF_GONE  equ 0\nGF_SEEN  equ 1\n')
+                'GM_GUARD equ 0\nGM_HUNT  equ 1\nGM_SWIM  equ 2\nGF_GONE  equ 0\nGF_SEEN  equ 1\n')
         f.write('CF_BLOCK equ %d\n' % CF_BLOCK)
         for c, t, name, blk, col, vc in CELLS:
             f.write('CT_%-12s equ %d\n' % (name, t))

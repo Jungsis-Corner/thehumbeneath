@@ -56,11 +56,14 @@ HW = [96, 64, 40, 24, 16]          # half width of plane 0..4 (multiples of 2)
 HH = [72, 48, 30, 18, 12]          # half height of plane 0..4
 DEPTHS = 4                         # cell depths 0..3
 LAT = 3                            # lateral offsets -3..3
-WALLMAX = 22528                    # wall set buffer in the game
+WALLMAX = 24576                    # wall set buffer in the game
 SPRMAX = 12288                     # sprite set buffer in the game
 SPRITE_LIGHT = (0.70, 0.18)        # enemy pictures: light at depth 1, loss per cell
                                    # (eyes always glow at full brightness)
-SPRITESETS = {1: None}             # set number: sprite names (None = all)
+SPRITESETS = {                     # set number: sprite names (the bundle is added)
+    1: ['rat', 'spider', 'bigrat'],               # root cellar
+    2: ['rat', 'eel', 'leech', 'gaterat'],        # drain tunnels
+}
 MAGIC = b'HWS1'
 ENTRY = 22                         # bytes per draw list entry
 
@@ -96,11 +99,12 @@ def encode(pixels):
 # Wall sets: stone blocks, doors, stairs openings, floor and ceiling
 # ---------------------------------------------------------------------------
 class StoneSet:
-    rows = 3                       # block rows per wall
-    cols = 2                       # blocks per row and wall width
-
     def __init__(self, stone, odd, floor, floor_i, ceil, ceil_i,
-                 light0=0.86, lightz=0.19, side=0.78, fog=None, edge=None):
+                 light0=0.86, lightz=0.19, side=0.78, fog=None, edge=None,
+                 rows=3, cols=2, flats=('down', 'up'), water=(BLUE, CYAN)):
+        self.rows, self.cols = rows, cols          # block rows, blocks per row
+        self.flats = flats                         # floor/ceiling pictures it has
+        self.water = water                         # water: colour, ripples
         self.stone, self.odd = stone, odd          # block colours
         self.edge = edge                           # colour of the top edges
         self.floor, self.floor_i = floor, floor_i  # floor colour, intensity
@@ -147,6 +151,16 @@ class StoneSet:
             return dither(x, y, self.light(z) * 0.7, WHITE)   # step edges
         return BLACK
 
+    def pool(self, x, y, a, b, z):
+        """Water: only ripples across the cell, the wet floor shows between
+        them (empty lines cost almost nothing)."""
+        wave = (b * 4) % 1             # (a whole line: one run per line)
+        if wave < 0.14:
+            return dither(x, y, self.light(z) * 0.9, self.water[1])
+        if wave < 0.22:
+            return dither(x, y, self.light(z) * 0.6, self.water[0])
+        return None
+
     def opening(self, x, y, a, b, z):
         """Stairs up: an opening in the ceiling with faint light."""
         if not (0.18 <= a < 0.82 and 0.15 <= b < 0.85):
@@ -167,12 +181,15 @@ class StoneSet:
 # ceiling, a wide dark band at the horizon, dark stone colours.
 DARK = dict(light0=0.48, lightz=0.13, side=0.65, fog=20)
 WALLSETS = {
-    1: StoneSet(BLUE, MAG, RED, 0.25, BLUE, 0.0, edge=WHITE, **DARK),    # root cellar
-    2: StoneSet(CYAN, GREEN, BLUE, 0.25, BLUE, 0.0, edge=WHITE, **DARK), # wet stone (test)
+    # root cellar: laid stone, earth floor
+    1: StoneSet(BLUE, MAG, RED, 0.25, BLUE, 0.0, edge=WHITE, **DARK),
+    # drain tunnels: small wet bricks, moss, a wet floor, water
+    2: StoneSet(BLUE, GREEN, BLUE, 0.3, BLUE, 0.0, edge=CYAN, rows=5, cols=3,
+                flats=('down', 'up', 'water'), **DARK),
 }
 
 # view classes, as in levelc.py
-VC_WALL, VC_DOOR, VC_DOWN, VC_UP = 1, 2, 3, 4
+VC_WALL, VC_DOOR, VC_DOWN, VC_UP, VC_WATER = 1, 2, 3, 4, 5
 SOLID = 1 << VC_WALL | 1 << VC_DOOR
 
 
@@ -282,7 +299,7 @@ def build_sprites(names):
     foes = enemies.read() + [{'sprite': 'bundle', 'where': 'items'}]
     tiles, table = [], b''
     for e in foes:
-        if names is not None and e['sprite'] not in names + ['bundle']:
+        if e['sprite'] not in names + ['bundle']:
             table += b'\0' * 12
             continue
         if e['sprite'] not in sprites.ART:
@@ -399,7 +416,16 @@ def build(ws):
     for d in range(DEPTHS - 1, -1, -1):                 # far to near
         order = [l for a in range(LAT, -1, -1) for l in sorted({-a, a})]
         for l in order:                                 # floor and ceiling first
-            for vc, tex, ceil in ((VC_DOWN, ws.hole, False), (VC_UP, ws.opening, True)):
+            for name, vc, tex, ceil in (('down', VC_DOWN, ws.hole, False),
+                                        ('up', VC_UP, ws.opening, True),
+                                        ('water', VC_WATER, ws.pool, False)):
+                if name not in ws.flats:
+                    continue
+                if name == 'water' and (abs(l) > 1 or d in (0, 3)):
+                    continue                            # (saves memory: far water
+                                                        # is in the dark, the
+                                                        # message tells when the
+                                                        # party wades in)
                 t = make_tile(flat_face(tex, d, l, ceil), True)
                 if t:
                     entries.append((cell_index(d, l), 1, 1 << vc, 0, t,

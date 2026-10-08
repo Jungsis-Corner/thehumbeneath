@@ -136,6 +136,14 @@ RAT_SMELL       The air smells of rats.
 BOARDS          A board breaks under your paws!
 NOT_YET         Rubble blocks the way down.
 
+# --- Level 2: The Drain Tunnels ---
+WATER_COLD      Cold water reaches your bellies.
+ECHOES          Every sound comes back twice.
+MOSS_WALLS      Green moss grows on the wet walls.
+GRATE           A broken grate bites into a paw.
+SLUICE          A rusted sluice gate. Something waits.
+DRIP_TUNNEL     Water drips from the ceiling.
+
 # --- Traps ---
 TRAP_GLASS      Broken glass cuts into a paw.
 TRAP_THORNS     Thorns tear at the fur.
@@ -188,6 +196,11 @@ EN_SPIDERS      Giant Spiders
 EN_WHISKERLESS  Old Whiskerless
 EN_SEWER_RAT    Sewer Rat
 EN_SEWER_RATS   Sewer Rats
+EN_EEL          Eel
+EN_EELS         Eels
+EN_LEECH        Leech
+EN_LEECHES      Leeches
+EN_GATE_RAT     The Gate Rat
 
 # --- Party panel ---
 @width 15
@@ -286,8 +299,11 @@ DRIPPING        You hear dripping water.
 ENTRY_TEST      A cold test cellar. Walls, nothing else.
 ENTRY_TEST2     Wet stone. Water runs somewhere.
 ENTRY_1         Dust and old apples.
+ENTRY_2         Dark water runs below.
 
 # --- Scratch-Marks, level 1 ---
 MARK_SEEN       Scratch-Marks are carved here:
 MARK_1_1        WE WENT DOWN\nWE WERE NOT AFRAID
 MARK_1_2        The cellar is only the first step.
+MARK_2_1        FOLLOW THE WATER\nIT KNOWS THE WAY
+MARK_2_2        The gate rat guards what we left behind.

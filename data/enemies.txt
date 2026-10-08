@@ -11,3 +11,6 @@ enemy RAT              EN_RAT            EN_RATS            4   2   0   3   0   
 enemy GIANT_SPIDER     EN_SPIDER         EN_SPIDERS         6   3   1   2   1     0      0    4   spider
 enemy OLD_WHISKERLESS  EN_WHISKERLESS    EN_WHISKERLESS     18  5   2   2   1     0      1    15  bigrat
 enemy SEWER_RAT        EN_SEWER_RAT      EN_SEWER_RATS      7   3   1   3   0     1      0    4   rat
+enemy EEL              EN_EEL            EN_EELS            8   4   1   4   1     0      0    4   eel
+enemy LEECH            EN_LEECH          EN_LEECHES         4   2   0   1   1     0      0    2   leech
+enemy GATE_RAT         EN_GATE_RAT       EN_GATE_RAT        24  6   2   3   2     1      1    25  gaterat

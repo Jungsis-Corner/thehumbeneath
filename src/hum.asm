@@ -614,7 +614,16 @@ move_rel:
         lea     celltab(pc),a1
         btst    #0,0(a1,d1.w)   ; CF_BLOCK
         bne.s   .block
-        move.w  d0,v_pos(a5)
+        cmp.b   #CT_WATER,d1    ; water: cold and slow
+        bne.s   .dry
+        move.w  #1,v_slow(a5)
+        move.w  v_pos(a5),d1
+        moveq   #CELL_TYPE,d3
+        and.b   0(a0,d1.w),d3
+        cmp.b   #CT_WATER,d3
+        beq.s   .dry            ; (already in the water)
+        move.w  #T_WATER_COLD,d2
+.dry    move.w  d0,v_pos(a5)
         bset    #CELL_SEEN,0(a0,d0.w)
         move.l  d0,-(sp)
         move.w  d2,d0
@@ -873,8 +882,8 @@ groups_act:
         beq     .e
         btst    #GF_GONE,G_FLAGS(a3)
         bne     .nx
-        cmp.b   #GM_HUNT,G_MODE(a3)
-        bne     .nx
+        cmp.b   #GM_GUARD,G_MODE(a3) ; hunters and swimmers move
+        beq     .nx
         bsr     .dist           ; d0 = distance, d1 = dx, d2 = dy
         cmp.w   #HUNT_RANGE,d0
         bhi     .nx
@@ -957,7 +966,11 @@ groups_act:
         lea     celltab(pc),a1
         btst    #0,0(a1,d7.w)   ; CF_BLOCK
         bne.s   .no
-        bclr    #CELL_GROUP,0(a0,d0.w)
+        cmp.b   #GM_SWIM,G_MODE(a3) ; swimmers stay in the water
+        bne.s   .ok
+        cmp.b   #CT_WATER,d7
+        bne.s   .no
+.ok     bclr    #CELL_GROUP,0(a0,d0.w)
         bset    #CELL_GROUP,0(a0,d5.w)
         moveq   #31,d0
         and.w   d5,d0

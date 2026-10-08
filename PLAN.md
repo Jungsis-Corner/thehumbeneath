@@ -3,7 +3,7 @@
 Status: approved 2026-10-07 (open questions answered with the proposals, see section 8).
 Changes to the architecture below need approval (CLAUDE.md).
 
-Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9.1 (level 1) done.
+Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9.1-M9.2 (levels 1-2) done.
 
 ## 1. Toolchain (taken over from FUSE RUNNER)
 
@@ -364,6 +364,18 @@ draws a level source as PNG for review.
   for the progress.
   Open: STORY.md has two Scratch-Mark texts for level 1, the plan asks for
   3-5 per level - more texts are needed (to be written by the author).
+- **M9.2 The Drain Tunnels: DONE.** data/levels/l2.txt, wall set 2 (wet
+  bricks with moss, wet floor, water), sprite set 2. Water cells '~': cold,
+  every step in water gives the enemies an extra move, "Cold water reaches
+  your bellies." when wading in; drawn as ripples (only near cells, for
+  memory). Eels: new group mode `swim` (hunt, only through water). Leeches
+  make bleed (Scratch) - STORY's "drains HP over time". Broken grates are
+  traps (Gash). The Gate Rat (mini-boss, 24 HP) guards the sluice gate;
+  behind it the first Valve Wheel (for the level 3 puzzle), the second mark
+  and the stairs down. Shortcut: a second channel to the gate corridor
+  (slow, eels). Fen Moss: gather spots and one moss item.
+  Memory: 73.3 KB (WALLMAX 24 KB for the water pictures; floor pictures are
+  chosen per wall set). Sprite sets now list their pictures per level.
 **M10 – endings, sound, polish, distribution** (win image, README, MiSTer test).
 
 ## 7. Testing

@@ -1,0 +1,81 @@
+# Level 2: The Drain Tunnels (STORY.md)
+# Wet, dripping, echoing. A long drain with eels, walkways beside it, a
+# leech room with the first Fen Moss on the walls, dry tunnels with sewer
+# rats and broken grates. The Gate Rat guards the sluice gate; behind it
+# what the Deepwardens left: a Valve Wheel (for level 3) and the stairs
+# down. Shortcut: the second channel runs to the gate corridor (slow, eels).
+number  2
+start   3 3 S
+wallset 2
+sprites 2
+entry   ENTRY_2
+map
+################################
+#.....##.......###............##
+#.<...##.......###............##
+#.....##...#...###..#...#..#..##
+#.....##.......###............##
+###.####.......###............##
+###.#######.###########.########
+#.....##.....##......##.......##
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~##
+#.........#......#......#.....##
+###.########.###.#########~#####
+###.########.###.#########~#####
+###.########.###.#########~#####
+###.########.###.########~~#####
+###.########.###.########~~#####
+#............###.########~~#####
+#.#######.##.###.#########~#####
+#.#######.##.###.....#####~#####
+#.###...#.##.###.###.#####~#####
+#.###...#.##.###.###.#####~#####
+#.###...#.##.###.###.##~~~~#####
+#.#######.##.###.###.##.########
+#.#######.##.###.###.##.###....#
+#.........##.........##.###....#
+#########.######.#####...##....#
+#########.######.#####.####....#
+#########.###....####.....D....#
+#########.######.#####.####....#
+#########.######.#####.####....#
+#########..............####..>.#
+###########################....#
+################################
+
+event 2 2 stairs 1 29 29
+# the main drain
+event 3 7 message ECHOES
+event 4 9 mark MARK_2_1
+event 15 9 message DRIP_TUNNEL
+# leech room: Fen Moss on the walls
+event 11 6 message MOSS_WALLS
+event 9 2 gather FEN_MOSS 2
+event 13 4 gather FEN_MOSS 2
+event 8 5 item FEN_MOSS 1
+# north-east room
+event 28 1 item MARIGOLD_LEAF 1
+event 19 5 gather HERB 2
+# south tunnels: broken grates
+event 1 18 trap 2 GRATE
+event 12 20 trap 2 GRATE
+event 16 15 trap 1 GRATE
+event 6 19 item COBWEB_WRAP 1
+event 20 22 gather FEN_MOSS 2
+event 15 26 item FRESH_PREY 1
+# the sluice gate
+event 23 24 message SLUICE
+event 28 23 item VALVE_WHEEL 1
+event 30 30 mark MARK_2_2
+event 29 29 stairs 3 2 2
+
+# enemies
+group 9 8 EEL 1 swim
+group 20 8 EEL 1 swim
+group 26 18 EEL 2 swim
+group 10 3 LEECH 2 guard
+group 25 2 LEECH 1 guard
+group 6 15 SEWER_RAT 2 hunt
+group 12 22 SEWER_RAT 2 guard
+group 18 29 SEWER_RAT 3 hunt
+group 25 26 GATE_RAT 1 guard

@@ -62,6 +62,35 @@ SPIDER_HALF = [
 ]
 
 
+EEL_HALF = [
+    "................GGGG",
+    "...............GGGGG",
+    "..............GG+GGG",
+    "..............GGGGGG",
+    "...............GgGGG",
+    "................gGGG",
+    "................GGGG",
+    "...............GGgg.",
+    "..............GGGg..",
+    "..............GGgg..",
+    ".............GGGg...",
+    ".............GGgg...",
+    ".......bbb...GGGg...",
+    "....bbbbbbbbbGGGGbbb",
+    "..bbbbbbbbbbbbbbbbbb",
+]
+
+LEECH_HALF = [
+    "......mmmmmm",
+    "...mmMMMMMMM",
+    "..mMMmMMMmMM",
+    ".mMMMMMMMMMM",
+    ".mMmMMMMmMMM",
+    "..mMMMMMMMMR",
+    "...mmmmmmmmR",
+]
+
+
 def mirror(half):
     return [row + row[::-1] for row in half]
 
@@ -96,14 +125,25 @@ SIZE = {
     'bundle': (24, 14),
     'rat': (48, 34),
     'spider': (72, 46),
-    'bigrat': (64, 48),
+    'bigrat': (64, 46),
+    'eel': (40, 44),
+    'leech': (40, 16),
+    'gaterat': (72, 52),
 }
+
+def gate_rat():
+    """The Gate Rat: a big reddish rat with both ears and red eyes."""
+    return [row.replace('w', 'r') for row in mirror(RAT_HALF)]
+
 
 ART = {
     'bundle': BUNDLE,
     'rat': mirror(RAT_HALF),
     'spider': mirror(SPIDER_HALF),
     'bigrat': big_rat(),
+    'eel': mirror(EEL_HALF),
+    'leech': mirror(LEECH_HALF),
+    'gaterat': gate_rat(),
 }
 
 
