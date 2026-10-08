@@ -144,6 +144,7 @@ new_init:                       ; a new party, nothing visited
         clr.w   v_deep(a5)
         clr.w   v_story(a5)
         clr.w   v_sneak(a5)
+        clr.w   v_humc(a5)
         clr.w   v_steps(a5)
         clr.w   v_page(a5)
         rts
@@ -496,6 +497,40 @@ intro:
         bsr     wait_key
         movem.l (sp)+,d0-d2
         rts
+
+;---------------------------------------------------------------------
+; ending: d0 = END_A, END_B or END_C. The words of the ending (STORY.md)
+;         on the full screen, then the title (the stack is reset)
+END_A   equ     0               ; the Release: the Heart Stone used
+END_B   equ     1               ; the Silence: the Keeper beaten
+END_C   equ     2               ; the Stay: laid down at the Heart
+ending:
+        move.w  d0,d7
+        moveq   #100,d1         ; a moment to read the last messages
+.w      bsr     frame
+        dbra    d1,.w
+        bsr     full_clear
+        lea     v_args(a5),a2
+        move.w  d7,d0
+        add.w   #T_END_A_TITLE,d0
+        moveq   #3,d1
+        moveq   #C_YEL,d2
+        bsr     full_line
+        addq.w  #1,d1
+        move.w  d7,d0
+        add.w   #T_END_A,d0
+        moveq   #C_WHITE,d2
+        bsr     full_line
+        addq.w  #2,d1
+        move.w  #T_THE_END,d0
+        moveq   #C_CYAN,d2
+        bsr     full_line
+        move.w  #T_PRESS_KEY,d0
+        moveq   #FULL_ROWS-2,d1
+        moveq   #C_CYAN,d2
+        bsr     full_line
+        bsr     wait_key
+        bra     to_title
 
 ;---------------------------------------------------------------------
 ; game_over: every cat has fallen; how far the party came, then the

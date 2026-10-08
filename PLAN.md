@@ -3,7 +3,7 @@
 Status: approved 2026-10-07 (open questions answered with the proposals, see section 8).
 Changes to the architecture below need approval (CLAUDE.md).
 
-Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9.1-M9.7 (levels 1-7) done.
+Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9 done (levels 1-8, three endings).
 
 ## 1. Toolchain (taken over from FUSE RUNNER)
 
@@ -459,6 +459,31 @@ draws a level source as PNG for review.
     in level 8) are saved after the deepest level: SAVE_VER 4, older saves
     are not loaded any more.
   88.7 KB in use, tested at 384 KB.
+- **M9.8 The Heart Hollow: DONE (all 8 levels playable to an ending).**
+  data/levels/l8.txt (a vast cavern with rock pillars, the moss garden in
+  the middle, the passage to the Heart in the south-east), wall set 8
+  (dark rock, veins glowing red and yellow, moss on the floor), sprite set
+  8 (Echo Shade, Hollow-Keeper). Decided 2026-10-08:
+  - Level option `hum yes` (header byte LV_FLAGS, bit LF_HUM, so far 0):
+    every 10 actions a Hum pulse costs the party a turn (the enemies move
+    once more), two actions before it the ground trembles; in a fight
+    every 4th round nobody of the party can move, with a warning the round
+    before.
+  - Trait `echo` (Echo Shade, "copies the party's last action"): it
+    strikes back with exactly the damage of the last cat's hit (always
+    hits); if the last cat did not hit (defend, skill, item, a miss), it
+    waits.
+  - Trait `keeper` (Hollow-Keeper, 60 HP, boss): its words from STORY.md;
+    with the Heart Stone a menu Use the Heart Stone (ending A, the
+    Release) / Lay down at the Heart (ending C, the Stay) / Fight; without
+    the Heart Stone, or with Fight: the fight, won = ending B (the
+    Silence). The ending: title and text of STORY.md on the full screen,
+    THE END, a key, the title screen.
+  - Two Scratch-Marks of my own (MARK_8_1, MARK_8_2); STORY.md has none
+    for level 8.
+  ITEMTEST now also packs the Heart Stone. 90.0 KB in use, tested at
+  384 KB (endings A, B, C each seen in the emulator; B with a Keeper of 1
+  HP for the test only).
 **M10 – endings, sound, polish, distribution** (win image, README, MiSTer test).
 
 ## 7. Testing

@@ -346,6 +346,50 @@ BADGER_HALF = [
     ".KKKK....KKKK.......WKWK",
 ]
 
+ECHOSHADE_HALF = [
+    "..b.............",
+    "..bc............",
+    "..bcb...........",
+    "..bccb..........",
+    "..bcbcbcbcbcbcbc",
+    "...bcbcbcbcbcbcb",
+    "...cbcbcbcbcbcbc",
+    "...bcb**bcbcbcbc",
+    "....cbcbcbcbcbcb",
+    "...b.bcbcbcbcbcK",
+    "..b...bcbcbcbcbc",
+    ".......cbcbcbcbc",
+    "......bcbcbcbcbc",
+    ".....bcbcbcbcbcb",
+    "....bcbcbcbcbcbc",
+    "....cbcbcb.bcbcb",
+    "....bcbc...cbcbc",
+    "....b.b.....b.b.",
+]
+
+KEEPER_HALF = [
+    "........................",
+    "...MM...................",
+    "...MMM..............mmmm",
+    "....MMM..........mmmMMMM",
+    ".....MMMm.....mmmMMMMMMM",
+    "......MMMMmmmmMMMMMMMMMM",
+    ".......MMMMMMMMMMMMMMMMM",
+    "........MMMMMKKKKMMMMMMM",
+    "........MMMMK++++KMMMMMM",
+    "........MMMMK++++KMMMMMM",
+    ".......MMMMMMKKKKMMMMMMM",
+    "......MMMMMMMMMMMMMMMMMM",
+    ".....MMMMMMMMMMMMMMWWWMW",
+    "....MMMMMMMMMMMMMMMWMWMW",
+    "...MMMMMMMMMMMMMMMMMMMMM",
+    "..WMMMMMMMMMMMMMMMMMMMMM",
+    ".W.WMMMMMMMMMMMMMMMMMMMM",
+    "W...WmmmmmmmmmmmmmmmmmmW",
+    ".W.W.....W.W.W.W.W.W.W.W",
+    "..W.....W.W.W.W.W.W.W.W.",
+]
+
 
 def mirror(half):
     return [row + row[::-1] for row in half]
@@ -402,6 +446,8 @@ SIZE = {
     'warrenrat': (48, 34),
     'badger': (64, 40),
     'elder': (48, 64),
+    'echoshade': (40, 52),
+    'keeper': (96, 84),
 }
 
 def gate_rat():
@@ -447,6 +493,8 @@ ART = {
     'warrenrat': mirror(WARRENRAT_HALF),
     'badger': mirror(BADGER_HALF),
     'elder': elder(),
+    'echoshade': mirror(ECHOSHADE_HALF),
+    'keeper': mirror(KEEPER_HALF),
 }
 
 

@@ -1,0 +1,76 @@
+# Level 8: The Heart Hollow (STORY.md)
+# A vast cavern; the Hum is physical (hum yes: every 10 actions a pulse
+# costs the party a turn, in a fight every 4th round nobody can move).
+# Echo Shades copy the last blow of the party. The moss garden in the
+# middle has Glowcap Moss. The Hollow-Keeper waits in the passage to the
+# Heart (south-east): with the Heart Stone the party may use it (ending
+# A) or lay down (ending C); a fight it wins gives ending B.
+number  8
+start   3 2 E
+wallset 8
+sprites 8
+entry   ENTRY_8
+hum     yes
+map
+################################
+#.....##########################
+#.<.......######################
+#.....###.....##########....####
+###.####.........#####.......###
+###...##..#.......###.........##
+####.......##...........#.....##
+#####..#.......##...........####
+####...........###....#.....####
+###..##....#................####
+###......................#...###
+##....#....###.....##.........##
+##.........#~~#..............###
+###...........................##
+####..##.......##.....#.......##
+####.......#...##.............##
+###.................##.....#####
+###..#........#.............####
+##........##..........#......###
+##..##.......................###
+###.........#....##...####...###
+####......................##.###
+#####..#####.......#.......#.###
+######..#######..........#...###
+#######.########...#####.....###
+#######...######..##########.###
+########...#####.###########.###
+#########...........#######...##
+##########.####.....#######....#
+##########.####.....########...#
+###########........#########...#
+################################
+
+event 2 2 stairs 7 29 29
+event 5 2 message HOLLOW
+event 1 1 mark MARK_8_1
+event 9 6 message SHADES
+event 26 3 mark MARK_8_2
+# the moss garden
+event 10 13 message GARDEN
+event 11 13 gather GLOWCAP_MOSS 2
+event 14 13 gather GLOWCAP_MOSS 2
+event 12 14 gather GLOWCAP_MOSS 2
+event 15 12 gather FEN_MOSS 3
+# supplies
+event 2 12 item COBWEB_WRAP 1
+event 25 5 item MARIGOLD_LEAF 1
+event 3 18 item FRESH_PREY 1
+event 17 30 item HERB 2
+event 24 21 item MARIGOLD_LEAF 1
+# the way to the Heart
+event 28 22 message HEART
+
+# enemies
+group 9 8 ECHO_SHADE 1 hunt
+group 22 5 ECHO_SHADE 1 guard
+group 18 10 ECHO_SHADE 2 hunt
+group 6 17 ECHO_SHADE 1 hunt
+group 16 19 ECHO_SHADE 1 guard
+group 26 13 ECHO_SHADE 2 hunt
+group 17 25 ECHO_SHADE 1 guard
+group 28 26 HOLLOW_KEEPER 1 guard

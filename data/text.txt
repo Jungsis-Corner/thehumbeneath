@@ -92,6 +92,21 @@ ELDER_MEET      The Elder Pale rises.\n"We were once like you."\n"The Hum kept u
 ELDER_SPARE     The Elder Pale lowers its head.\n"Take the Heart Stone.\n End what we could not."
 FIGHT           Fight
 FIGHT_ON        So be it. The party attacks!
+HUM_WARN        The Hum swells. The ground trembles.
+HUM_PULSE       The Hum pulses! The party staggers.
+HUM_STUN        The Hum pulses! Nobody can move.
+ECHO_BLOW       %s echoes your last blow!
+ECHO_WAIT       %s copies you and waits.
+KEEPER_MEET     The Hum stops.\nFor one breath, the world is silent.\nThen something vast opens its eyes.\nTHE HOLLOW-KEEPER\nBound here. Bound by the Deepwardens.
+USE_STONE       Use the Heart Stone
+LAY_DOWN        Lay down at the Heart
+END_A_TITLE     THE RELEASE
+END_B_TITLE     THE SILENCE
+END_C_TITLE     THE STAY
+END_A           The Hum fades.\nThe Keeper's chains fall away.\nAbove, the moor is quiet.\nThe Pale Ones follow you to the surface.\nThey feel the sun for the first time.\nThe Emberfen gather at the cellar door.\nSome turn away.\nSome step forward.
+END_B           The Hum stops.\nThe tunnels fall silent.\nYou return alone.\nThe clan celebrates.\nBut at night,\nyou still listen.
+END_C           You lay down at the Heart.\nThe Hum welcomes you.\nSomewhere above,\na new kit hears it for the first time.
+THE_END         THE END
 PASS            Pass
 SPARE           Spare
 
@@ -246,6 +261,9 @@ EN_WARREN_RATS  Warren Rats
 EN_BADGER       Stalker Badger
 EN_BADGERS      Stalker Badgers
 EN_ELDER        Elder Pale
+EN_ECHO         Echo Shade
+EN_ECHOS        Echo Shades
+EN_KEEPER       Hollow-Keeper
 
 # --- Party panel ---
 @width 15
@@ -470,6 +488,19 @@ NESTS           Empty nests. Old fur in the straw.
 BADGER_DEN      A musky smell. Deep claw marks.
 ELDER_HALL      A great hall. Something breathes.
 TOTEM_NICHE     A carved niche. Something lay here.
+
+@level 8
+@width 40
+@digits 6
+@strlen 12
+# --- The Heart Hollow ---
+ENTRY_8         The Hum is in your bones.
+MARK_8_1        WE BOUND IT TO KEEP THE HUM\nTHE HUM BOUND US TO KEEP IT
+MARK_8_2        If you read this, you came\nfurther than we dared to go back.
+HOLLOW          The cavern has no end. The light pulses.
+GARDEN          Moss grows everywhere, soft and deep.
+HEART           Ahead, the Heart beats in the rock.
+SHADES          Shapes move like your own shadows.
 
 @level 0
 @width 40

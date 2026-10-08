@@ -68,6 +68,7 @@ SPRITESETS = {                     # set number: sprite names (the bundle is add
     5: ['adder', 'moth', 'toad'],                 # glowcap caverns
     6: ['bonerat', 'shadecat', 'owl'],            # bone halls
     7: ['pale', 'warrenrat', 'badger', 'elder'],  # silent warren
+    8: ['echoshade', 'keeper'],                   # heart hollow
 }
 MAGIC = b'HWS1'
 ENTRY = 22                         # bytes per draw list entry
@@ -283,6 +284,10 @@ WALLSETS = {
     # party's own (the darkest set)
     7: EarthSet(RED, MAG, RED, 0.10, BLUE, 0.0, rows=3, cols=2,
                 **dict(DARK, light0=0.42, lightz=0.12)),
+    # heart hollow: dark rock with veins that glow in time with the Hum,
+    # moss on the floor
+    8: GlowSet(BLUE, MAG, GREEN, 0.16, BLUE, 0.06, rows=2, cols=2,
+               glow=(RED, YEL), **DARK),
 }
 
 # view classes, as in levelc.py

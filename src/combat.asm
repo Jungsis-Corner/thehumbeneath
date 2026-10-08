@@ -23,6 +23,9 @@ TR_REVIVE equ   1               ; e_trait: gets up once more
 TR_SHADOW equ   2               ; e_trait: illusions
 TR_PALE   equ   3               ; e_trait: a Pale One (a choice when calm)
 TR_ELDER  equ   4               ; e_trait: the Elder Pale (fight or spare)
+TR_ECHO   equ   5               ; e_trait: copies the party's last action
+TR_KEEPER equ   6               ; e_trait: the Hollow-Keeper (the endings)
+HUM_ROUNDS equ  4               ; Hum levels: every 4th round a pulse
 SHADOW_PCT equ  33              ; chance that an attack hits only a shadow
 
 ; combat: a3 = enemy group next to the party, the party faces it
@@ -50,6 +53,8 @@ combat:
         move.w  #1,v_fight(a5)
         clr.w   v_charm(a5)
         clr.w   v_charmed(a5)
+        clr.w   v_echo(a5)
+        clr.w   v_cround(a5)
         lea     v_crev(a5),a0
         clr.l   (a0)+
         clr.l   (a0)+
@@ -62,6 +67,22 @@ combat:
         bsr     foes_draw
 
 .round  clr.w   v_cskip(a5)
+        btst    #LF_HUM,v_map+LV_FLAGS(a5) ; the Hum: every 4th round
+        beq.s   .nohum          ; nobody of the party can move
+        addq.w  #1,v_cround(a5)
+        move.w  v_cround(a5),d0
+        and.w   #HUM_ROUNDS-1,d0
+        beq.s   .pulse
+        cmp.w   #HUM_ROUNDS-1,d0
+        bne.s   .nohum
+        move.w  #T_HUM_WARN,d0
+        bsr     msg_print
+        bra.s   .nohum
+.pulse  move.w  #T_HUM_STUN,d0
+        bsr     msg_print
+        bsr     pause
+        move.w  #1,v_cskip(a5)
+.nohum
         moveq   #31,d7          ; speed, highest first
 .speed  moveq   #0,d6           ; cats with this speed
         lea     v_party(a5),a2
@@ -89,7 +110,7 @@ combat:
         beq.s   .rnd
         subq.w  #1,v_charm(a5)
 .rnd
-        bra.s   .round
+        bra     .round
 
 .done   clr.w   v_cact(a5)
         clr.w   v_fight(a5)
@@ -114,6 +135,7 @@ combat:
 cat_turn:
         movem.l d0-d7/a0-a4,-(sp)
         clr.w   p_guard(a2)
+        clr.w   v_echo(a5)      ; (an attack that hits sets it again)
         move.w  d6,d0
         addq.w  #1,d0
         move.w  d0,v_cact(a5)   ; highlighted in the panel
@@ -270,6 +292,7 @@ cat_attack:
         moveq   #1,d0
 .dmg    move.w  d0,d2
         sub.w   d2,(a1)
+        move.w  d2,v_echo(a5)   ; what an Echo Shade copies
         move.w  #T_HIT_FOR,d0
         move.w  e_name(a4),d1
         bsr     name_num_msg
@@ -325,7 +348,19 @@ foe_attack:
         bsr     name_msg
         bsr     pause
         bsr     pick_target     ; -> a3 = cat
-        bsr     cat_def
+        cmp.w   #TR_ECHO,e_trait(a4) ; an Echo Shade copies the last action
+        bne.s   .def0
+        move.w  #T_ECHO_WAIT,d0 ; (no blow to copy: it waits)
+        move.w  e_name(a4),d1
+        move.w  v_echo(a5),d2
+        beq.s   .say
+        move.w  #T_ECHO_BLOW,d0 ; the same blow back, it always hits
+        bsr     name_msg
+        move.w  d2,d0
+        bra     .dmg
+.say    bsr     name_msg
+        bra     .e
+.def0   bsr     cat_def
         move.w  d0,d4
         tst.w   p_guard(a3)
         beq.s   .def

@@ -60,6 +60,7 @@ SF_SPARED  equ  0               ; v_story: the Elder Pale was spared
 SF_PFOUGHT equ  1               ; v_story: the party fought Pale Ones
 NOISE_STEP equ  3               ; a normal step wakes listeners this near
 NOISE_LOUD equ  6               ; a noise event wakes listeners this near
+HUM_STEPS  equ  10              ; Hum levels: a pulse every 10 actions
 
 ; level memory and saving
 LVSLOTS    equ  10              ; levels 0-9 can be kept
@@ -202,6 +203,9 @@ v_fight rs.w    1               ; 1 while a fight is going on
 v_charm rs.w    1               ; rounds of the Starfolk Charm left
 v_charmed rs.w  1               ; the charm was used in this fight
 v_crev  rs.b    10              ; combat: enemy n got up again (byte n)
+v_echo  rs.w    1               ; combat: damage of the last cat's hit (0 = none)
+v_cround rs.w   1               ; combat: rounds (for the Hum pulses)
+v_humc  rs.w    1               ; actions since the last Hum pulse
 v_mcount rs.w   1               ; menu: number of lines
 v_mtxt  rs.b    MENU_MAX*MENU_LEN ; menu: the lines
 v_mitem rs.b    MENU_MAX        ; menu: item of each line (pack menus)
@@ -441,6 +445,7 @@ mainloop:
 .new    move.w  #REP_FIRST,v_rep(a5)
 .act    bsr     do_keys
         bsr     groups_act
+        bsr     hum_tick        ; the Hum may cost the party a turn
         tst.w   v_sneak(a5)     ; sneaking: the enemies move twice as often
         beq.s   .slw
         bsr     groups_act
@@ -808,6 +813,28 @@ rest:
         bsr     panel_show
         movem.l (sp)+,d0-d3/a0-a3
         rts
+
+; hum_tick: after an action on a Hum level: a warning two actions
+;           before, then a pulse; the party staggers, the enemies move
+hum_tick:
+        btst    #LF_HUM,v_map+LV_FLAGS(a5)
+        beq.s   .e
+        move.l  d0,-(sp)
+        addq.w  #1,v_humc(a5)
+        move.w  v_humc(a5),d0
+        cmp.w   #HUM_STEPS-2,d0
+        bne.s   .p
+        move.w  #T_HUM_WARN,d0
+        bsr     msg_print
+        bra.s   .x
+.p      cmp.w   #HUM_STEPS,d0
+        blo.s   .x
+        clr.w   v_humc(a5)
+        move.w  #T_HUM_PULSE,d0
+        bsr     msg_print
+        bsr     groups_act
+.x      move.l  (sp)+,d0
+.e      rts
 
 ; pale_wake: d1 = range; listening groups that near wake up and hunt
 pale_wake:
@@ -1411,6 +1438,8 @@ encounter:
         move.w  #T_GROUP_ATTACKS,d0
 .say    move.w  d0,d3           ; ("attacks!")
         move.w  e_trait(a0),d1  ; the Pale Ones: a choice first
+        cmp.w   #TR_KEEPER,d1
+        beq     .keeper
         cmp.w   #TR_ELDER,d1
         beq.s   .elder
         cmp.w   #TR_PALE,d1
@@ -1451,6 +1480,54 @@ encounter:
         bsr     combat
 .e      movem.l (sp)+,d0-d3/a0-a2
         rts
+.keeper bsr     keeper_meet     ; the end of the way
+        beq.s   .e              ; (not reached when it ends the game)
+        bsr     pause
+        bsr     combat
+        cmp.w   #CE_VICTORY,v_cend(a5)
+        bne.s   .e
+        moveq   #END_B,d0       ; the Keeper is beaten: the Silence
+        bra     ending
+
+; keeper_meet: a0 = the Keeper's type. Its words; with the Heart Stone a
+;              choice: use it (ending A), lay down (ending C) or fight.
+;              -> NE = fight (EQ: the party chose not to; does not happen)
+keeper_meet:
+        movem.l d0-d2/a0-a1,-(sp)
+        move.w  #T_KEEPER_MEET,d0
+        bsr     msg_print
+        btst    #SF_SPARED,v_story+1(a5) ; the Elder gave the Heart Stone
+        bne.s   .ask            ; (counts even when the pack was full)
+        move.w  #IT_HEART_STONE,d0
+        bsr     pack_count
+        beq.s   .fight
+.ask    bsr     menu_clear
+        move.w  #T_USE_STONE,d0
+        bsr     menu_addt
+        move.w  #T_LAY_DOWN,d0
+        bsr     menu_addt
+        move.w  #T_FIGHT,d0
+        bsr     menu_addt
+        move.l  12(sp),a0
+        move.w  e_name(a0),d0
+        bsr     text_get
+        bsr     menu_run
+        tst.w   d0
+        bmi.s   .ask
+        bsr     view_refresh
+        moveq   #END_A,d1       ; 0: the Heart Stone, 1: lay down
+        tst.w   d0
+        beq.s   .end
+        moveq   #END_C,d1
+        cmp.w   #1,d0
+        beq.s   .end
+.fight  move.w  #T_FIGHT_ON,d0
+        bsr     msg_print
+        movem.l (sp)+,d0-d2/a0-a1
+        moveq   #1,d0           ; NE: fight
+        rts
+.end    move.w  d1,d0
+        bra     ending
 
 ; pale_choice: d0 = text of the meeting, d1 = text of the peaceful choice
 ;              -> EQ = the peaceful one, NE = fight
@@ -2055,6 +2132,7 @@ item_test:                      ; the pack for tests
         move.l  #IT_THISTLE_CHARM<<24|1<<16|IT_COBWEB_WRAP<<8|1,(a0)+
         move.l  #IT_STALE_PREY<<24|1<<16|IT_HERB<<8|2,(a0)+
         move.w  #IT_VALVE_WHEEL<<8|3,(a0)+
+        move.w  #IT_HEART_STONE<<8|1,(a0)+
         rts
         endc
 
