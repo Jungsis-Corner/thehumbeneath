@@ -3,7 +3,7 @@
 Status: approved 2026-10-07 (open questions answered with the proposals, see section 8).
 Changes to the architecture below need approval (CLAUDE.md).
 
-Progress: M1 done (M1a, M1b, M1c), M2-M8 done.
+Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9.1 (level 1) done.
 
 ## 1. Toolchain (taken over from FUSE RUNNER)
 
@@ -348,6 +348,22 @@ saving any time outside a fight; 3 save slots; a title picture with menu.
   to microdrive and floppy buffers). Save files: about 0.3 KB + 0.4 KB per
   visited level (save version 3).
 **M9 – levels 1-8 content**, mini-bosses, hazards, sneak step (L7), Elder Pale choice.
+One level per step (M9.1 = level 1, ...). Each level gets its map, enemies,
+mini-boss, hazards, items and Scratch-Marks from STORY.md; tools/mapview.py
+draws a level source as PNG for review.
+- **M9.1 The Root Cellar: DONE.** data/levels/l1.txt: entrance with the way
+  back up (exit event), tutorial corridor (three hints), store room with
+  herbs in crates, cobweb hall (cobwebs slow: enemies get an extra move;
+  two Giant Spiders, the first Scratch-Mark), rat nest (hunters), apple
+  hall with loose boards on the way south (damage once), west cellar, south
+  rooms with the Cellar Key, the lair with Old Whiskerless (mini-boss) and
+  the stairs down; shortcut: the key opens the locked door lair <-> rat
+  nest. New events: boards, cobweb, exit; stairs to a level that is not
+  built yet say "Rubble blocks the way down." New games start on level 1
+  (QUICKSTART tests on test level 0); test levels (`test yes`) do not count
+  for the progress.
+  Open: STORY.md has two Scratch-Mark texts for level 1, the plan asks for
+  3-5 per level - more texts are needed (to be written by the author).
 **M10 – endings, sound, polish, distribution** (win image, README, MiSTer test).
 
 ## 7. Testing

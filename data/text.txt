@@ -124,6 +124,18 @@ FINDS_NOTHING   %s finds nothing here.
 NO_NEED         %s does not need it.
 NOT_ABLE        %s is in no state for that.
 
+# --- Level 1: The Root Cellar ---
+EXIT_1          The camp is behind you. Follow the Hum.
+TUT_1           Cursor keys walk and turn the party.
+TUT_2           SPACE: party menu. I: pack. C: cats.
+TUT_3           ESC: save, load or quit the game.
+APPLES          Crates of old apples line the walls.
+APPLE_RACKS     Old apples rot on wooden racks.
+WEBS            Cobwebs cling to your fur.
+RAT_SMELL       The air smells of rats.
+BOARDS          A board breaks under your paws!
+NOT_YET         Rubble blocks the way down.
+
 # --- Traps ---
 TRAP_GLASS      Broken glass cuts into a paw.
 TRAP_THORNS     Thorns tear at the fur.

@@ -181,7 +181,11 @@ new_start:                      ; the first level
         ifd     STARTLV
         moveq   #STARTLV,d0
         else
-        moveq   #0,d0           ; test level
+        ifd     QUICKSTART
+        moveq   #0,d0           ; tests: test level 0
+        else
+        moveq   #1,d0           ; the game: level 1
+        endc
         endc
         bsr     enter_level
         bsr     level_start
@@ -563,6 +567,9 @@ progress:
 .lv     move.w  v_lvok(a5),d0
         btst    d4,d0
         beq.s   .nlv
+        move.w  #TEST_LEVELS,d0 ; test levels do not count
+        btst    d4,d0
+        bne.s   .nlv
         move.w  d4,d0
         bsr     lv_slot         ; a0 = what changed in that level
         moveq   #128-1,d1       ; cells seen: bits set

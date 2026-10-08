@@ -166,6 +166,7 @@ v_full  rs.l    1               ; channel over the whole screen (title texts)
 v_sptop rs.l    1               ; stack pointer for the title
 v_spgame rs.l   1               ; stack pointer of the running game
 v_intitle rs.w  1               ; 1 while the title menu is shown
+v_slow  rs.w    1               ; 1: the enemies get one more move (cobwebs)
 v_prog  rs.w    5               ; progress: %, depth, explored %, marks, bosses
 v_cname rs.b    NPARTY*NAME_LEN ; the cats' names
 v_svn   rs.b    10              ; save file name 'hum_svN' (QDOS string)
@@ -413,7 +414,11 @@ mainloop:
 .new    move.w  #REP_FIRST,v_rep(a5)
 .act    bsr.s   do_keys
         bsr     groups_act
-        bsr     redraw
+        tst.w   v_slow(a5)      ; cobwebs: the enemies move once more
+        beq.s   .rd
+        clr.w   v_slow(a5)
+        bsr     groups_act
+.rd     bsr     redraw
         bra     mainloop
 .none   clr.w   v_rep(a5)
         bra     mainloop
@@ -506,7 +511,10 @@ enter_level:
 .fe     bclr    #PF_FEATHER,1(a2)
         lea     p_size(a2),a2
         dbra    d1,.fe
-        cmp.w   v_deep(a5),d0   ; the deepest level reached (progress)
+        move.w  #TEST_LEVELS,d1 ; the deepest level reached (progress;
+        btst    d0,d1           ; test levels do not count)
+        bne.s   .dp
+        cmp.w   v_deep(a5),d0
         bls.s   .dp
         move.w  d0,v_deep(a5)
 .dp     bsr     lv_keep
@@ -702,6 +710,12 @@ cell_events:
         beq     .trap
         cmp.b   #EV_ITEM,d0
         beq     .item
+        cmp.b   #EV_BOARDS,d0
+        beq     .boards
+        cmp.b   #EV_COBWEB,d0
+        beq     .cobweb
+        cmp.b   #EV_EXIT,d0
+        beq     .exit
         cmp.b   #EV_MESSAGE,d0
         bne     .nx             ; gather, lock: not when entering
         bset    #0,EV_FLAGS(a3) ; message: only the first time
@@ -719,7 +733,7 @@ cell_events:
         moveq   #C_WHITE,d1
         bsr     msg_ink
 .nx     addq.l  #EV_SIZE,a3
-        bra.s   .ev
+        bra     .ev
 .item   btst    #0,EV_FLAGS(a3) ; item: until it is taken
         bne     .nx
         moveq   #0,d0
@@ -752,8 +766,35 @@ cell_events:
         move.w  #T_MOSS_FULL,d0
         bsr     msg_print
         bra     .nx
+.boards bset    #0,EV_FLAGS(a3) ; loose boards: once, a cat is hurt
+        bne     .nx
+        move.w  EV_PARAM(a3),d1 ; damage<<12 | text id
+        move.w  d1,d0
+        and.w   #$fff,d0
+        bsr     msg_print
+        moveq   #12,d0
+        lsr.w   d0,d1
+        movem.l a2-a3,-(sp)
+        bsr     pick_random     ; -> a3 = a standing cat
+        beq.s   .b1
+        sub.w   d1,p_hp(a3)
+        move.w  d1,d2
+        move.w  #T_HIT_FOR,d0
+        move.w  p_name(a3),d1
+        bsr     name_num_msg
+        bsr     fall_check
+        bsr     party_check
+.b1     movem.l (sp)+,a2-a3
+        bra     .nx
+.cobweb move.w  EV_PARAM(a3),d0 ; cobwebs: every time, slow
+        bsr     msg_print
+        move.w  #1,v_slow(a5)
+        bra     .nx
+.exit   move.w  EV_PARAM(a3),d0 ; stairs that lead nowhere
+        bsr     msg_print
+        bra     .nx
 .trap   bset    #0,EV_FLAGS(a3) ; trap: only the first time
-        bne.s   .nx
+        bne     .nx
         move.w  EV_PARAM(a3),d1 ; bleed<<12 | text id
         move.w  d1,d0
         and.w   #$fff,d0
@@ -762,7 +803,15 @@ cell_events:
         lsr.w   d0,d1
         bsr     wound_random
         bra     .nx
-.stairs move.w  #T_STAIRS_DOWN,d0
+.stairs move.w  EV_PARAM(a3),d0 ; level<<10 | y<<5 | x: its file there?
+        moveq   #10,d2
+        lsr.w   d2,d0
+        bsr     level_exists
+        beq.s   .go
+        move.w  #T_NOT_YET,d0   ; not built yet: the way is blocked
+        bsr     msg_print
+        bra     .e
+.go     move.w  #T_STAIRS_DOWN,d0
         move.w  v_pos(a5),d1
         lea     v_map(a5),a0
         moveq   #CELL_TYPE,d2
@@ -775,7 +824,7 @@ cell_events:
         move.w  d1,d0
         moveq   #10,d2
         lsr.w   d2,d0
-        bsr     enter_level     ; replaces the map: no more events here
+.there  bsr     enter_level     ; replaces the map: no more events here
         and.w   #$3ff,d1
         move.w  d1,v_pos(a5)
         lea     v_map(a5),a0
@@ -1537,10 +1586,9 @@ rand:   move.w  v_rand(a5),d0
         move.w  d0,v_rand(a5)
         rts
 
-; wound_random: d1 = bleed level; a random cat that is still standing
-;               bleeds at least that much
-wound_random:
-        movem.l d0-d3/a0-a3,-(sp)
+; pick_random: -> a3 = a random cat that is still standing, EQ = none
+pick_random:
+        movem.l d0/d2-d3,-(sp)
         lea     v_party(a5),a3
         moveq   #0,d2           ; cats standing
         moveq   #NPARTY-1,d3
@@ -1561,6 +1609,35 @@ wound_random:
         bmi.s   .hit
 .f1     lea     p_size(a3),a3
         bra.s   .find
+.hit    moveq   #1,d2           ; NE
+.e      movem.l (sp)+,d0/d2-d3  ; (keeps the flags)
+        rts
+
+; level_exists: d0 = level -> EQ = its file can be opened
+level_exists:
+        movem.l d0-d4/a0-a3,-(sp)
+        lea     v_buf(a5),a2    ; file name 'hum_lN'
+        move.l  a2,a0
+        lea     lvname(pc),a1
+        moveq   #2+6-1,d1
+.cp     move.b  (a1)+,(a0)+
+        dbra    d1,.cp
+        add.b   d0,-1(a0)
+        lea     v_name(a5),a3
+        bsr     fopen
+        bne.s   .e
+        moveq   #IO_CLOSE,d0
+        trap    #2
+        moveq   #0,d0
+.e      movem.l (sp)+,d0-d4/a0-a3 ; (keeps the flags)
+        rts
+
+; wound_random: d1 = bleed level; a random cat that is still standing
+;               bleeds at least that much
+wound_random:
+        movem.l d0-d3/a0-a3,-(sp)
+        bsr     pick_random
+        beq.s   .e
 .hit    cmp.w   p_bleed(a3),d1
         bls.s   .msg
         move.w  d1,p_bleed(a3)

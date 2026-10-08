@@ -4,6 +4,7 @@ start   3 2 S
 wallset 2
 sprites 1
 entry   ENTRY_TEST2
+test    yes
 map
 ################################
 #....#.........................#

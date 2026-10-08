@@ -24,12 +24,19 @@ Level source:
     event X Y item ITEM COUNT      found when the cell is entered (once)
     event X Y gather ITEM COUNT    found by the healer's Gather (once)
     event X Y lock ITEM            locked door ('L') that ITEM opens
+    event X Y boards DAMAGE TEXT   the first time: TEXT, a random cat takes
+                                   DAMAGE (loose boards and the like)
+    event X Y cobweb TEXT          every time: TEXT, and the enemies get one
+                                   more move (cobwebs slow the party)
+    event X Y exit TEXT            on stairs that lead nowhere (yet): TEXT
+    test yes                       a test level: not counted for the progress
     group X Y ENEMY COUNT guard|hunt   enemy group (ENEMY = id from
                                    data/enemies.txt); guards stay, hunters
                                    come closer when the party is near
 
-Every stairs cell needs a stairs event; the target must be an open cell of
-a level compiled in the same run.
+Every stairs cell needs a stairs or exit event. A stairs target must be an
+open cell of a level compiled in the same run; a level that is not built
+yet is allowed with a warning (the game then says the way is blocked).
 
 hum_lN layout:
     1024 bytes   map, cell (x,y) at y*32+x, x = east, y = south
@@ -41,7 +48,8 @@ hum_lN layout:
                  time), param.w; ends with $FF
                  stairs param = level<<10 | y<<5 | x, mark/message = text id,
                  trap param = bleed<<12 | text id,
-                 item/gather param = item<<8 | count, lock param = item
+                 item/gather param = item<<8 | count, lock param = item,
+                 boards param = damage<<12 | text id, cobweb/exit = text id
     groups       6 bytes each: x, y, enemy type, count, mode (0 guard,
                  1 hunt), flags (0; at run time bit 0 = gone, bit 1 = seen);
                  ends with $FF
@@ -88,7 +96,7 @@ BY_TYPE = {c[1]: c for c in CELLS}
 CF_BLOCK = 1
 
 EVENTS = {'stairs': 1, 'mark': 2, 'message': 3, 'trap': 4, 'item': 5, 'gather': 6,
-          'lock': 7}
+          'lock': 7, 'boards': 8, 'cobweb': 9, 'exit': 10}
 ITEM_IDS = {it['id']: i + 1 for i, it in enumerate(items.read())}
 MODES = {'guard': 0, 'hunt': 1}
 MAXGROUPS = 16
@@ -147,6 +155,8 @@ def parse(path, textids):
             lv['entry'] = textids[args[0]]
         elif key == 'map':
             rows = []
+        elif key == 'test':
+            lv['test'] = args == ['yes']
         elif key == 'event':
             if len(args) < 4 or args[2] not in EVENTS:
                 fail('%s: event X Y %s ...' % (where, '|'.join(EVENTS)))
@@ -163,6 +173,11 @@ def parse(path, textids):
                 if len(args) != 4 or args[3] not in ITEM_IDS:
                     fail('%s: event X Y lock ITEM' % where)
                 param = ITEM_IDS[args[3]]
+            elif kind == 'boards':
+                if len(args) != 5 or not args[3].isdigit() or not 1 <= int(args[3]) <= 9 \
+                        or args[4] not in textids:
+                    fail('%s: event X Y boards DAMAGE(1-9) TEXT' % where)
+                param = int(args[3]) << 12 | textids[args[4]]
             elif kind == 'trap':
                 if len(args) != 5 or args[3] not in '123' or args[4] not in textids:
                     fail('%s: event X Y trap BLEED(1-3) TEXT' % where)
@@ -209,14 +224,15 @@ def check(lv):
             if (nx, ny) not in seen and (not blocks(c) or c in 'DL'):
                 seen.add((nx, ny))
                 todo.append((nx, ny))
-    stairs = {(x, y) for x, y, kind, _, _ in lv['events'] if kind == 'stairs'}
+    stairs = {(x, y) for x, y, kind, _, _ in lv['events'] if kind in ('stairs', 'exit')}
     for y in range(SIZE):
         for x in range(SIZE):
             if rows[y][x] in '<>':
                 if (x, y) not in seen:
                     fail('%s: stairs at %d,%d not reachable' % (path, x, y))
                 if (x, y) not in stairs:
-                    fail('%s: stairs at %d,%d without a stairs event' % (path, x, y))
+                    fail('%s: stairs at %d,%d without a stairs or exit event'
+                         % (path, x, y))
     for x, y, kind, _, where in lv['events']:
         if not (0 <= x < SIZE and 0 <= y < SIZE):
             fail('%s: event cell %d,%d outside the map' % (where, x, y))
@@ -225,8 +241,8 @@ def check(lv):
                 fail('%s: lock event on a cell without a locked door' % where)
         elif blocks(rows[y][x]):
             fail('%s: event cell %d,%d is not open' % (where, x, y))
-        if kind == 'stairs' and rows[y][x] not in '<>':
-            fail('%s: stairs event on a cell without stairs' % where)
+        if kind in ('stairs', 'exit') and rows[y][x] not in '<>':
+            fail('%s: %s event on a cell without stairs' % (where, kind))
     doors = sum(row.count(c) for row in rows for c in 'DLd')
     if doors > MAXDOORS:
         fail('%s: more than %d doors (the game keeps open doors per level)'
@@ -252,7 +268,8 @@ def check_links(levels):
                 continue
             n, tx, ty = param
             if n not in levels:
-                fail('%s: target level %d is not built' % (where, n))
+                print('levelc: note: %s: target level %d is not built yet' % (where, n))
+                continue
             if not (0 <= tx < SIZE and 0 <= ty < SIZE) or blocks(levels[n]['rows'][ty][tx]):
                 fail('%s: target cell %d,%d of level %d is not open' % (where, tx, ty, n))
 
@@ -285,9 +302,10 @@ DEPTH_LEVELS = 8                  # levels of the game (for the progress)
 def write_inc(path, levels):
     """levels.inc and leveltab.inc; levels = all levels of this build"""
     bosses = {i for i, e in enumerate(enemies.read()) if e['boss']}
-    cells = sum(lv['open'] for lv in levels.values())
-    marks = sum(1 for lv in levels.values() for e in lv['events'] if e[2] == 'mark')
-    guards = sum(1 for lv in levels.values() for g in lv['groups'] if g[2] in bosses)
+    real = [lv for lv in levels.values() if not lv.get('test')]
+    cells = sum(lv['open'] for lv in real)
+    marks = sum(1 for lv in real for e in lv['events'] if e[2] == 'mark')
+    guards = sum(1 for lv in real for g in lv['groups'] if g[2] in bosses)
     flags, cols, vcls = [0] * 32, [0] * 32, [0] * 32
     with open(path, 'w') as f:
         f.write('; GENERATED by tools/levelc.py - do not edit\n')
@@ -301,7 +319,9 @@ def write_inc(path, levels):
                 'TOTAL_CELLS  equ %d  ; reachable cells of all levels\n'
                 'TOTAL_MARKS  equ %d  ; Scratch-Marks of all levels\n'
                 'TOTAL_BOSSES equ %d  ; mini-boss groups of all levels\n'
-                % (DEPTH_LEVELS, cells, marks, guards))
+                % (DEPTH_LEVELS, max(cells, 1), marks, guards))
+        f.write('TEST_LEVELS equ %d  ; bit n = level n is a test level\n'
+                % sum(1 << n for n, lv in levels.items() if lv.get('test')))
         f.write('G_SIZE   equ 6\nG_X      equ 0\nG_Y      equ 1\nG_TYPE   equ 2\n'
                 'G_COUNT  equ 3\nG_MODE   equ 4\nG_FLAGS  equ 5\nG_END    equ $ff\n'
                 'GM_GUARD equ 0\nGM_HUNT  equ 1\nGF_GONE  equ 0\nGF_SEEN  equ 1\n')
