@@ -3,7 +3,7 @@
 Status: approved 2026-10-07 (open questions answered with the proposals, see section 8).
 Changes to the architecture below need approval (CLAUDE.md).
 
-Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9.1-M9.3 (levels 1-3) done.
+Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9.1-M9.4 (levels 1-4) done.
 
 ## 1. Toolchain (taken over from FUSE RUNNER)
 
@@ -394,6 +394,14 @@ draws a level source as PNG for review.
   Test levels use a global TEST_MARK. 74.9 -> 73.9 KB now, and every new
   level's texts no longer add to the memory in use. Fixed on the way: the
   entry text of the first level was cleared at the start (since M8b).
+- **M9.4 The Rail Tunnel: DONE.** data/levels/l4.txt, wall set 4 (rusty
+  bricks, lantern glints), sprite set 4 (fox, crow, rust beetle, Vixen
+  Redbrush). Crows flutter, rust beetles have defence 6, foxes hunt and
+  make bleed (Gash). New events: `rubble` (once: every cat is hit),
+  `handcar TX TY` (with the Handcar Lever: ride to the other stop; the
+  lever lies in the fox den). Vixen Redbrush (30 HP) stands in the only
+  passage to the stairs. The rails exist only in messages (pictures of
+  rails would need more floor pictures). 74.3 KB, tested at 256 KB.
 **M10 – endings, sound, polish, distribution** (win image, README, MiSTer test).
 
 ## 7. Testing

@@ -33,6 +33,9 @@ Level source:
                                    level wakes up and hunts
     event X Y slip TEXT            every time: TEXT, the party slides one
                                    more cell the way it went
+    event X Y rubble DAMAGE TEXT   the first time: TEXT, every cat takes DAMAGE
+    event X Y handcar TX TY        with the Handcar Lever in the pack the party
+                                   rides to TX TY (keeps its facing)
     event X Y valve                a valve socket: a Valve Wheel from the pack
                                    is fitted and turned; when all valves of
                                    the level are turned, the locked doors with
@@ -107,7 +110,7 @@ CF_BLOCK = 1
 
 EVENTS = {'stairs': 1, 'mark': 2, 'message': 3, 'trap': 4, 'item': 5, 'gather': 6,
           'lock': 7, 'boards': 8, 'cobweb': 9, 'exit': 10, 'echo': 11, 'slip': 12,
-          'valve': 13}
+          'valve': 13, 'rubble': 14, 'handcar': 15}
 ITEM_IDS = {it['id']: i + 1 for i, it in enumerate(items.read())}
 MODES = {'guard': 0, 'hunt': 1, 'swim': 2, 'flutter': 3}
 MAXGROUPS = 16
@@ -188,10 +191,15 @@ def parse(path, textids):
                 if len(args) != 3:
                     fail('%s: event X Y valve' % where)
                 param = 0
-            elif kind == 'boards':
+            elif kind == 'handcar':
+                if len(args) != 5:
+                    fail('%s: event X Y handcar TX TY' % where)
+                param = int(args[4]) << 5 | int(args[3])
+                lv.setdefault('rides', []).append((int(args[3]), int(args[4]), where))
+            elif kind in ('boards', 'rubble'):
                 if len(args) != 5 or not args[3].isdigit() or not 1 <= int(args[3]) <= 9 \
                         or args[4] not in textids:
-                    fail('%s: event X Y boards DAMAGE(1-9) TEXT' % where)
+                    fail('%s: event X Y %s DAMAGE(1-9) TEXT' % (where, kind))
                 param = int(args[3]) << 12 | textids[args[4]]
             elif kind == 'trap':
                 if len(args) != 5 or args[3] not in '123' or args[4] not in textids:
@@ -272,6 +280,9 @@ def check(lv):
             fail('%s: a group needs a floor or water cell' % where)
         if (x, y) in cells or (x, y) == (sx, sy):
             fail('%s: cell %d,%d is taken' % (where, x, y))
+    for tx, ty, where in lv.get('rides', []):
+        if not (0 < tx < SIZE - 1 and 0 < ty < SIZE - 1) or blocks(rows[ty][tx]):
+            fail('%s: the handcar must end on an open cell' % where)
     for x, y, _, _, mode, where in lv['groups']:
         if mode == MODES['swim'] and rows[y][x] != '~':
             fail('%s: swimmers start in the water' % where)

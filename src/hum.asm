@@ -732,6 +732,28 @@ move_rel:
 .group  bsr     group_at        ; walked into an enemy group
         bra     encounter
 
+; hurt_all: d1 = damage for every cat still standing
+hurt_all:
+        movem.l d0-d3/a0-a3,-(sp)
+        lea     v_party(a5),a3
+        moveq   #NPARTY-1,d3
+.c      tst.w   p_hp(a3)
+        ble.s   .n
+        sub.w   d1,p_hp(a3)
+        movem.l d1,-(sp)
+        move.w  d1,d2
+        move.w  #T_HIT_FOR,d0
+        move.w  p_name(a3),d1
+        bsr     name_num_msg
+        bsr     fall_check
+        movem.l (sp)+,d1
+.n      lea     p_size(a3),a3
+        dbra    d3,.c
+        bsr     panel_show
+        bsr     party_check
+        movem.l (sp)+,d0-d3/a0-a3
+        rts
+
 ; wake_guards: every guard group of the level hunts now (not the bosses)
 wake_guards:
         movem.l d0/a0-a1,-(sp)
@@ -886,6 +908,10 @@ cell_events:
         beq     .slip
         cmp.b   #EV_VALVE,d0
         beq     .valve
+        cmp.b   #EV_RUBBLE,d0
+        beq     .rubble
+        cmp.b   #EV_HANDCAR,d0
+        beq     .handcar
         cmp.b   #EV_MESSAGE,d0
         bne     .nx             ; gather, lock: not when entering
         bset    #0,EV_FLAGS(a3) ; message: only the first time
@@ -975,6 +1001,29 @@ cell_events:
         bra     .e              ; (the party is somewhere else now)
 .valve  bsr     valve_turn
         bra     .nx
+.rubble bset    #0,EV_FLAGS(a3) ; falling rubble: once, every cat is hit
+        bne     .nx
+        move.w  EV_PARAM(a3),d1 ; damage<<12 | text id
+        move.w  d1,d0
+        and.w   #$fff,d0
+        bsr     msg_print
+        moveq   #12,d0
+        lsr.w   d0,d1
+        bsr     hurt_all
+        bra     .nx
+.handcar move.w #IT_HANDCAR_LEVER,d0 ; the handcar: a ride with the lever
+        bsr     pack_count
+        bne.s   .ride
+        move.w  #T_HANDCAR_NO,d0
+        bsr     msg_print
+        bra     .nx
+.ride   move.w  #T_HANDCAR_GO,d0
+        bsr     msg_print
+        move.w  EV_PARAM(a3),d0 ; y<<5 | x
+        move.w  d0,v_pos(a5)
+        lea     v_map(a5),a0
+        bset    #CELL_SEEN,0(a0,d0.w)
+        bra     .e              ; (somewhere else now)
 .trap   bset    #0,EV_FLAGS(a3) ; trap: only the first time
         bne     .nx
         move.w  EV_PARAM(a3),d1 ; bleed<<12 | text id

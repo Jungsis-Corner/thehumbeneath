@@ -135,6 +135,51 @@ SNAKE_HALF = [
 ]
 
 
+FOX_HALF = [
+    "..R...............",
+    "..RR..............",
+    "..RRR.............",
+    "..RRRRR...........",
+    "...RRRRRRRRRRRRRRR",
+    "...RRRRRRRRRRRRRRR",
+    "....RRRR+RRRRRRRRR",
+    ".....RRRRRRRRRRRRR",
+    "......RRRWWWRRRRRR",
+    ".......RWWWWWWWWWW",
+    "........WWWWWWWWWW",
+    ".........WWWWWWWKK",
+    "..........WWWWWWWW",
+    "...........rrrrrrr",
+]
+
+CROW_HALF = [
+    "b.............",
+    "bb...........B",
+    "bbb.........BB",
+    "bbbbb......B+B",
+    ".bbbbbb..BBBBB",
+    "..bbbbbbbBBBBB",
+    "....bbbbbBBBBY",
+    "......bbbbBBBB",
+    ".........bBBB.",
+    "..........B.B.",
+]
+
+BEETLE_HALF = [
+    ".........RRRRR",
+    "......RRRRRRRR",
+    "....RRYRRRRRRR",
+    "...RRRRRRRRRRK",
+    "..RRRRRYRRRRRK",
+    ".RRRRRRRRRRRRK",
+    "rRRRRRRRRRRRRK",
+    "r.RRRRRRRRRRRK",
+    "r..RRRRRRRRRRK",
+    "....rrrrrrrrrr",
+    "...r..r.+r....",
+]
+
+
 def mirror(half):
     return [row + row[::-1] for row in half]
 
@@ -176,11 +221,20 @@ SIZE = {
     'bat': (48, 30),
     'cricket': (40, 30),
     'snake': (32, 40),
+    'fox': (48, 40),
+    'crow': (44, 30),
+    'beetle': (40, 28),
+    'vixen': (64, 52),
 }
 
 def gate_rat():
     """The Gate Rat: a big reddish rat with both ears and red eyes."""
     return [row.replace('w', 'r') for row in mirror(RAT_HALF)]
+
+
+def vixen():
+    """Vixen Redbrush: the fox, with red glowing eyes."""
+    return [row.replace('+', '*') for row in mirror(FOX_HALF)]
 
 
 ART = {
@@ -194,6 +248,10 @@ ART = {
     'bat': mirror(BAT_HALF),
     'cricket': mirror(CRICKET_HALF),
     'snake': mirror(SNAKE_HALF),
+    'fox': mirror(FOX_HALF),
+    'crow': mirror(CROW_HALF),
+    'beetle': mirror(BEETLE_HALF),
+    'vixen': vixen(),
 }
 
 

@@ -135,6 +135,8 @@ VALVE_EMPTY     A valve socket. Its wheel is missing.
 VALVE_TURN      You fit a Valve Wheel and turn it.
 VALVE_DONE      This valve is open.
 CISTERN_OPEN    Far off, a heavy door grinds open.
+HANDCAR_GO      You pull the lever. The handcar rolls!
+HANDCAR_NO      An old handcar. Its lever is missing.
 DOOR_VALVES     The door does not move. Valves hold it.
 
 # --- Traps ---
@@ -200,6 +202,13 @@ EN_CRICKET      Cave Cricket
 EN_CRICKETS     Cave Crickets
 EN_SNAKE        Water Snake
 EN_SNAKES       Water Snakes
+EN_FOX          Fox
+EN_FOXES        Foxes
+EN_CROW         Crow
+EN_CROWS        Crows
+EN_BEETLE       Rust Beetle
+EN_BEETLES      Rust Beetles
+EN_VIXEN        Vixen Redbrush
 
 # --- Party panel ---
 @width 15
@@ -350,6 +359,22 @@ ECHO_TRAP       Your steps ring out. Something wakes.
 SLIPPERY        The wet stone is slippery. You slide!
 CISTERN_DOOR    A heavy iron door bars the way.
 MOSS_CORNER     Moss grows thick in this corner.
+
+@level 4
+@width 40
+@digits 6
+@strlen 12
+# --- The Rail Tunnel ---
+ENTRY_4         Rusted rails vanish into the dark.
+MARK_4_1        THE ROOF FELL IN\nWE LOST FOUR
+MARK_4_2        Fox claims the tunnel now.\nPerhaps we should have stayed.
+RUBBLE          Stones crash down from the roof!
+GLASS           Broken glass cuts deep.
+LANTERN         An old lantern hangs here, long dark.
+RAILS           Rusted rails run off into the dark.
+SHAFT           Cold air falls from a shaft above.
+FOX_DEN         The smell of fox is strong here.
+TRACK_END       The track ends at a heap of stones.
 
 @level 0
 @width 40
