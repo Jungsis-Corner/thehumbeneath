@@ -137,6 +137,9 @@ VALVE_DONE      This valve is open.
 CISTERN_OPEN    Far off, a heavy door grinds open.
 HANDCAR_GO      You pull the lever. The handcar rolls!
 HANDCAR_NO      An old handcar. Its lever is missing.
+SINKHOLE        The ground gives way! You fall.
+REST            The glowing pool soothes every wound.
+REST_UP         %s stands up again.
 DOOR_VALVES     The door does not move. Valves hold it.
 
 # --- Traps ---
@@ -209,6 +212,12 @@ EN_CROWS        Crows
 EN_BEETLE       Rust Beetle
 EN_BEETLES      Rust Beetles
 EN_VIXEN        Vixen Redbrush
+EN_ADDER        Adder
+EN_ADDERS       Adders
+EN_MOTH         Spore Moth
+EN_MOTHS        Spore Moths
+EN_TOAD         Cave Toad
+EN_TOADS        Cave Toads
 
 # --- Party panel ---
 @width 15
@@ -375,6 +384,20 @@ RAILS           Rusted rails run off into the dark.
 SHAFT           Cold air falls from a shaft above.
 FOX_DEN         The smell of fox is strong here.
 TRACK_END       The track ends at a heap of stones.
+
+@level 5
+@width 40
+@digits 6
+@strlen 12
+# --- The Glowcap Caverns ---
+ENTRY_5         Soft light glows on the walls.
+MARK_5_1        THE LIGHT HEALS\nTHE LIGHT FEEDS\nWE STAYED TOO LONG
+MARK_5_2        The glowing moss mends any wound.\nTake it. Carry it.
+SPORES          Spores drift down from glowing caps.
+POOL            A pool glows softly in the dark.
+GLOW_ROCK       Green light pulses in the rock.
+TOAD_CAVE       Something big breathes in the dark.
+DEEP_CAVE       This cave lies deeper than the rest.
 
 @level 0
 @width 40

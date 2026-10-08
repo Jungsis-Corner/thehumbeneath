@@ -3,7 +3,7 @@
 Status: approved 2026-10-07 (open questions answered with the proposals, see section 8).
 Changes to the architecture below need approval (CLAUDE.md).
 
-Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9.1-M9.4 (levels 1-4) done.
+Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9.1-M9.5 (levels 1-5) done.
 
 ## 1. Toolchain (taken over from FUSE RUNNER)
 
@@ -410,6 +410,20 @@ draws a level source as PNG for review.
   for 256 KB stay (text blocks, kept levels as changes); the new room is
   for richer graphics and the mechanics of levels 5-8. Tests run at
   RAMTOP 384 from now on.
+- **M9.5 The Glowcap Caverns: DONE.** data/levels/l5.txt, wall set 5
+  (rough rock without laid blocks, veins, clusters of glowing caps that
+  shine at every depth, a glowing pool), sprite set 5 (adder, spore moth,
+  cave toad). WALLMAX raised from 24 to 32 KB for it (wall set 5 has
+  29.0 KB). New events: `spores TEXT` (every time: half the time a
+  random cat is poisoned, the Thistle Charm protects), `sinkhole TX TY`
+  (every time: the party falls to TX TY, every cat takes 2 damage; the
+  two on the cracked ledge are a painful shortcut past the toad cave into
+  the deep cave), `rest` (the glowing pool: every cat gets full HP, a Deep
+  Wound, bleeding and poison are healed, the fallen stand up; it can be
+  used any number of times, saving is not tied to it). Glowcap Moss at
+  the pool, in the deep cave and in the toad cave. No mini-boss (none in
+  STORY.md). The stairs down lead to level 6 (not built yet: "Rubble
+  blocks the way down"). 82.7 KB in use, tested at 384 KB.
 **M10 – endings, sound, polish, distribution** (win image, README, MiSTer test).
 
 ## 7. Testing

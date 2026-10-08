@@ -1,0 +1,97 @@
+# Level 5: The Glowcap Caverns (STORY.md)
+# Soft green and blue light, spores in the air. Adders in the rock, Spore
+# Moths in the fungus grove, Cave Toads in the big cave on the way down.
+# Spores poison now and then. The cracked ledge in the middle has
+# sinkholes: they drop the party into the deep cave below (a painful
+# shortcut past the toads). The glowing pool in the north-east is a safe
+# resting spot: every cat is healed there. Glowcap Moss grows at the pool,
+# in the deep cave and in the toad cave.
+number  5
+start   3 2 E
+wallset 5
+sprites 5
+entry   ENTRY_5
+map
+################################
+#....##......####.......########
+#.<..##.......##.........#######
+#.........##.......##....#######
+#....##..####.......#.~~..######
+##.####...##...###....~~..######
+##.#####......####.#......######
+##.##########.######..##########
+##.##########.##################
+#...#########.##################
+#....########.......############
+#.##..#####...........##########
+#.....#####.....#.......#.....##
+##.#..######.........##.......##
+##...#######..#....###.........#
+###.#############.####.....#...#
+###.##################.......###
+#......################..#######
+#..#...#################.#######
+#......#################.#######
+####.###################.#######
+####.########......#####.#######
+####.#######........####.#######
+####.#######..#.....####.#######
+####.#######.............#######
+####.########......####.......##
+####.##########.#######.......##
+####.##########.#######...##..##
+####............#######.......##
+#######################.....#>.#
+#######################........#
+################################
+
+event 2 2 stairs 4 29 29
+# the fungus grove
+event 11 2 message GLOW_ROCK
+event 8 5 spores SPORES
+event 11 6 spores SPORES
+event 14 4 spores SPORES
+event 16 3 spores SPORES
+event 12 1 item HERB 2
+# the glowing pool: the resting spot
+event 19 5 message POOL
+event 21 5 rest
+event 25 5 mark MARK_5_1
+event 24 4 gather GLOWCAP_MOSS 2
+event 21 7 item COBWEB_WRAP 1
+# the west caverns and the adder nest
+event 2 9 item GLOWCAP_MOSS 1
+event 2 12 spores SPORES
+event 1 18 item THISTLE_CHARM 1
+event 5 28 item FRESH_PREY 1
+# the cracked ledge: sinkholes into the deep cave
+event 14 13 sinkhole 14 21
+event 19 13 sinkhole 18 23
+# the deep cave
+event 15 26 message DEEP_CAVE
+event 13 22 mark MARK_5_2
+event 17 22 gather GLOWCAP_MOSS 2
+event 16 24 spores SPORES
+# the toad cave
+event 22 12 message TOAD_CAVE
+event 24 17 message TOAD_CAVE
+event 29 12 gather GLOWCAP_MOSS 2
+event 29 14 item MARIGOLD_LEAF 1
+# the way down
+event 30 30 item STALE_PREY 1
+event 29 29 stairs 6 2 2
+
+# enemies
+group 8 2 ADDER 1 guard
+group 13 3 SPORE_MOTH 2 flutter
+group 22 2 SPORE_MOTH 1 flutter
+group 3 12 ADDER 2 hunt
+group 4 18 ADDER 1 guard
+group 16 11 SPORE_MOTH 2 flutter
+group 26 13 CAVE_TOAD 1 guard
+group 29 15 CAVE_TOAD 2 guard
+group 24 19 CAVE_TOAD 1 guard
+group 16 23 ADDER 2 hunt
+group 10 28 SPORE_MOTH 2 flutter
+group 26 26 ADDER 1 guard
+group 27 30 SPORE_MOTH 1 flutter

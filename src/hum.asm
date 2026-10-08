@@ -754,6 +754,30 @@ hurt_all:
         movem.l (sp)+,d0-d3/a0-a3
         rts
 
+; rest: every cat is healed in full, wounds and poison are gone, the
+;       fallen stand up again
+rest:
+        movem.l d0-d3/a0-a3,-(sp)
+        move.w  #T_REST,d0
+        bsr     msg_print
+        lea     v_party(a5),a3
+        moveq   #NPARTY-1,d3
+.c      move.w  p_hpbase(a3),p_hpmax(a3)
+        move.w  p_hp(a3),d2
+        move.w  p_hpmax(a3),p_hp(a3)
+        clr.w   p_bleed(a3)
+        bclr    #PF_POISON,p_flags+1(a3)
+        tst.w   d2
+        bgt.s   .n
+        move.w  #T_REST_UP,d0
+        move.w  p_name(a3),d1
+        bsr     name_msg
+.n      lea     p_size(a3),a3
+        dbra    d3,.c
+        bsr     panel_show
+        movem.l (sp)+,d0-d3/a0-a3
+        rts
+
 ; wake_guards: every guard group of the level hunts now (not the bosses)
 wake_guards:
         movem.l d0/a0-a1,-(sp)
@@ -891,7 +915,7 @@ cell_events:
         cmp.b   #EV_STAIRS,d0
         beq     .stairs
         cmp.b   #EV_MARK,d0
-        beq.s   .mark
+        beq     .mark
         cmp.b   #EV_TRAP,d0
         beq     .trap
         cmp.b   #EV_ITEM,d0
@@ -912,6 +936,12 @@ cell_events:
         beq     .rubble
         cmp.b   #EV_HANDCAR,d0
         beq     .handcar
+        cmp.b   #EV_SPORES,d0
+        beq     .spores
+        cmp.b   #EV_SINKHOLE,d0
+        beq     .sink
+        cmp.b   #EV_REST,d0
+        beq     .rest
         cmp.b   #EV_MESSAGE,d0
         bne     .nx             ; gather, lock: not when entering
         bset    #0,EV_FLAGS(a3) ; message: only the first time
@@ -1024,6 +1054,29 @@ cell_events:
         lea     v_map(a5),a0
         bset    #CELL_SEEN,0(a0,d0.w)
         bra     .e              ; (somewhere else now)
+.spores move.w  EV_PARAM(a3),d0 ; spores: every time, a cat may be poisoned
+        bsr     msg_print
+        bsr     rand
+        btst    #8,d0
+        beq     .nx
+        movem.l a2-a3,-(sp)
+        bsr     pick_random     ; -> a3 = a standing cat
+        beq.s   .sp1
+        bsr     poison_cat
+        bsr     panel_show
+.sp1    movem.l (sp)+,a2-a3
+        bra     .nx
+.sink   move.w  #T_SINKHOLE,d0  ; a sinkhole: down to the cave below, hurt
+        bsr     msg_print
+        move.w  EV_PARAM(a3),d0 ; y<<5 | x
+        move.w  d0,v_pos(a5)
+        lea     v_map(a5),a0
+        bset    #CELL_SEEN,0(a0,d0.w)
+        moveq   #2,d1
+        bsr     hurt_all
+        bra     .e              ; (somewhere else now)
+.rest   bsr     rest            ; the glowing pool
+        bra     .nx
 .trap   bset    #0,EV_FLAGS(a3) ; trap: only the first time
         bne     .nx
         move.w  EV_PARAM(a3),d1 ; bleed<<12 | text id

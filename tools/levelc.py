@@ -36,6 +36,12 @@ Level source:
     event X Y rubble DAMAGE TEXT   the first time: TEXT, every cat takes DAMAGE
     event X Y handcar TX TY        with the Handcar Lever in the pack the party
                                    rides to TX TY (keeps its facing)
+    event X Y spores TEXT          every time: TEXT, a random cat may be
+                                   poisoned (half the time)
+    event X Y sinkhole TX TY       every time: the party falls to TX TY and
+                                   every cat takes 2 damage
+    event X Y rest                 a safe place: every cat is healed, the
+                                   fallen stand up again
     event X Y valve                a valve socket: a Valve Wheel from the pack
                                    is fitted and turned; when all valves of
                                    the level are turned, the locked doors with
@@ -110,7 +116,8 @@ CF_BLOCK = 1
 
 EVENTS = {'stairs': 1, 'mark': 2, 'message': 3, 'trap': 4, 'item': 5, 'gather': 6,
           'lock': 7, 'boards': 8, 'cobweb': 9, 'exit': 10, 'echo': 11, 'slip': 12,
-          'valve': 13, 'rubble': 14, 'handcar': 15}
+          'valve': 13, 'rubble': 14, 'handcar': 15, 'spores': 16, 'sinkhole': 17,
+          'rest': 18}
 ITEM_IDS = {it['id']: i + 1 for i, it in enumerate(items.read())}
 MODES = {'guard': 0, 'hunt': 1, 'swim': 2, 'flutter': 3}
 MAXGROUPS = 16
@@ -191,9 +198,13 @@ def parse(path, textids):
                 if len(args) != 3:
                     fail('%s: event X Y valve' % where)
                 param = 0
-            elif kind == 'handcar':
+            elif kind == 'rest':
+                if len(args) != 3:
+                    fail('%s: event X Y rest' % where)
+                param = 0
+            elif kind in ('handcar', 'sinkhole'):
                 if len(args) != 5:
-                    fail('%s: event X Y handcar TX TY' % where)
+                    fail('%s: event X Y %s TX TY' % (where, kind))
                 param = int(args[4]) << 5 | int(args[3])
                 lv.setdefault('rides', []).append((int(args[3]), int(args[4]), where))
             elif kind in ('boards', 'rubble'):

@@ -179,6 +179,54 @@ BEETLE_HALF = [
     "...r..r.+r....",
 ]
 
+ADDER_HALF = [
+    ".........GGG",
+    "........GKGG",
+    "........G*GG",
+    ".........GGG",
+    "..........GK",
+    ".........KGG",
+    "........GGK.",
+    ".......KGG..",
+    "......GGK...",
+    "....gGKGgg..",
+    "..gGKGGKGGKG",
+    ".gKGGKGGKGGK",
+    "gggggggggggg",
+]
+
+MOTH_HALF = [
+    "............",
+    ".mm.........",
+    "mMMm.......W",
+    "mMWMMm....W.",
+    "mMMWMMMm.WW.",
+    ".mMMMMMMMW*W",
+    "..mMMWMMMWWW",
+    "...mMMMMMWWW",
+    "..mMMMMmmWW.",
+    ".mMWMm....W.",
+    ".mMMm.......",
+    "..mm........",
+]
+
+TOAD_HALF = [
+    "................",
+    ".......GGG......",
+    "......GG+GG.....",
+    ".....GGGGGGGGGGG",
+    "....GGgGGGGGgGGG",
+    "...GGGGGGGGGGGGG",
+    "..GGgGGGGgGGGGGG",
+    "..GGGGGGGGGGGGGG",
+    ".GGGGGGYYYYYYYYY",
+    ".GGGgGYYYYYYYYYY",
+    "GGGGGGYYYYYYYYYY",
+    "gGGGgggYYYYYYYYY",
+    "gg.gg...gggggggg",
+    "gggg............",
+]
+
 
 def mirror(half):
     return [row + row[::-1] for row in half]
@@ -225,6 +273,9 @@ SIZE = {
     'crow': (44, 30),
     'beetle': (40, 28),
     'vixen': (64, 52),
+    'adder': (40, 38),
+    'moth': (48, 32),
+    'toad': (56, 40),
 }
 
 def gate_rat():
@@ -252,6 +303,9 @@ ART = {
     'crow': mirror(CROW_HALF),
     'beetle': mirror(BEETLE_HALF),
     'vixen': vixen(),
+    'adder': mirror(ADDER_HALF),
+    'moth': mirror(MOTH_HALF),
+    'toad': mirror(TOAD_HALF),
 }
 
 

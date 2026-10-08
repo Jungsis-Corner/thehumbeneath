@@ -3,7 +3,8 @@
 
 Walls grey, floor dark, doors brown (locked: red), stairs green (down) and
 cyan (up), the start yellow. Markers: E enemy group (B mini-boss), I item,
-G gather spot, M Scratch-Mark, T trap or hazard, ! message, X exit.
+G gather spot, M Scratch-Mark, T trap or hazard, R resting spot, ! message,
+X exit.
 """
 import os
 import sys
@@ -18,7 +19,8 @@ COL = {'#': (110, 110, 120), '.': (25, 25, 30), 'D': (140, 90, 40), 'd': (90, 60
        'L': (170, 40, 40), '>': (40, 160, 60), '<': (40, 150, 170), '~': (30, 50, 140),
        'S': (130, 110, 130)}
 MARK = {'mark': 'M', 'message': '!', 'trap': 'T', 'boards': 'T', 'cobweb': 'T',
-        'item': 'I', 'gather': 'G', 'exit': 'X', 'stairs': '', 'lock': ''}
+        'item': 'I', 'gather': 'G', 'exit': 'X', 'stairs': '', 'lock': '',
+        'spores': 'T', 'sinkhole': 'T', 'rest': 'R'}
 
 
 def main():

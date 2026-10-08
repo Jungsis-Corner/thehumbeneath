@@ -56,7 +56,7 @@ HW = [96, 64, 40, 24, 16]          # half width of plane 0..4 (multiples of 2)
 HH = [72, 48, 30, 18, 12]          # half height of plane 0..4
 DEPTHS = 4                         # cell depths 0..3
 LAT = 3                            # lateral offsets -3..3
-WALLMAX = 24576                    # wall set buffer in the game
+WALLMAX = 32768                    # wall set buffer in the game
 SPRMAX = 12288                     # sprite set buffer in the game
 SPRITE_LIGHT = (0.70, 0.18)        # enemy pictures: light at depth 1, loss per cell
                                    # (eyes always glow at full brightness)
@@ -65,6 +65,7 @@ SPRITESETS = {                     # set number: sprite names (the bundle is add
     2: ['rat', 'eel', 'leech', 'gaterat'],        # drain tunnels
     3: ['bat', 'cricket', 'snake'],               # old cistern
     4: ['fox', 'crow', 'beetle', 'vixen'],        # rail tunnel
+    5: ['adder', 'moth', 'toad'],                 # glowcap caverns
 }
 MAGIC = b'HWS1'
 ENTRY = 22                         # bytes per draw list entry
@@ -179,6 +180,43 @@ class StoneSet:
         return dither(x, y, self.floor_i * t, self.floor) if t > 0 else BLACK
 
 
+class GlowSet(StoneSet):
+    """Rough cave rock without laid blocks; patches of glowing moss and caps
+    shine at the same brightness at every depth."""
+    def __init__(self, *args, glow=(GREEN, CYAN), **kw):
+        super().__init__(*args, **kw)
+        self.glow = glow
+
+    def wall(self, x, y, u, v, z, side):
+        r = int(v * self.rows)
+        fv = (v * self.rows) % 1
+        fu = u * self.cols + 0.37 * ((r * 5) % 3)
+        crack = 0.05 + 0.05 * ((int(fu) * 3 + r) % 3) / 2
+        if fv < crack or fu % 1 < 0.03:
+            return BLACK
+        cell = int(fu) * 7 + r * 13
+        gu, gv = fu % 1, fv
+        if cell % 3 == 1:                           # a cluster of glowing caps
+            for cu, cv, rad in ((0.35, 0.72, 0.16), (0.5, 0.55, 0.22), (0.64, 0.75, 0.13)):
+                q = ((gu - cu) * 4 * self.cols / 2) ** 2 + (gv - cv) ** 2
+                if q < rad * rad:
+                    colour = self.glow[1] if q < rad * rad * 0.3 else self.glow[0]
+                    return dither(x, y, 0.62, colour)
+        lt = self.light(z, side)
+        if (int(gv * 12) + cell) % 7 == 0:
+            return dither(x, y, lt * 0.8, self.odd)   # veins in the rock
+        return dither(x, y, lt, self.stone)
+
+    def pool(self, x, y, a, b, z):
+        """The glowing pool: bright ripples at every depth."""
+        wave = (b * 4) % 1
+        if wave < 0.16:
+            return dither(x, y, 0.7, self.water[1])
+        if wave < 0.26:
+            return dither(x, y, 0.5, self.water[0])
+        return None
+
+
 # Dark caves (decided 2026-10-07): little light that fades quickly, black
 # ceiling, a wide dark band at the horizon, dark stone colours.
 DARK = dict(light0=0.48, lightz=0.13, side=0.65, fog=20)
@@ -194,6 +232,9 @@ WALLSETS = {
                 **dict(DARK, light0=0.55)),
     # rail tunnel: rusty bricks, lantern glints on the edges
     4: StoneSet(BLUE, RED, RED, 0.22, BLUE, 0.0, edge=YEL, rows=4, cols=3, **DARK),
+    # glowcap caverns: rough rock, glowing moss and caps, a glowing pool
+    5: GlowSet(BLUE, MAG, GREEN, 0.18, BLUE, 0.08, rows=3, cols=2,
+               flats=('down', 'up', 'water'), water=(CYAN, WHITE), **DARK),
 }
 
 # view classes, as in levelc.py

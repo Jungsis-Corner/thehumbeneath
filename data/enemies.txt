@@ -21,3 +21,6 @@ enemy FOX              EN_FOX            EN_FOXES           14  5   2   5   2   
 enemy CROW             EN_CROW           EN_CROWS           8   3   1   6   1     0      0    5   crow
 enemy RUST_BEETLE      EN_BEETLE         EN_BEETLES         10  3   6   2   0     0      0    6   beetle
 enemy VIXEN_REDBRUSH   EN_VIXEN          EN_VIXEN           30  7   3   6   2     0      1    40  vixen
+enemy ADDER            EN_ADDER          EN_ADDERS          10  4   2   5   1     1      0    7   adder
+enemy SPORE_MOTH       EN_MOTH           EN_MOTHS           6   2   1   6   0     1      0    5   moth
+enemy CAVE_TOAD        EN_TOAD           EN_TOADS           12  7   3   1   0     0      0    8   toad
