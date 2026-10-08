@@ -512,6 +512,8 @@ TOTEM_NICHE     A carved niche. Something lay here.
 ENTRY_8         The Hum is in your bones.
 MARK_8_1        WE BOUND IT TO KEEP THE HUM\nTHE HUM BOUND US TO KEEP IT
 MARK_8_2        If you read this, you came\nfurther than we dared to go back.
+MARK_8_3        THE HUM IS NOT A VOICE\nIT IS A CALL FOR HELP
+MARK_8_4        Something below is asking\nto be let go.
 HOLLOW          The cavern has no end. The light pulses.
 GARDEN          Moss grows everywhere, soft and deep.
 HEART           Ahead, the Heart beats in the rock.

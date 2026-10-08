@@ -403,6 +403,14 @@ IT IS A CALL FOR HELP
 Something below is asking
 to be let go.
 ```
+```
+WE BOUND IT TO KEEP THE HUM
+THE HUM BOUND US TO KEEP IT
+```
+```
+If you read this, you came
+further than we dared to go back.
+```
 
 ### Pale One Encounter (Level 7, spoken as text)
 ```

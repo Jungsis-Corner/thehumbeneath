@@ -50,6 +50,7 @@ event 5 2 message HOLLOW
 event 1 1 mark MARK_8_1
 event 9 6 message SHADES
 event 26 3 mark MARK_8_2
+event 3 16 mark MARK_8_3
 # the moss garden
 event 10 13 message GARDEN
 event 11 13 gather GLOWCAP_MOSS 2
@@ -63,6 +64,7 @@ event 3 18 item FRESH_PREY 1 or 5 15 or 7 17
 event 17 30 item HERB 2 or 13 30 or 16 27
 event 24 21 item MARIGOLD_LEAF 1 or 22 23 or 26 24
 # the way to the Heart
+event 28 19 mark MARK_8_4
 event 28 22 message HEART
 
 # enemies
