@@ -142,6 +142,8 @@ new_init:                       ; a new party, nothing visited
         clr.w   v_lvok(a5)      ; no level kept, nothing loaded
         clr.w   v_inlv(a5)
         clr.w   v_deep(a5)
+        clr.w   v_story(a5)
+        clr.w   v_sneak(a5)
         clr.w   v_steps(a5)
         clr.w   v_page(a5)
         rts

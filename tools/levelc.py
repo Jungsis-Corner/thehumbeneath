@@ -42,6 +42,8 @@ Level source:
                                    every cat takes 2 damage
     event X Y collapse TX TY       once: the floor breaks, the party falls
                                    to TX TY and every cat takes 2 damage
+    event X Y noise TEXT           every time, unless the party sneaks: TEXT,
+                                   listeners within 6 cells wake up and hunt
     event X Y rest                 a safe place: every cat is healed, the
                                    fallen stand up again
     event X Y valve                a valve socket: a Valve Wheel from the pack
@@ -119,9 +121,9 @@ CF_BLOCK = 1
 EVENTS = {'stairs': 1, 'mark': 2, 'message': 3, 'trap': 4, 'item': 5, 'gather': 6,
           'lock': 7, 'boards': 8, 'cobweb': 9, 'exit': 10, 'echo': 11, 'slip': 12,
           'valve': 13, 'rubble': 14, 'handcar': 15, 'spores': 16, 'sinkhole': 17,
-          'rest': 18, 'collapse': 19}
+          'rest': 18, 'collapse': 19, 'noise': 20}
 ITEM_IDS = {it['id']: i + 1 for i, it in enumerate(items.read())}
-MODES = {'guard': 0, 'hunt': 1, 'swim': 2, 'flutter': 3}
+MODES = {'guard': 0, 'hunt': 1, 'swim': 2, 'flutter': 3, 'listen': 4}
 MAXGROUPS = 16
 MAXDOORS = 40                     # LVD_NDOORS in hum.asm
 MAXEVENTS = 64                    # flags kept per level (state.asm)
@@ -367,6 +369,7 @@ def write_inc(path, levels):
         f.write('G_SIZE   equ 6\nG_X      equ 0\nG_Y      equ 1\nG_TYPE   equ 2\n'
                 'G_COUNT  equ 3\nG_MODE   equ 4\nG_FLAGS  equ 5\nG_END    equ $ff\n'
                 'GM_GUARD equ 0\nGM_HUNT  equ 1\nGM_SWIM  equ 2\nGM_FLUTTER equ 3\n'
+                'GM_LISTEN equ 4\n'
                 'GF_GONE  equ 0\nGF_SEEN  equ 1\n')
         f.write('CF_BLOCK equ %d\n' % CF_BLOCK)
         for c, t, name, blk, col, vc in CELLS:

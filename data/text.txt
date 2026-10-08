@@ -82,6 +82,18 @@ FLEE_FAILS      The party cannot get away.
 @strlen 12
 GAIN_XP         The party gains %d XP.
 RISES           %s rises to %s.
+SNEAK_ON        You move softly now. Slow, but silent.
+SNEAK_OFF       You walk normally again.
+SOFT            You step softly. Nothing stirs.
+PALE_HEARS      A pale shape lifts its head.\nIt heard you!
+PALE_MEET       A pale shape turns its head.\nIt has no eyes.\nIt listens.\nIt does not attack.\n"You are... warm."\n"Are you... ours?"
+PALE_PASS       The pale shape steps back into the dark.
+ELDER_MEET      The Elder Pale rises.\n"We were once like you."\n"The Hum kept us. It did not let go."
+ELDER_SPARE     The Elder Pale lowers its head.\n"Take the Heart Stone.\n End what we could not."
+FIGHT           Fight
+FIGHT_ON        So be it. The party attacks!
+PASS            Pass
+SPARE           Spare
 
 # --- Items (messages with item names: %s up to 16 characters) ---
 @strlen 16
@@ -227,6 +239,13 @@ EN_SHADE_CAT    Shade Cat
 EN_SHADE_CATS   Shade Cats
 EN_OWL          Wraith Owl
 EN_OWLS         Wraith Owls
+EN_PALE         Pale One
+EN_PALES        Pale Ones
+EN_WARREN_RAT   Warren Rat
+EN_WARREN_RATS  Warren Rats
+EN_BADGER       Stalker Badger
+EN_BADGERS      Stalker Badgers
+EN_ELDER        Elder Pale
 
 # --- Party panel ---
 @width 15
@@ -240,6 +259,10 @@ COMPASS_N       Facing North
 COMPASS_E       Facing East
 COMPASS_S       Facing South
 COMPASS_W       Facing West
+SNEAK_N         Sneaking North
+SNEAK_E         Sneaking East
+SNEAK_S         Sneaking South
+SNEAK_W         Sneaking West
 
 # --- Status next to the role in the panel ---
 @width 7
@@ -429,6 +452,24 @@ MARK_6_6        THE OLDEST SAY THE HUM CALLS\nTHE YOUNGEST SAY IT SINGS
 MARK_6_7        Lay me facing up.\nI want to remember the way home.
 EMPTY_NICHE     One niche is empty.\nIts sign is scratched out.
 DUST            Thick dust. Nothing walked here\nfor a long time.
+
+@level 7
+@width 40
+@digits 6
+@strlen 12
+# --- The Silent Warren ---
+ENTRY_7         Nothing moves. Nothing sounds.
+MARK_7_1        THEY HAVE NO EYES\nTHEY HAVE NO FEAR\nWE ARE THEIR FATHERS
+MARK_7_2        Do not run. Do not shout.\nThey hear everything.
+MARK_7_3        We did this.\nWe stayed too long.
+QUIET           Every sound carries far down here.
+SNEAK_HINT      S: sneak (slow, but silent) or walk.
+BONES_NOISE     Dry bones crack under your paws!
+GRAVEL          Loose stones clatter away!
+NESTS           Empty nests. Old fur in the straw.
+BADGER_DEN      A musky smell. Deep claw marks.
+ELDER_HALL      A great hall. Something breathes.
+TOTEM_NICHE     A carved niche. Something lay here.
 
 @level 0
 @width 40

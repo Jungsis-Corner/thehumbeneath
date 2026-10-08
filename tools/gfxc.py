@@ -57,7 +57,7 @@ HH = [72, 48, 30, 18, 12]          # half height of plane 0..4
 DEPTHS = 4                         # cell depths 0..3
 LAT = 3                            # lateral offsets -3..3
 WALLMAX = 32768                    # wall set buffer in the game
-SPRMAX = 12288                     # sprite set buffer in the game
+SPRMAX = 16384                     # sprite set buffer in the game
 SPRITE_LIGHT = (0.70, 0.18)        # enemy pictures: light at depth 1, loss per cell
                                    # (eyes always glow at full brightness)
 SPRITESETS = {                     # set number: sprite names (the bundle is added)
@@ -67,6 +67,7 @@ SPRITESETS = {                     # set number: sprite names (the bundle is add
     4: ['fox', 'crow', 'beetle', 'vixen'],        # rail tunnel
     5: ['adder', 'moth', 'toad'],                 # glowcap caverns
     6: ['bonerat', 'shadecat', 'owl'],            # bone halls
+    7: ['pale', 'warrenrat', 'badger', 'elder'],  # silent warren
 }
 MAGIC = b'HWS1'
 ENTRY = 22                         # bytes per draw list entry
@@ -243,6 +244,21 @@ class BoneSet(StoneSet):
         return dither(x, y, lt, self.stone)
 
 
+class EarthSet(StoneSet):
+    """Burrow walls of packed earth: no blocks, roots hang down, small
+    stones in the earth."""
+    def wall(self, x, y, u, v, z, side):
+        lt = self.light(z, side)
+        k = int(u * 9)                              # roots: a few columns
+        root = (k * 5) % 7 < 2 and v < 0.25 + 0.5 * ((k * 3) % 5) / 4
+        if root and abs((u * 9) % 1 - 0.5) < 0.12:
+            return dither(x, y, lt * 0.9, YEL)
+        band = int(v * self.rows * 2)
+        if (band * 3 + int(u * 4)) % 5 == 0 and (v * self.rows * 2) % 1 < 0.15:
+            return dither(x, y, lt * 0.8, self.odd)   # stones in the earth
+        return dither(x, y, lt, self.stone)
+
+
 # Dark caves (decided 2026-10-07): little light that fades quickly, black
 # ceiling, a wide dark band at the horizon, dark stone colours.
 DARK = dict(light0=0.48, lightz=0.13, side=0.65, fog=20)
@@ -263,6 +279,10 @@ WALLSETS = {
                flats=('down', 'up', 'water'), water=(CYAN, WHITE), **DARK),
     # bone halls: carved pale stone, niches with skulls, a dusty floor
     6: BoneSet(YEL, WHITE, RED, 0.12, BLUE, 0.0, edge=WHITE, rows=4, cols=3, **DARK),
+    # silent warren: packed earth with roots, no light at all but the
+    # party's own (the darkest set)
+    7: EarthSet(RED, MAG, RED, 0.10, BLUE, 0.0, rows=3, cols=2,
+                **dict(DARK, light0=0.42, lightz=0.12)),
 }
 
 # view classes, as in levelc.py

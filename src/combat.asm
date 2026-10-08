@@ -21,6 +21,8 @@ CE_VICTORY equ  1               ; v_cend
 CE_FLED   equ   2
 TR_REVIVE equ   1               ; e_trait: gets up once more
 TR_SHADOW equ   2               ; e_trait: illusions
+TR_PALE   equ   3               ; e_trait: a Pale One (a choice when calm)
+TR_ELDER  equ   4               ; e_trait: the Elder Pale (fight or spare)
 SHADOW_PCT equ  33              ; chance that an attack hits only a shadow
 
 ; combat: a3 = enemy group next to the party, the party faces it

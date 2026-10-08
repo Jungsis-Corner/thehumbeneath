@@ -77,12 +77,16 @@ panel_show:
         lea     p_size(a3),a3
         dbra    d7,.cat
 
-        move.w  v_dir(a5),d0    ; compass
+        move.w  v_dir(a5),d0    ; compass ("Sneaking North" when sneaking)
         add.w   #T_COMPASS_N,d0
-        bsr     text_get
+        moveq   #C_YEL,d2
+        tst.w   v_sneak(a5)
+        beq.s   .walk
+        add.w   #T_SNEAK_N-T_COMPASS_N,d0
+        moveq   #C_CYAN,d2
+.walk   bsr     text_get
         moveq   #PNL_COL,d0
         move.w  #COMPASS_Y,d1
-        moveq   #C_YEL,d2
         moveq   #C_BLUE,d3
         bsr     pdraw
         ifne    DEBUG

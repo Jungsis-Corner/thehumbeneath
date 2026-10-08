@@ -20,7 +20,8 @@ walls_load:
 sprites_load:
         movem.l d1-d3/a0-a1,-(sp)
         lea     ssname(pc),a0
-        lea     v_sprites(a5),a1
+        lea     v_walls(a5),a1  ; (v_sprites)
+        add.l   #WALLMAX,a1
         move.l  #SPRMAX,d2
         move.l  #HS_MAGIC,d3
 set_load:                       ; a0 = name 'hum_x0', a1 = buffer, d2 = size,
@@ -222,7 +223,7 @@ render:
         move.l  d4,d5
         and.l   d6,d5
         cmp.l   d4,d5
-        beq.s   .skip           ; all walls: hidden
+        beq     .skip           ; all walls: hidden
         dbra    d7,.occ
 .draw   move.l  a4,a2
         tst.b   d1
@@ -258,10 +259,12 @@ render:
         subq.w  #1,d4
         lsl.w   #2,d4
         add.w   d4,d5
-        lea     v_sprites+HS_TABLE(a5),a1
+        lea     v_walls(a5),a1  ; (v_sprites+HS_TABLE)
+        add.l   #WALLMAX+HS_TABLE,a1
         move.l  0(a1,d5.w),d4
         beq.s   .pe
-        lea     v_sprites(a5),a1
+        lea     v_walls(a5),a1  ; (v_sprites)
+        add.l   #WALLMAX,a1
         add.l   d4,a1
 .pe     rts
 .skip   move.l  a4,a2

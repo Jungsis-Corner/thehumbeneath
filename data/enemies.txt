@@ -5,7 +5,8 @@
 # poison: 1 = a hit can poison
 # boss: 1 = mini-boss, the party cannot flee
 # trait: - none, revive (gets up once more with half its HP), illusion
-#        (a third of the attacks on it hit only a shadow)
+#        (a third of the attacks on it hit only a shadow), pale (a calm
+#        group gives the choice fight or pass), elder (fight or spare)
 # sprite: picture name in tools/sprites.py
 #
 #     id               name              plural             hp  atk def spd bleed poison boss trait    xp   sprite
@@ -29,3 +30,7 @@ enemy CAVE_TOAD        EN_TOAD           EN_TOADS           12  7   3   1   0   
 enemy BONE_RAT         EN_BONE_RAT       EN_BONE_RATS       9   4   2   4   1     0      0    revive   9    bonerat
 enemy SHADE_CAT        EN_SHADE_CAT      EN_SHADE_CATS      12  5   2   6   2     0      0    illusion 11   shadecat
 enemy WRAITH_OWL       EN_OWL            EN_OWLS            16  6   2   5   3     0      0    -        14   owl
+enemy PALE_ONE         EN_PALE           EN_PALES           14  5   2   5   1     0      0    pale     12   pale
+enemy WARREN_RAT       EN_WARREN_RAT     EN_WARREN_RATS     10  4   1   5   1     0      0    -        8    warrenrat
+enemy STALKER_BADGER   EN_BADGER         EN_BADGERS         28  8   4   3   2     0      0    -        25   badger
+enemy ELDER_PALE       EN_ELDER          EN_ELDER           36  7   3   4   2     0      1    elder    50   elder

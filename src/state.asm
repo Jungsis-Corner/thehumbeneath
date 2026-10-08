@@ -9,11 +9,11 @@
 ; holds the party, the pack, where the party is and every kept level:
 ;   'HSG1', length.l, SAVE_VER.w, level.w, pos.w, dir.w, steps.w,
 ;   kept levels.w (bit n = level n), progress.w (%), party, names, pack,
-;   deepest level.w, the kept levels in ascending order (LVDELTA each)
+;   deepest level.w, story flags.w, the kept levels in ascending order (LVDELTA each)
 ;=====================================================================
-SAVE_VER   equ  3
+SAVE_VER   equ  4
 SAVE_SLOTS equ  3
-SAVE_FIX   equ  SAVE_HEAD+NPARTY*p_size+NPARTY*NAME_LEN+2*PACK_SLOTS+2
+SAVE_FIX   equ  SAVE_HEAD+NPARTY*p_size+NPARTY*NAME_LEN+2*PACK_SLOTS+4
 SAVE_MAX   equ  SAVE_FIX+LVSLOTS*LVDELTA
 SAVE_MAGIC equ  'HSG1'
 IO_DELET   equ  $04
@@ -280,7 +280,7 @@ game_save:
         bsr     fwrite
         bne.s   .cl
         lea     v_pack(a5),a1   ; pack and the deepest level
-        moveq   #2*PACK_SLOTS+2,d4
+        moveq   #2*PACK_SLOTS+4,d4
         bsr     fwrite
         bne.s   .cl
         moveq   #0,d5           ; the kept levels
@@ -369,7 +369,7 @@ game_load:
         bsr     fread
         bne.s   .cl
         lea     v_pack(a5),a1   ; pack and the deepest level
-        moveq   #2*PACK_SLOTS+2,d4
+        moveq   #2*PACK_SLOTS+4,d4
         bsr     fread
         bne.s   .cl
         moveq   #0,d5           ; the kept levels

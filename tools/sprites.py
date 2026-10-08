@@ -287,6 +287,65 @@ OWL_HALF = [
     ".......cccYccYcc",
 ]
 
+PALE_HALF = [
+    "..w.............",
+    "..wW............",
+    "..wWW...........",
+    "..wWWW..........",
+    "..wWWWwwwwwwwwww",
+    "...wWWWWWWWWWWWW",
+    "...wWWWWWWWWWWWW",
+    "...wWWWwwwWWWWWW",
+    "....wWWWWWWWWWWW",
+    "...w.wWWWWWWWWWM",
+    "..w...wWWWWWWWWW",
+    ".......wWWWWWWWW",
+    "......wWWWWWWWWW",
+    ".....wWWWWWWWWWW",
+    "....wWWWWWWWWWWW",
+    "....wWWWWw.wWWWW",
+    "....wWWw...wWWWW",
+    "....www.....wwww",
+]
+
+WARRENRAT_HALF = [
+    "......RR............",
+    ".....RMMR...........",
+    ".....RMMMR..........",
+    "......RMMRr.........",
+    ".......RRrrrrrrrrrrr",
+    "......rrrrrrrrrrrrrr",
+    ".....rrrrrrrrrrrrrrr",
+    ".....rrrK++rrrrrrrrr",
+    ".....rrrK++rrrrrrrrr",
+    "......rrrrrrrrrrrrrr",
+    "...W...rrrrrrrrrrrrr",
+    "....WW..rrrrrrrrrrMM",
+    "......WWWrrrrrrrrrMM",
+    "....WW...rrrrrrrrrrr",
+    "...W......rrrrrrrrrr",
+    "........rrrrrrrrrrrr",
+]
+
+BADGER_HALF = [
+    "........................",
+    "..........KKKKKKKKKKKWWW",
+    "........KKKKKKKKKKKKWWWW",
+    "......KKKKKKKKKKKKKKWWWW",
+    ".....KKKKKKKKKKKKKKKKWWW",
+    "....wwwwKKKKKKKKKKKKKKWW",
+    "...wwwwwwwKKKKKK*KKKKKWW",
+    "..wwwwwwwwwKKKKKKKKKKKWW",
+    "..wwwwwwwwwwKKKKKKKKKKKW",
+    ".wwwwwwwwwwwwwKKKKKKKKKK",
+    ".wwwwwwwwwwwwwwwKKKKKKKK",
+    ".wwwwwwwwwwwwwwwwKKKKKKK",
+    "..KKKwwwwwwwwwwwwwKKKKKK",
+    "..KKK.....KKK.....KKKKKK",
+    "..KKK.....KKK......KKKKK",
+    ".KKKK....KKKK.......WKWK",
+]
+
 
 def mirror(half):
     return [row + row[::-1] for row in half]
@@ -339,6 +398,10 @@ SIZE = {
     'bonerat': (48, 34),
     'shadecat': (40, 52),
     'owl': (48, 50),
+    'pale': (40, 54),
+    'warrenrat': (48, 34),
+    'badger': (64, 40),
+    'elder': (48, 64),
 }
 
 def gate_rat():
@@ -349,6 +412,14 @@ def gate_rat():
 def vixen():
     """Vixen Redbrush: the fox, with red glowing eyes."""
     return [row.replace('+', '*') for row in mirror(FOX_HALF)]
+
+
+def elder():
+    """The Elder Pale: a Pale One, larger, with a grey mane."""
+    art = mirror(PALE_HALF)
+    art = [row[:10].replace('W', 'C') + row[10:-10] + row[-10:].replace('W', 'C')
+           for row in art]
+    return art
 
 
 ART = {
@@ -372,6 +443,10 @@ ART = {
     'bonerat': mirror(BONERAT_HALF),
     'shadecat': mirror(SHADECAT_HALF),
     'owl': mirror(OWL_HALF),
+    'pale': mirror(PALE_HALF),
+    'warrenrat': mirror(WARRENRAT_HALF),
+    'badger': mirror(BADGER_HALF),
+    'elder': elder(),
 }
 
 

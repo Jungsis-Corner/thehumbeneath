@@ -1,0 +1,93 @@
+# Level 7: The Silent Warren (STORY.md)
+# Abandoned burrows, no light, no sound. The Pale Ones listen in the
+# tunnels (group mode "listen"): a normal step within 3 cells, or a
+# noise cell (dry bones, loose stones) within 6, wakes them and they hunt.
+# Sneaking (S key) is silent, but every other enemy moves twice as often.
+# A calm Pale One gives the choice: fight or pass. The Pale Totem lies in
+# the badger den in the north-east; it opens the door to the Elder's hall.
+# The Elder Pale stands behind that door: fight or spare (spared: the
+# Heart Stone).
+number  7
+start   3 2 E
+wallset 7
+sprites 7
+entry   ENTRY_7
+map
+################################
+#.....######...#################
+#.<.........##.....###....######
+#.....#####.....#..###.##..#####
+###.#######.###.#.....##....####
+###.######..###.#.###.###...####
+##...####..####...###..####.####
+##.#.###..######.#####..###.####
+##...###.#######.######.###.####
+###.####.##....#.######.....####
+###.####...###...####.#.###.####
+###......#####.#####...##...####
+#####.#.######.####..#.##.######
+####..#..####...###.##....######
+###..###..##..#.###.#####.######
+###.#####.##.##.......###.######
+##...####....###.####.###.######
+##.#.#######.##..####.##...#####
+##...#######....#####.##.#.#####
+######...###.#######..#....#####
+#####..#..##.#######.##.##.#####
+####..###.....####...#.......###
+####.######.#.####.###.#####.###
+###..######...####.###.#####.###
+###.#####..#.#####..##..####.###
+##...###..###.#####.###.####L###
+##.#.##..####.......###.###...##
+##...##.######.####.....##.....#
+###.##..######.####.#######....#
+###....#######....#.#######..>.#
+###################.#######....#
+################################
+
+event 2 2 stairs 6 29 29
+event 4 2 message QUIET
+event 5 2 message SNEAK_HINT
+event 1 1 mark MARK_7_1
+event 3 6 message NESTS
+event 11 4 mark MARK_7_2
+# noise underfoot near the Pale Ones
+event 14 3 noise BONES_NOISE
+event 14 10 noise GRAVEL
+event 12 17 noise GRAVEL
+event 16 15 noise BONES_NOISE
+event 13 23 noise BONES_NOISE
+event 27 10 noise GRAVEL
+event 18 26 noise BONES_NOISE
+# the badger den and the Pale Totem
+event 27 7 message BADGER_DEN
+event 25 2 message TOTEM_NICHE
+event 25 2 item PALE_TOTEM 1
+# supplies
+event 2 18 item HERB 2
+event 3 14 gather FEN_MOSS 2
+event 9 24 item MARIGOLD_LEAF 1
+event 7 28 item FRESH_PREY 1
+# the Elder's hall
+event 23 24 mark MARK_7_3
+event 28 24 message ELDER_HALL
+event 28 25 lock PALE_TOTEM
+event 30 28 item COBWEB_WRAP 1
+event 29 29 stairs 8 2 2
+
+# enemies
+group 17 2 PALE_ONE 1 listen
+group 12 9 PALE_ONE 2 listen
+group 10 16 PALE_ONE 1 listen
+group 19 15 PALE_ONE 2 listen
+group 12 21 PALE_ONE 1 listen
+group 16 26 PALE_ONE 1 listen
+group 25 9 PALE_ONE 2 listen
+group 6 11 WARREN_RAT 3 hunt
+group 4 18 WARREN_RAT 2 hunt
+group 24 19 WARREN_RAT 3 hunt
+group 3 27 WARREN_RAT 2 hunt
+group 26 4 STALKER_BADGER 1 guard
+group 28 22 STALKER_BADGER 1 guard
+group 28 26 ELDER_PALE 1 guard

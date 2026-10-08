@@ -3,7 +3,7 @@
 Status: approved 2026-10-07 (open questions answered with the proposals, see section 8).
 Changes to the architecture below need approval (CLAUDE.md).
 
-Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9.1-M9.6 (levels 1-6) done.
+Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9.1-M9.7 (levels 1-7) done.
 
 ## 1. Toolchain (taken over from FUSE RUNNER)
 
@@ -437,6 +437,28 @@ draws a level source as PNG for review.
   towards the stairs down. Seven Scratch-Marks (the three of STORY.md and
   four new ones, MARK_6_4..7, written 2026-10-08 on request, added to STORY.md) and two more messages; dry moss only. 83.4 KB in
   use, tested at 384 KB.
+- **M9.7 The Silent Warren: DONE.** data/levels/l7.txt (a maze of
+  burrows), wall set 7 (packed earth, roots, stones; the darkest set),
+  sprite set 7 (Pale One, Warren Rat, Stalker Badger, Elder Pale; SPRMAX
+  raised to 16 KB, the sprite buffer now lies after the wall buffer and
+  is reached as v_walls+WALLMAX, so v_walls stays below 32K).
+  Decided 2026-10-08:
+  - Sneak step: the S key switches sneaking on and off ("Sneaking North"
+    in cyan in the panel). Sneaking is silent, but every other enemy
+    moves twice as often. A normal step wakes listening groups within 3
+    cells (x and y), a `noise TEXT` cell (dry bones, loose stones) within
+    6; sneaking over it: "You step softly."
+  - New group mode `listen` (GM_LISTEN): stands still until woken, then
+    hunts. New traits `pale` and `elder`. Walking into a calm Pale One:
+    the STORY.md text and a menu Fight / Pass (Pass: it steps back and is
+    gone). Awake Pale Ones attack. Every fight with Pale Ones or the Elder
+    sets SF_PFOUGHT. The Elder Pale (guard behind the door that the Pale
+    Totem opens): Fight / Spare; Spare sets SF_SPARED and gives the Heart
+    Stone (counts as a mini-boss beaten). Fighting it gives no Heart Stone.
+  - Story flags v_story (SF_SPARED, SF_PFOUGHT; heart_stone_used follows
+    in level 8) are saved after the deepest level: SAVE_VER 4, older saves
+    are not loaded any more.
+  88.7 KB in use, tested at 384 KB.
 **M10 – endings, sound, polish, distribution** (win image, README, MiSTer test).
 
 ## 7. Testing
@@ -456,7 +478,8 @@ draws a level source as PNG for review.
 2. Layout: viewport 192x128 left, party panel 64x128 right, messages below.
 3. Controls: cursor keys, up = forward, down = back, left/right = turn, plus strafe;
    joystick via CTL2 as in FUSE RUNNER. Strafe = Shift + left/right (keyboard only).
-   Held keys repeat after 12 frames, then every 7 frames.
+   Held keys repeat after 12 frames, then every 7 frames. Further keys: SPACE party menu,
+   I pack, C party sheet, M map, ESC game menu, S sneak on/off (since M9.7).
 4. Graphics: generated procedurally by gfxc.py first.
 5. Levels and wall sets: separate files, loaded on level entry.
 6. Language: English only.

@@ -56,6 +56,10 @@ MENU_W     equ  24              ; menu box width in words
 PF_POISON  equ  0               ; p_flags: poisoned
 PF_FEAR    equ  2               ; p_flags: afraid (no source yet)
 PF_FEATHER equ  3               ; p_flags: the feather was used on this level
+SF_SPARED  equ  0               ; v_story: the Elder Pale was spared
+SF_PFOUGHT equ  1               ; v_story: the party fought Pale Ones
+NOISE_STEP equ  3               ; a normal step wakes listeners this near
+NOISE_LOUD equ  6               ; a noise event wakes listeners this near
 
 ; level memory and saving
 LVSLOTS    equ  10              ; levels 0-9 can be kept
@@ -123,6 +127,7 @@ K_SHIFT equ     8               ; from KEYROW(7), added by readkeys
 K_MAP   equ     9               ; M (KEYROW(2)): debug map on/off
 K_SHEET equ     10              ; C (KEYROW(2)): party sheet on/off
 K_PACK  equ     11              ; I (KEYROW(5)): pack page on/off
+K_SNEAK equ     12              ; S (KEYROW(3)): sneak on/off
 
 ; pages shown in the viewport
 PG_VIEW  equ    0
@@ -202,6 +207,8 @@ v_mtxt  rs.b    MENU_MAX*MENU_LEN ; menu: the lines
 v_mitem rs.b    MENU_MAX        ; menu: item of each line (pack menus)
 v_pack  rs.b    2*PACK_SLOTS    ; party pack: item, count
 v_deep  rs.w    1               ; deepest level reached (saved after the pack)
+v_story rs.w    1               ; story flags SF_... (saved after v_deep)
+v_sneak rs.w    1               ; 1 = the party sneaks (S key)
 v_cend  rs.w    1               ; combat: 0 going on, 1 victory, 2 fled
 v_cskip rs.w    1               ; combat: the party lost the rest of the round
 v_rtime rs.w    1               ; frames the last render took (DEBUG)
@@ -218,8 +225,9 @@ v_buf   rs.b    BUFLEN          ; formatted text
 v_map   rs.b    LEVMAX          ; current level file
 v_lvstore rs.b  LVSLOTS*LVDELTA ; what changed in the levels visited
 v_vbuf  rs.b    VIEWB*VIEW_H    ; view buffer, copied to the screen at once
-v_sprites rs.b  SPRMAX          ; current sprite set
 v_walls rs.b    WALLMAX         ; current wall set (must start below 32K)
+v_sprites rs.b  SPRMAX          ; current sprite set (after the walls, beyond
+                                ; 32K: reached as v_walls+WALLMAX)
 v_size  rs.b    0               ; text file follows directly
         ifgt    v_walls-32767   ; buffers are reached with lea d16(a5)
         fail    "v_walls must start below 32K"
@@ -401,7 +409,16 @@ mainloop:
         bsr     clear_view
         bsr     redraw
         bra     mainloop
-.nomap  btst    #K_SPACE,d2     ; space: party menu
+.nomap  btst    #K_SNEAK,d2     ; S: sneak or walk
+        beq.s   .nosn
+        move.w  #T_SNEAK_OFF,d0
+        bchg    #0,v_sneak+1(a5)
+        bne.s   .sn1
+        move.w  #T_SNEAK_ON,d0
+.sn1    bsr     msg_print
+        bsr     panel_show
+        bra     mainloop
+.nosn   btst    #K_SPACE,d2     ; space: party menu
         beq.s   .nomenu
         bsr     wait_free
         bsr     party_menu
@@ -417,13 +434,17 @@ mainloop:
         and.w   d1,d2
         bne.s   .new
         subq.w  #1,v_rep(a5)    ; held: repeat after a delay
-        bgt.s   mainloop
+        bgt     mainloop
         move.w  #REP_NEXT,v_rep(a5)
         move.w  d1,d2
         bra.s   .act
 .new    move.w  #REP_FIRST,v_rep(a5)
-.act    bsr.s   do_keys
+.act    bsr     do_keys
         bsr     groups_act
+        tst.w   v_sneak(a5)     ; sneaking: the enemies move twice as often
+        beq.s   .slw
+        bsr     groups_act
+.slw
         tst.w   v_slow(a5)      ; cobwebs: the enemies move once more
         beq.s   .rd
         clr.w   v_slow(a5)
@@ -684,7 +705,16 @@ move_rel:
         move.w  d2,d0
         bsr     msg_print
         bsr     bleed_step
-        move.l  (sp)+,d0
+        tst.w   v_sneak(a5)     ; a normal step can be heard
+        bne.s   .quiet
+        move.l  (sp),d0         ; (a noise cell is louder: its event)
+        moveq   #EV_NOISE,d1
+        bsr     event_at
+        cmpa.w  #0,a3
+        bne.s   .quiet
+        moveq   #NOISE_STEP,d1
+        bsr     pale_wake
+.quiet  move.l  (sp)+,d0
         lea     v_map(a5),a0
         btst    #CELL_EVENT,0(a0,d0.w)
         bne     cell_events
@@ -777,6 +807,49 @@ rest:
         dbra    d3,.c
         bsr     panel_show
         movem.l (sp)+,d0-d3/a0-a3
+        rts
+
+; pale_wake: d1 = range; listening groups that near wake up and hunt
+pale_wake:
+        movem.l d0-d4/a0,-(sp)
+        move.w  v_pos(a5),d3
+        moveq   #31,d2
+        and.w   d3,d2           ; party x
+        lsr.w   #5,d3           ; party y
+        moveq   #0,d4           ; woken
+        move.w  v_map+LV_GROUPS(a5),d0
+        lea     v_map(a5),a0
+        add.w   d0,a0
+.g      cmp.b   #G_END,G_X(a0)
+        beq.s   .e
+        btst    #GF_GONE,G_FLAGS(a0)
+        bne.s   .n
+        cmp.b   #GM_LISTEN,G_MODE(a0)
+        bne.s   .n
+        moveq   #0,d0
+        move.b  G_X(a0),d0
+        sub.w   d2,d0
+        bpl.s   .x
+        neg.w   d0
+.x      cmp.w   d1,d0
+        bhi.s   .n
+        moveq   #0,d0
+        move.b  G_Y(a0),d0
+        sub.w   d3,d0
+        bpl.s   .y
+        neg.w   d0
+.y      cmp.w   d1,d0
+        bhi.s   .n
+        move.b  #GM_HUNT,G_MODE(a0)
+        bset    #GF_SEEN,G_FLAGS(a0) ; (no "something moves")
+        moveq   #1,d4
+.n      addq.l  #G_SIZE,a0
+        bra.s   .g
+.e      tst.w   d4
+        beq.s   .q
+        move.w  #T_PALE_HEARS,d0
+        bsr     msg_print
+.q      movem.l (sp)+,d0-d4/a0
         rts
 
 ; wake_guards: every guard group of the level hunts now (not the bosses)
@@ -945,6 +1018,8 @@ cell_events:
         beq     .rest
         cmp.b   #EV_COLLAPSE,d0
         beq     .coll
+        cmp.b   #EV_NOISE,d0
+        beq     .noise
         cmp.b   #EV_MESSAGE,d0
         bne     .nx             ; gather, lock: not when entering
         bset    #0,EV_FLAGS(a3) ; message: only the first time
@@ -1082,6 +1157,16 @@ cell_events:
         moveq   #2,d1
         bsr     hurt_all
         bra     .e              ; (somewhere else now)
+.noise  move.w  #T_SOFT,d0      ; something loud underfoot
+        tst.w   v_sneak(a5)
+        bne.s   .soft
+        move.w  EV_PARAM(a3),d0
+        bsr     msg_print
+        moveq   #NOISE_LOUD,d1
+        bsr     pale_wake
+        bra     .nx
+.soft   bsr     msg_print
+        bra     .nx
 .rest   bsr     rest            ; the glowing pool
         bra     .nx
 .trap   bset    #0,EV_FLAGS(a3) ; trap: only the first time
@@ -1165,6 +1250,8 @@ groups_act:
         btst    #GF_GONE,G_FLAGS(a3)
         bne     .nx
         cmp.b   #GM_GUARD,G_MODE(a3) ; hunters and swimmers move
+        beq     .nx
+        cmp.b   #GM_LISTEN,G_MODE(a3)
         beq     .nx
         bsr     .dist           ; d0 = distance, d1 = dx, d2 = dy
         cmp.w   #HUNT_RANGE,d0
@@ -1322,10 +1409,69 @@ encounter:
         bsr     text_get
         move.l  a1,4(a2)
         move.w  #T_GROUP_ATTACKS,d0
-.say    bsr     msg_print
+.say    move.w  d0,d3           ; ("attacks!")
+        move.w  e_trait(a0),d1  ; the Pale Ones: a choice first
+        cmp.w   #TR_ELDER,d1
+        beq.s   .elder
+        cmp.w   #TR_PALE,d1
+        bne.s   .fight
+        cmp.b   #GM_LISTEN,G_MODE(a3) ; (awake ones just attack)
+        bne.s   .pfight
+        move.w  #T_PALE_MEET,d0
+        move.w  #T_PASS,d1
+        bsr     pale_choice
+        bne.s   .chose
+        move.w  #T_PALE_PASS,d0
+        bra.s   .gone
+.elder  move.w  #T_ELDER_MEET,d0
+        move.w  #T_SPARE,d1
+        bsr     pale_choice
+        bne.s   .chose
+        bset    #SF_SPARED,v_story+1(a5)
+        move.w  #IT_HEART_STONE,d0
+        moveq   #1,d1
+        bsr     pack_add
+        move.w  #T_ELDER_SPARE,d0
+.gone   bsr     msg_print       ; the group goes away
+        bset    #GF_GONE,G_FLAGS(a3)
+        moveq   #0,d0
+        move.b  G_Y(a3),d0
+        lsl.w   #5,d0
+        moveq   #0,d1
+        move.b  G_X(a3),d1
+        add.w   d1,d0
+        lea     v_map(a5),a0
+        bclr    #CELL_GROUP,0(a0,d0.w)
+        bra.s   .e
+.chose  move.w  #T_FIGHT_ON,d3  ; (the menu used v_args: no names)
+.pfight bset    #SF_PFOUGHT,v_story+1(a5)
+.fight  move.w  d3,d0
+        bsr     msg_print
         bsr     pause
         bsr     combat
-        movem.l (sp)+,d0-d3/a0-a2
+.e      movem.l (sp)+,d0-d3/a0-a2
+        rts
+
+; pale_choice: d0 = text of the meeting, d1 = text of the peaceful choice
+;              -> EQ = the peaceful one, NE = fight
+pale_choice:
+        movem.l d0-d2/a0-a1,-(sp)
+        move.w  d1,d2
+        bsr     msg_print
+.ask    bsr     menu_clear
+        move.w  #T_FIGHT,d0
+        bsr     menu_addt
+        move.w  d2,d0
+        bsr     menu_addt
+        move.l  12(sp),a0       ; (the enemy type, kept on the stack)
+        move.w  e_name(a0),d0
+        bsr     text_get
+        bsr     menu_run
+        tst.w   d0
+        bmi.s   .ask
+        bsr     view_refresh
+        cmp.w   #1,d0
+        movem.l (sp)+,d0-d2/a0-a1
         rts
 
 ;---------------------------------------------------------------------
@@ -1658,7 +1804,15 @@ readkeys:                       ; -> d0 = KEYROW(1), CTL2 mapped onto it
 .f2     btst    #5,d1           ; F5 = fire
         beq.s   .f5
         bset    #K_SPACE,d0
-.f5     move.w  v_keys(a5),v_pkeys(a5)
+.f5     move.w  d0,-(sp)
+        lea     kr3(pc),a3      ; S: sneak
+        moveq   #MT_IPCOM,d0
+        trap    #1
+        move.w  (sp)+,d0
+        btst    #3,d1
+        beq.s   .s
+        bset    #K_SNEAK,d0
+.s      move.w  v_keys(a5),v_pkeys(a5)
         move.w  d0,v_keys(a5)
         move.l  v_sysv(a5),a0   ; empty the keyboard queue, so that the keys
         move.l  $4c(a0),d1      ; pressed in the game do not end up in BASIC
@@ -2093,6 +2247,7 @@ kr1:    dc.b    9,1,0,0,0,0,1,2         ; IPC: KEYROW(1)
 kr0:    dc.b    9,1,0,0,0,0,0,2         ; IPC: KEYROW(0)
 kr2:    dc.b    9,1,0,0,0,0,2,2         ; IPC: KEYROW(2)
 kr5:    dc.b    9,1,0,0,0,0,5,2         ; IPC: KEYROW(5)
+kr3:    dc.b    9,1,0,0,0,0,3,2         ; IPC: KEYROW(3)
 steps:  dc.w    0,-1,1,0,0,1,-1,0       ; dx, dy of one step N, E, S, W
 kr7:    dc.b    9,1,0,0,0,0,7,2         ; IPC: KEYROW(7)
 doff:   dc.w    -32,1,32,-1             ; map offset of one step N, E, S, W
