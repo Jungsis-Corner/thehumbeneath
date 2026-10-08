@@ -65,6 +65,10 @@ QDOS file names use `_` instead of `.` (`hum_txt` instead of `TEXT.dat`).
 ## 3. Memory layout
 
 QL map: ROM $00000-$0BFFF, I/O $18000, **screen $20000-$27FFF (32 KB, Mode 8)**,
+**Minimum memory: 384 KB** (raised from 256 KB on 2026-10-08; measured: at
+256 KB only about 82-87 KB are free for the game, so at 384 KB about 210 KB).
+Budget: keep the game below about 160 KB.
+
 system variables from $28000, rest = RAM for QDOS + jobs. With 256 KB total about 160 KB are free
 for jobs after QDOS/SuperBASIC; target: **stay below ~100 KB** in total.
 
@@ -402,13 +406,17 @@ draws a level source as PNG for review.
   lever lies in the fox den). Vixen Redbrush (30 HP) stands in the only
   passage to the stairs. The rails exist only in messages (pictures of
   rails would need more floor pictures). 74.3 KB, tested at 256 KB.
+- **2026-10-08: minimum memory now 384 KB** (CLAUDE.md). The savings made
+  for 256 KB stay (text blocks, kept levels as changes); the new room is
+  for richer graphics and the mechanics of levels 5-8. Tests run at
+  RAMTOP 384 from now on.
 **M10 – endings, sound, polish, distribution** (win image, README, MiSTer test).
 
 ## 7. Testing
 
 - `tools/preview.py <level> x y dir` → PNG of the expected view (geometry check without emulator).
 - `tools/viewtest.py <keys>` → walks in the running emulator, compares each view with preview.py.
-- `tools/emu.sh` (sQLux, RAMTOP 640; also run with RAMTOP 256 to check the minimum memory),
+- `tools/emu.sh` (sQLux, RAMTOP 640; also run with RAMTOP 384 to check the minimum memory),
   `tools/key.sh Up`, `tools/shot.sh m1c_step1` → compare screenshots with previews.
 - Test switches via `-D`: `STARTLV=n`, `STARTX/STARTY/STARTDIR`, `DEBUG=1` (render time in frames).
 - After every milestone: build, emulator run, screenshots, size report (code / data / graphics).

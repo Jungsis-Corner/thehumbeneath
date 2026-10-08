@@ -6,7 +6,7 @@ Cat-clan setting, original world. Story, levels, enemies and all in-game texts: 
 ## Target Platform
 
 - Sinclair QL, Motorola 68008
-- Expanded memory required (minimum 256 KB RAM)
+- Expanded memory required (minimum 384 KB RAM; raised from 256 KB on 2026-10-08)
 - Display: Mode 8 (256x256, 8 colours)
 - Written in 68000 assembler; SuperBASIC only for throwaway prototypes and tools
 
