@@ -3,7 +3,7 @@
 Status: approved 2026-10-07 (open questions answered with the proposals, see section 8).
 Changes to the architecture below need approval (CLAUDE.md).
 
-Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9 done (levels 1-8, three endings), M9.9 (balance, polish) done, M9.10 (random places) done, M10a (sound) done.
+Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9 done (levels 1-8, three endings), M9.9 (balance, polish) done, M9.10 (random places) done, M10a (sound) done, M10b (German) done.
 
 ## 1. Toolchain (taken over from FUSE RUNNER)
 
@@ -536,6 +536,18 @@ draws a level source as PNG for review.
   ending. Game menu line SOUND: ON/OFF (v_mute, not saved). Measured in
   sQLux: f = 11065 / (8 + pitch) Hz. tools/sound_notes.py (from FUSE
   RUNNER) lists the notes of emu/sound.raw.
+- **M10b German: DONE** (2026-10-08). data/text_de.txt holds every id of
+  text.txt in German (UTF-8, no @ lines: level, widths and placeholders
+  come from text.txt; textc checks ids, placeholders in the same order and
+  the 40 characters). The build writes hum_tde next to hum_txt; ä ö ü ß Ä Ö Ü
+  become QL codes $80 $84 $87 $9C $A0 $A4 $A7, the 4 px font has glyphs up
+  to $A7 (FONT_N), the QDOS console font has them anyway. The heap block
+  is sized for the larger language (TXT_RESMAX). Title menu line LANGUAGE /
+  SPRACHE switches (text_load) and writes hum_cfg (v_lang, 2 bytes) on the
+  game's device; at start cfg_load picks the language, English if hum_cfg
+  or hum_tde is missing. Saves hold no text and work in both languages.
+  Names: the cats are Aschkralle, Moosfarn, Flinkschnurr, Seggenpelz;
+  "der Hum" keeps its English name. tools/emu.sh: EMULANG=de.
 
 ## 7. Testing
 
@@ -558,7 +570,7 @@ draws a level source as PNG for review.
    I pack, C party sheet, M map, ESC game menu, S sneak on/off (since M9.7).
 4. Graphics: generated procedurally by gfxc.py first.
 5. Levels and wall sets: separate files, loaded on level entry.
-6. Language: English only.
+6. Language: English only. Changed 2026-10-08: German as a second language (M10b).
 7. Distribution: as FUSE RUNNER (QXL.WIN + XTcc file + LOADER_bas/INSTALL_bas), MiSTer test.
 8. Git: repository initialised.
 9. Sound: IPC beeps in M10.

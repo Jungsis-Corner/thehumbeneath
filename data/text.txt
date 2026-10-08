@@ -18,6 +18,7 @@ PRESS_ESC       Press ESC to quit.
 # --- Title and main menu ---
 MM_NEW          NEW GAME
 MM_LOAD         LOAD GAME
+MM_LANG         LANGUAGE: ENGLISH
 MM_QUIT         QUIT
 MM_BEGIN        BEGIN
 NAME_CATS       Name your cats.

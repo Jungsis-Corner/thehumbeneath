@@ -8,7 +8,7 @@ TC=${TOOLCHAIN:-$HOME/toolchain}
 PATH=$TC/vasm:$TC/qxltools:$PATH
 B=../build
 mkdir -p $B
-python3 ../tools/textc.py ../data/text.txt $B/hum_txt textid.inc || exit 1
+python3 ../tools/textc.py ../data/text.txt $B/hum_txt textid.inc ../data/text_de.txt $B/hum_tde || exit 1
 python3 ../tools/levelc.py textid.inc $B levels.inc ../data/levels/*.txt || exit 1
 python3 ../tools/gfxc.py $B walls.inc || exit 1
 python3 ../tools/fontc.py font.inc || exit 1
@@ -38,7 +38,7 @@ printf '10 EXEC_W win1_thehum\n' > $B/boot
 if command -v qxltool >/dev/null 2>&1; then
   ( cd $B && rm -f thehum.win &&
     qxltool -w thehum.win 2 THE HUM </dev/null >/dev/null 2>&1 &&
-    { echo write boot; for f in thehum hum_txt hum_scr hum_l* hum_w* hum_s?; do echo "write $f"; done; echo quit; } | qxltool -w thehum.win >/dev/null 2>&1 &&
+    { echo write boot; for f in thehum hum_txt hum_tde hum_scr hum_l* hum_w* hum_s?; do echo "write $f"; done; echo quit; } | qxltool -w thehum.win >/dev/null 2>&1 &&
     echo "thehum.win created" )
 fi
 python3 ../tools/sizes.py $B

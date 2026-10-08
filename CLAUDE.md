@@ -21,6 +21,8 @@ If it is not reachable, ask me for the details.
 ## Language
 
 - All in-game text, code comments, identifiers, file names and documentation: English
+- Second in-game language German (since 2026-10-08): data/text_de.txt with the same ids,
+  chosen in the title menu; "The Hum" and "THE HUM BENEATH" stay English
 - Talk to me in German
 
 ## Rules

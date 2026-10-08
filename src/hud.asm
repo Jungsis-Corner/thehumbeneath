@@ -393,7 +393,7 @@ pdraw:
         bmi.s   .e
         sub.w   #32,d4
         bcs.s   .unk
-        cmp.w   #95,d4
+        cmp.w   #FONT_N,d4
         blo.s   .ok
 .unk    moveq   #'?'-32,d4
 .ok     mulu    #FONT_ROWS,d4

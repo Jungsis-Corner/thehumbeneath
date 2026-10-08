@@ -168,6 +168,7 @@ v_msg   rs.l    1               ; message window channel
 v_poll  rs.l    2               ; poll list linkage (50 Hz counter)
 v_text  rs.l    1               ; text file in memory (0 = not loaded)
 v_txtres rs.l   1               ; length of the part in memory
+v_lang  rs.w    1               ; language: 0 English, 1 German
 v_ltstart rs.w  1               ; level text block: file offset, length
 v_ltlen rs.w    1
 v_keys  rs.w    1               ; current keys (KEYROW(1) layout)
@@ -285,40 +286,16 @@ common:
         move.l  sp,a4
 
 ;---------------------------------------------------------------------
-; Open the text file and read its header first: its length decides
-; the size of the heap block (one block for everything).
+; One heap block for everything: the variables, then the part of the
+; text file kept in memory (room for the larger language).
 ;---------------------------------------------------------------------
-        lea     -(NAMEBUF+TXT_HEAD+2)(sp),sp
-        moveq   #0,d6           ; text length (0 = no text file)
-        lea     txtname(pc),a2
-        move.l  sp,a3
-        bsr     fopen
-        bne.s   .notxt
-        move.w  d4,d5           ; the device the game is on (for saving)
-        move.l  a0,a2           ; a2 = channel
-        lea     NAMEBUF(sp),a1
-        moveq   #TXT_HEAD,d4
-        bsr     fread
-        bne.s   .badtxt
-        lea     NAMEBUF(sp),a1
-        cmp.l   #TXT_MAGIC,(a1)
-        bne.s   .badtxt
-        move.l  TXT_LEN(a1),d6
-        cmp.l   #TXT_HEAD,d6
-        bhi.s   .alloc
-.badtxt move.l  a2,a0
-        moveq   #IO_CLOSE,d0
-        trap    #2
-        moveq   #0,d6
-.notxt  sub.l   a2,a2
-.alloc  move.l  #v_size+1,d1
-        add.l   d6,d1
+        move.l  #v_size+TXT_RESMAX+1,d1
         and.w   #$fffe,d1
         moveq   #MT_ALCHP,d0
         moveq   #-1,d2
         trap    #1
         tst.l   d0
-        bne.s   .nomem
+        bne     leave
         move.l  a0,a5
         move.l  a5,a1           ; clear the variables
         move.w  #v_size/2-1,d0
@@ -326,37 +303,15 @@ common:
         dbra    d0,.clr
         move.l  a5,v_heap(a5)
         move.l  a4,v_sp(a5)
-        move.w  d5,v_dev(a5)
         move.w  d7,v_mode(a5)
-        move.l  a2,d0           ; text file open?
+        bsr     cfg_load        ; the language chosen last time
+        bsr     text_load       ; its texts (else the English ones)
         beq.s   .head
-        move.l  a5,a1           ; copy the header, read the rest
-        add.l   #v_size,a1
-        move.l  a1,v_text(a5)
-        move.l  d6,v_txtres(a5)
-        lea     NAMEBUF(sp),a0
-        moveq   #TXT_HEAD-1,d0
-.cp     move.b  (a0)+,(a1)+
-        dbra    d0,.cp
-        move.l  a2,a0
-        move.l  d6,d4
-        sub.l   #TXT_HEAD,d4
-        bsr     fread
-        beq.s   .close
-        clr.l   v_text(a5)      ; read error: treat as missing
-.close  move.l  a2,a0
-        moveq   #IO_CLOSE,d0
-        trap    #2
-        bra.s   .head
-.nomem  move.l  a2,d1           ; out of memory: close file, leave
-        beq.s   .nm2
-        move.l  d0,-(sp)
-        move.l  a2,a0
-        moveq   #IO_CLOSE,d0
-        trap    #2
-        move.l  (sp)+,d0
-.nm2    bra     leave
-.head   lea     NAMEBUF+TXT_HEAD+2(sp),sp
+        tst.w   v_lang(a5)
+        beq.s   .head
+        clr.w   v_lang(a5)
+        bsr     text_load
+.head
 
         moveq   #MT_INF,d0      ; where are the system variables?
         trap    #1
@@ -628,6 +583,85 @@ level_fatal:                    ; d0 = number, d1 = "... %d is missing."
         bsr     wait_esc
         bra     exit_prog
 
+; txt_file: -> a2 = name of the text file of the language
+txt_file:
+        lea     txtname(pc),a2
+        tst.w   v_lang(a5)
+        beq.s   .e
+        lea     tdename(pc),a2
+.e      rts
+
+; text_load: the text file of the language (v_lang), the part kept in
+;            memory -> EQ = loaded (NE: v_text = 0, no texts)
+text_load:
+        movem.l d1-d4/a0-a3,-(sp)
+        clr.l   v_text(a5)
+        bsr.s   txt_file
+        lea     v_name(a5),a3
+        bsr     fopen
+        bne.s   .e
+        move.w  d4,v_dev(a5)    ; the device the game is on (for saving)
+        move.l  a5,a3
+        add.l   #v_size,a3
+        move.l  a3,a1
+        moveq   #TXT_HEAD,d4
+        bsr     fread
+        bne.s   .cl
+        moveq   #-1,d0
+        cmp.l   #TXT_MAGIC,(a3)
+        bne.s   .cl
+        move.l  TXT_LEN(a3),d4
+        cmp.l   #TXT_RESMAX,d4
+        bhi.s   .cl
+        move.l  d4,v_txtres(a5)
+        sub.l   #TXT_HEAD,d4
+        bls.s   .cl
+        lea     TXT_HEAD(a3),a1
+        bsr     fread
+        bne.s   .cl
+        move.l  a3,v_text(a5)
+.cl     move.l  d0,d4
+        moveq   #IO_CLOSE,d0
+        trap    #2
+        move.l  d4,d0
+.e      movem.l (sp)+,d1-d4/a0-a3
+        tst.l   d0
+        rts
+
+; cfg_load: the language from hum_cfg (missing: English)
+cfg_load:
+        movem.l d0-d4/a0-a3,-(sp)
+        clr.w   v_lang(a5)
+        lea     cfgname(pc),a2
+        lea     v_name(a5),a3
+        bsr     fopen
+        bne.s   .e
+        lea     v_lang(a5),a1
+        moveq   #2,d4
+        bsr     fread
+        beq.s   .cl
+        clr.w   v_lang(a5)
+.cl     moveq   #IO_CLOSE,d0
+        trap    #2
+        and.w   #1,v_lang(a5)
+.e      movem.l (sp)+,d0-d4/a0-a3
+        rts
+
+; cfg_save: the language into hum_cfg (errors are ignored)
+cfg_save:
+        movem.l d0-d4/a0-a3,-(sp)
+        lea     cfgname(pc),a2
+        moveq   #2,d3
+        bsr     file_open
+        bne.s   .e
+        lea     v_lang(a5),a1
+        moveq   #2,d4
+        bsr     fwrite
+        moveq   #IO_CLOSE,d0
+        trap    #2
+.e      movem.l (sp)+,d0-d4/a0-a3
+        rts
+
 ; ltext_load: d0 = level; its block of the text file into v_ltext
 ;             (on any error the level texts are just missing)
 ltext_load:
@@ -639,7 +673,7 @@ ltext_load:
         move.w  TXT_SECT+2(a1,d0.w),d4 ; length
         beq.s   .e
         move.w  d5,v_ltstart(a5)
-        lea     txtname(pc),a2
+        bsr     txt_file
         lea     v_name(a5),a3
         move.w  d4,-(sp)
         bsr     fopen
@@ -2658,6 +2692,8 @@ notxt:  dc.b    0
 devices: dc.b   'win1_flp1_mdv1_'
         even
 txtname: qstr   'hum_txt'
+tdename: qstr   'hum_tde'
+cfgname: qstr   'hum_cfg'
 lvname: qstr    'hum_l0'
 wsname: qstr    'hum_w0'
 ssname: qstr    'hum_s0'

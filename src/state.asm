@@ -229,7 +229,16 @@ save_open:
 .cp     move.b  (a0)+,(a1)+
         dbra    d1,.cp
         add.b   d0,-1(a1)
-        move.w  v_dev(a5),d4    ; on the device the game came from
+        bsr.s   file_open
+        movem.l (sp)+,d1-d4/a1-a3
+        tst.l   d0
+        rts
+
+; file_open: a2 = QDOS file name, d3 = 1 to read, 2 to write a new file;
+;            on the device the game came from -> d0 = error, a0 = channel
+file_open:
+        movem.l d1-d4/a1-a3,-(sp)
+        move.w  v_dev(a5),d4
         lea     v_name(a5),a3
         bsr     dev_name
         cmp.w   #2,d3

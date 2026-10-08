@@ -1,0 +1,455 @@
+# THE HUM BENEATH - German game strings (UTF-8)
+# The same ids as data/text.txt, one entry per line:  ID  text
+# - every id of text.txt must be here, with the same placeholders in the
+#   same order (%s name, %d number, %% percent sign)
+# - no @ lines: level, line width and placeholder widths come from text.txt
+# - \n starts a new line, every line max. 40 characters
+# - letters: ASCII and ä ö ü Ä Ö Ü ß (the build turns them into QL codes)
+# Names: The Hum and THE HUM BENEATH stay English; the cats, places and
+# creatures are translated.
+
+# --- System ---
+TITLE           THE HUM BENEATH
+PRESS_ESC       ESC beendet das Spiel.
+
+# --- Title and main menu ---
+MM_NEW          NEUES SPIEL
+MM_LOAD         SPIEL LADEN
+MM_LANG         SPRACHE: DEUTSCH
+MM_QUIT         BEENDEN
+MM_BEGIN        LOS GEHT'S
+NAME_CATS       Benenne deine Katzen.
+NAME_LINE       %s (%s)
+NAME_HELP1      Tippen, oder hoch/runter und rechts.
+NAME_HELP2      Links löscht, ENTER ist fertig.
+PRESS_KEY       Drücke eine Taste.
+INTRO           Der Hum begann mit dem Tauwetter.\n\nNur die Jungen konnten es hören,\nein tiefer Ton unter dem Moor,\nwie ein Herzschlag im Dunkeln.\n\nDie Alten erzählten von den\nTiefenwächtern, die unter der Erde\ngingen und nie heimkehrten.\n\nHeute Nacht schleichen vier Katzen\nüber die Grenze des Lagers.\n\nDie Kellertür steht offen.
+INTRO_END       Folge dem Hum.
+
+# --- Game over and progress ---
+ALL_FALLEN      Alle vier sind gefallen.
+PROGRESS        Ihr seid %d%% des Weges gekommen:
+PROG_DEPTH      Tiefe: %d von %d Ebenen
+PROG_STORY      Geschichte: %d/%d Zeichen, %d/%d Wächter
+PROG_EXPLORED   Erkundet: %d%% der Höhlen
+
+# --- Game menu (ESC), saving ---
+GM_CONTINUE     WEITER
+GM_SAVE         SPEICHERN
+GM_LOAD         LADEN
+GM_SOUND_ON     TON: AN
+GM_SOUND_OFF    TON: AUS
+GM_QUIT         BEENDEN
+SLOT_USED       Platz %d: Ebene %d, %d%%
+SLOT_EMPTY      Platz %d: leer
+SLOT_AUTO       Auto: Ebene %d, %d%%
+SLOT_NOAUTO     Auto: leer
+AUTOSAVED       (Das Spiel wurde gespeichert: Auto.)
+SAVED           Gespeichert.
+SAVE_FAILED     Speichern ist fehlgeschlagen.
+NO_SAVE         Kein Spielstand gefunden.
+LOADED          Spiel geladen.
+LOAD_FAILED     Der Spielstand ist beschädigt.
+QUIT_ASK        Spiel beenden?
+YES             Ja
+NO              Nein
+NO_LEVEL        Ebenendatei %d fehlt.
+NO_WALLS        Wandsatz %d fehlt.
+NO_SPRITES      Bildersatz %d fehlt.
+
+# --- Party ---
+PARTY_LEAD      %s geht voran.
+BLEEDING        %s blutet!
+FALLS           %s fällt.
+GAME_OVER       Spiel vorbei.
+
+# --- Enemies ---
+SOMETHING_MOVES Vorne bewegt sich etwas.
+ATTACKS         %s greift an!
+GROUP_ATTACKS   %d %s greifen an!
+MISSES          %s verfehlt.
+HIT_FOR         %s: %d Schaden.
+POISONED        %s ist vergiftet.
+DEFENDS         %s geht in Deckung.
+VICTORY         Sieg!
+FLEES           Die Gruppe flieht.
+CANNOT_FLEE     Hier gibt es keine Flucht.
+FLEE_FAILS      Die Gruppe kommt nicht weg.
+GAIN_XP         Die Gruppe erhält %d EP.
+RISES           %s steigt auf: %s.
+SNEAK_ON        Ihr schleicht. Langsam, aber lautlos.
+SNEAK_OFF       Ihr geht wieder normal.
+SOFT            Ihr tretet leise auf. Nichts regt sich.
+PALE_HEARS      Eine blasse Gestalt hebt den Kopf.\nSie hat euch gehört!
+PALE_MEET       Eine blasse Gestalt dreht den Kopf.\nSie hat keine Augen.\nSie lauscht.\nSie greift nicht an.\n"Ihr seid... warm."\n"Seid ihr... unsere?"
+PALE_PASS       Die blasse Gestalt weicht ins Dunkel.
+ELDER_MEET      Der Älteste Blasse erhebt sich.\n"Wir waren einst wie ihr."\n"Der Hum hielt uns fest. Für immer."
+ELDER_ANGRY     Der Älteste Blasse erhebt sich.\n"Ihr habt meine Kinder verletzt."\n"Dann seid ihr nicht unsere."
+ELDER_SPARE     Der Älteste Blasse senkt den Kopf.\n"Nehmt den Herzstein.\n Beendet, was wir nicht konnten."
+FIGHT           Kämpfen
+FIGHT_ON        So sei es. Die Gruppe greift an!
+HUM_WARN        Der Hum schwillt an. Der Boden bebt.
+HUM_PULSE       Der Hum pulsiert! Die Gruppe taumelt.
+HUM_STUN        Der Hum pulsiert! Alle sind wie gelähmt.
+ECHO_BLOW       %s wirft euren Hieb zurück!
+ECHO_WAIT       %s äfft euch nach und wartet.
+KEEPER_MEET     Der Hum verstummt.\nEinen Atemzug lang ist die Welt still.\nDann öffnet etwas Riesiges die Augen.\nDER HÖHLENHÜTER\nGebunden von den Tiefenwächtern.
+USE_STONE       Den Herzstein nutzen
+LAY_DOWN        Am Herzen niederlegen
+END_A_TITLE     DIE BEFREIUNG
+END_B_TITLE     DIE STILLE
+END_C_TITLE     DAS BLEIBEN
+END_A           Der Hum verklingt.\nDie Ketten des Hüters fallen ab.\nOben liegt das Moor still.\nDie Blassen folgen euch nach oben.\nSie spüren zum ersten Mal die Sonne.\nDer Glutmoor-Clan wartet an der Tür.\nManche wenden sich ab.\nManche treten vor.
+END_B           Der Hum verstummt.\nDie Tunnel werden still.\nIhr kehrt allein zurück.\nDer Clan feiert.\nAber nachts\nlauscht ihr noch immer.
+END_C           Ihr legt euch am Herzen nieder.\nDer Hum heißt euch willkommen.\nIrgendwo da oben\nhört ein Junges ihn zum ersten Mal.
+THE_END         ENDE
+PASS            Vorbeigehen
+SPARE           Verschonen
+
+# --- Items ---
+FOUND           Gefunden: %s x%d.
+PACK_FULL       Der Beutel ist voll.
+MOSS_FULL       Niemand kann mehr Moos tragen.
+UNLOCKS         %s öffnet das Schloss.
+TAKES_OFF       Abgelegt: %s.
+WEARS           %s trägt jetzt: %s.
+REVIVE          Das Sternvolk hilft %s auf.
+HEALED          %s geht es besser.
+CANNOT_HELP     %s ist nicht zu helfen.
+WRAPPED         Der Verband stillt die Blutung.
+CALM            %s ist wieder ruhig.
+AFRAID          %s hat Angst!
+FROZEN          %s ist starr vor Angst.
+POUNCES         %s springt!
+WARN            %s: Vorsicht! Gefahr voraus.
+PEBBLE          Der Kiesel klappert in der Ferne.\nDie Jäger wenden sich dem Laut zu.
+NO_ROOM         %s braucht Platz: nur vorne.
+NOT_NOW         Nicht jetzt.
+NO_GEAR         Nichts zum Anlegen.
+NOTHING         Der Beutel ist leer.
+STALE_SICK      Die Beute war schlecht.
+
+# --- Healing and skills ---
+MOSS_PACK       %s legt einen Moosverband an.
+PRESSES_MOSS    %s drückt Moos auf die Wunde.
+BLEED_STOPS     Die Blutung hört auf.
+BLEED_SLOWS     Die Blutung lässt nach.
+NO_MOSS         Kein Moos mehr.
+MOSS_WEAK       Das Moos ist zu schwach für die Wunde.
+PRESS_HOLD      %s drückt auf die Wunde.
+HERB_CHEW       %s kaut das Kraut.
+POISON_FADES    Das Gift lässt nach.
+NO_HERB         Keine Kräuter mehr.
+CHARM_ON        Das Sternvolk wacht über euch.
+CHARM_USED      Das Sternvolk schweigt jetzt.
+GATHERS_MOSS    %s sammelt Moos.
+FINDS_HERBS     %s findet Kräuter.
+FINDS_NOTHING   %s findet hier nichts.
+NO_NEED         %s braucht das nicht.
+NOT_ABLE        %s ist dazu nicht in der Lage.
+
+# --- Level 1 ---
+NOT_YET         Geröll versperrt den Weg nach unten.
+
+# --- Level 2 ---
+WATER_COLD      Kaltes Wasser reicht bis an den Bauch.
+
+# --- Level 3 ---
+VALVE_EMPTY     Eine Ventilfassung. Das Rad fehlt.
+VALVE_TURN      Ihr setzt ein Ventilrad ein und dreht.
+VALVE_DONE      Dieses Ventil ist offen.
+CISTERN_OPEN    In der Ferne knirscht eine schwere Tür.
+HANDCAR_GO      Ihr zieht den Hebel. Die Draisine rollt!
+HANDCAR_NO      Eine alte Draisine. Der Hebel fehlt.
+SINKHOLE        Der Boden gibt nach! Ihr stürzt.
+REST            Der leuchtende Teich heilt jede Wunde.
+REST_UP         %s steht wieder auf.
+COLLAPSE        Der Boden bricht unter euch!
+SHADOW          %s trifft nur einen Schatten.
+GETS_UP         %s steht wieder auf!
+GETS_BACK       %s rappelt sich auf, schwach.
+DOOR_VALVES     Die Tür klemmt. Ventile halten sie.
+
+# --- Traps ---
+TRAP_GLASS      Glasscherben schneiden in eine Pfote.
+TRAP_THORNS     Dornen reißen am Fell.
+
+# --- Ranks, status, cat names (12) ---
+RANK_KIT        Junges
+RANK_POUNCE     Springer
+RANK_FENWALKER  Moorgänger
+RANK_EMBERGUARD Glutwache
+RANK_DEEPWALKER Tiefgänger
+STATUS_OK       Unverletzt
+STATUS_SCRATCH  Kratzer
+STATUS_GASH     Riss
+STATUS_DEEP     Tiefe Wunde
+STATUS_FALLEN   Gefallen
+STATUS_POISON   Vergiftet
+STATUS_AFRAID   Verängstigt
+NAME_ASHCLAW    Aschkralle
+NAME_MOSSFERN   Moosfarn
+NAME_QUICKWHISKER Flinkschnurr
+NAME_SEDGEPELT  Seggenpelz
+
+# --- Item names, at most 16 characters ---
+IT_FEN_MOSS     Moormoos
+IT_DRY_MOSS     Trockenmoos
+IT_GLOW_MOSS    Glühkappenmoos
+IT_HERB         Kraut
+IT_MARIGOLD     Ringelblume
+IT_COBWEB       Spinnwebverband
+IT_POPPY        Mohnsamen
+IT_FRESH_PREY   Frische Beute
+IT_STALE_PREY   Alte Beute
+IT_COLLAR       Dornenhalsband
+IT_THISTLE      Distelamulett
+IT_FEATHER      Sternvolkfeder
+IT_LANTERN      Laternensplitter
+IT_PEBBLE       Echokiesel
+IT_CELLAR_KEY   Kellerschlüssel
+IT_VALVE        Ventilrad
+IT_LEVER        Draisinenhebel
+IT_TOTEM        Blasses Totem
+IT_HEART_STONE  Herzstein
+
+# --- Enemy names (singular, plural), at most 16 characters ---
+EN_RAT          Ratte
+EN_RATS         Ratten
+EN_SPIDER       Riesenspinne
+EN_SPIDERS      Riesenspinnen
+EN_WHISKERLESS  Alter Bartlos
+EN_SEWER_RAT    Kanalratte
+EN_SEWER_RATS   Kanalratten
+EN_EEL          Aal
+EN_EELS         Aale
+EN_LEECH        Blutegel
+EN_LEECHES      Blutegel
+EN_GATE_RAT     Die Torratte
+EN_BAT          Fledermaus
+EN_BATS         Fledermäuse
+EN_CRICKET      Höhlengrille
+EN_CRICKETS     Höhlengrillen
+EN_SNAKE        Wasserschlange
+EN_SNAKES       Wasserschlangen
+EN_FOX          Fuchs
+EN_FOXES        Füchse
+EN_CROW         Krähe
+EN_CROWS        Krähen
+EN_BEETLE       Rostkäfer
+EN_BEETLES      Rostkäfer
+EN_VIXEN        Füchsin Rotrute
+EN_ADDER        Kreuzotter
+EN_ADDERS       Kreuzottern
+EN_MOTH         Sporenmotte
+EN_MOTHS        Sporenmotten
+EN_TOAD         Höhlenkröte
+EN_TOADS        Höhlenkröten
+EN_BONE_RAT     Knochenratte
+EN_BONE_RATS    Knochenratten
+EN_SHADE_CAT    Schattenkatze
+EN_SHADE_CATS   Schattenkatzen
+EN_OWL          Geistereule
+EN_OWLS         Geistereulen
+EN_PALE         Blasser
+EN_PALES        Blasse
+EN_WARREN_RAT   Bauratte
+EN_WARREN_RATS  Bauratten
+EN_BADGER       Lauerdachs
+EN_BADGERS      Lauerdachse
+EN_ELDER        Ältester Blasser
+EN_ECHO         Echoschatten
+EN_ECHOS        Echoschatten
+EN_KEEPER       Höhlenhüter
+
+# --- Party panel (15 characters) ---
+ROLE_FIGHTER    Kämpfer
+ROLE_HEALER     Heiler
+ROLE_SCOUT      Späher
+ROLE_HUNTER     Jäger
+PANEL_HP        LP %d/%d
+COMPASS_N       Blick: Norden
+COMPASS_E       Blick: Osten
+COMPASS_S       Blick: Süden
+COMPASS_W       Blick: Westen
+SNEAK_N         Leise: Norden
+SNEAK_E         Leise: Osten
+SNEAK_S         Leise: Süden
+SNEAK_W         Leise: Westen
+
+# --- Status next to the role (7 characters) ---
+PSTAT_SCRATCH   Kratzer
+PSTAT_GASH      Riss
+PSTAT_DEEP      Tief
+PSTAT_FALLEN    Liegt
+PSTAT_POISON    Gift
+PSTAT_AFRAID    Angst
+
+# --- Combat menu and enemy line (15 characters) ---
+CMB_ATTACK      Angriff
+CMB_DEFEND      Deckung
+CMB_ITEM        Gegenstand
+CMB_SKILL       Fähigkeit
+SK_MOSS_PACK    Moosverband
+SK_PRESS        Fest andrücken
+SK_HERB         Kräuter kauen
+SK_CHARM        Sternzauber
+SK_GATHER       Sammeln
+SK_APPLY        Moos auflegen
+SK_POUNCE       Ansprung
+CMB_FLEE        Flucht
+CMB_MARK        >
+MENU_PARTY      Katzen
+MENU_PACK       Beutel
+MENU_GAME       Spiel
+MENU_ITEM       Gegenstand
+MENU_EQUIP      Anlegen
+MENU_SKILL      Fähigkeit
+MENU_REMOVE     (ablegen)
+MENU_WHO        Für wen?
+CMB_FOES        %d %s
+MENU_COUNT      %s x%d
+
+# --- Pack page (key I) ---
+PACK_TITLE      Der Beutel - I schließt
+PACK_USED       (%d von %d)
+PACK_MOSS       Moos: Moor %d  trocken %d  Glüh %d
+WORN            Getragen:
+WORN_NONE       Getragen: nichts
+WORN_BY         %s: %s
+
+# --- Party sheet (key C) ---
+SHEET_TITLE     Die Katzen - C schließt
+SHEET_NAME      %s, %s, %s
+SHEET_HP        LP %d/%d  EP %d  %s
+SHEET_STATS     Ang %d  Abw %d  Tem %d  Fund %d
+SHEET_MOSS      Moos: Moor %d tr. %d Glüh %d max %d
+
+# --- Debug line ---
+DEBUG_POS       X%d Y%d %dF
+
+# --- Navigation ---
+STEP            Ihr geht vorwärts.
+BLOCKED         Eine Wand versperrt den Weg.
+TURN_LEFT       Ihr dreht euch nach links.
+TURN_RIGHT      Ihr dreht euch nach rechts.
+STEP_BACK       Ihr tretet zurück.
+STEP_SIDE       Ihr tretet zur Seite.
+CREEP           Ihr schleicht weiter, ohne einen Laut.
+DOOR_BLOCKS     Eine Tür versperrt den Weg.
+DOOR_LOCKED     Die Tür ist verschlossen.
+DOOR_OPENS      Die Tür öffnet sich knarrend.
+STAIRS_DOWN     Ihr steigt die Treppe hinab.
+STAIRS_UP       Ihr steigt die Treppe hinauf.
+DRIPPING        Ihr hört Wasser tropfen.
+
+# --- Scratch-Marks ---
+MARK_SEEN       Hier sind Kratzzeichen eingeritzt:
+TEST_MARK       EIN TESTZEICHEN\nZWEI ZEILEN
+
+# =====================================================================
+# Texts of single levels
+# =====================================================================
+
+# --- Level 1: Der Wurzelkeller ---
+ENTRY_1         Staub und alte Äpfel.
+MARK_1_1        WIR GINGEN HINAB\nWIR HATTEN KEINE ANGST
+MARK_1_2        Der Keller ist nur der erste Schritt.
+EXIT_1          Das Lager liegt hinter euch. Folgt ihm.
+TUT_1           Pfeiltasten: gehen und drehen.
+TUT_2           LEER: Menü I: Beutel C: Katzen M: Karte
+TUT_3           ESC: Spiel speichern, laden, beenden.
+APPLES          Kisten voll alter Äpfel an den Wänden.
+APPLE_RACKS     Alte Äpfel faulen auf Holzgestellen.
+WEBS            Spinnweben bleiben im Fell hängen.
+RAT_SMELL       Die Luft riecht nach Ratten.
+BOARDS          Ein Brett bricht unter euren Pfoten!
+
+# --- Level 2: Die Abflusstunnel ---
+ENTRY_2         Unten fließt dunkles Wasser.
+MARK_2_1        FOLGT DEM WASSER\nES KENNT DEN WEG
+MARK_2_2        Die Torratte bewacht,\nwas wir zurückließen.
+ECHOES          Jeder Laut kommt zweimal zurück.
+MOSS_WALLS      Grünes Moos wächst an den nassen Wänden.
+GRATE           Ein kaputtes Gitter beißt in eine Pfote.
+SLUICE          Ein rostiges Schleusentor. Etwas wartet.
+DRIP_TUNNEL     Wasser tropft von der Decke.
+
+# --- Level 3: Die alte Zisterne ---
+ENTRY_3         Eure Schritte hallen lange nach.
+MARK_3_1        HIER IST DER HUM RUHIG\nWIR SCHLIEFEN GUT
+MARK_3_2        Drei Räder. Drei Drehungen. Keine Eile.
+PALE_LIGHT      Fahles Licht fällt von weit oben herab.
+ECHO_TRAP       Eure Schritte hallen. Etwas erwacht.
+SLIPPERY        Der nasse Stein ist glatt. Ihr rutscht!
+CISTERN_DOOR    Eine schwere Eisentür versperrt den Weg.
+MOSS_CORNER     In dieser Ecke wächst dichtes Moos.
+
+# --- Level 4: Der Schienentunnel ---
+ENTRY_4         Rostige Schienen verschwinden im Dunkel.
+MARK_4_1        DIE DECKE STÜRZTE EIN\nWIR VERLOREN VIER
+MARK_4_2        Jetzt gehört der Tunnel dem Fuchs.\nVielleicht hätten wir bleiben sollen.
+RUBBLE          Steine krachen von der Decke!
+GLASS           Glasscherben schneiden tief.
+LANTERN         Hier hängt eine alte Laterne, lange aus.
+RAILS           Rostige Schienen führen ins Dunkel.
+SHAFT           Kalte Luft fällt aus einem Schacht.
+FOX_DEN         Hier riecht es stark nach Fuchs.
+TRACK_END       Das Gleis endet an einem Steinhaufen.
+
+# --- Level 5: Die Glühkappenhöhlen ---
+ENTRY_5         Sanftes Licht glimmt an den Wänden.
+MARK_5_1        DAS LICHT HEILT\nDAS LICHT NÄHRT\nWIR BLIEBEN ZU LANGE
+MARK_5_2        Das leuchtende Moos heilt jede Wunde.\nNehmt es. Tragt es.
+SPORES          Sporen rieseln von leuchtenden Kappen.
+POOL            Ein Teich leuchtet sanft im Dunkeln.
+GLOW_ROCK       Grünes Licht pulsiert im Fels.
+TOAD_CAVE       Etwas Großes atmet im Dunkeln.
+DEEP_CAVE       Diese Höhle liegt tiefer als der Rest.
+
+# --- Level 6: Die Knochenhallen ---
+ENTRY_6         Die Wände sind mit Knochen gesäumt.
+MARK_6_1        HIER LEGTEN WIR SIE NIEDER\nDER HUM NAHM IHRE NAMEN
+MARK_6_2        Wir konnten nicht gehen.\nWir konnten nicht aufhören zu lauschen.
+MARK_6_3        Unsere Jungen kamen taub\nfür die Sonne zur Welt.
+SPIKES          Spitze Knochen ragen aus einer Grube!
+NICHES          Kleine Schädel ruhen in Nischenreihen.
+CARVED          Geschnitzte Katzen sehen euch an.
+CRYPT           Eine Grabkammer. Die Luft steht still.
+LOWER_HALL      Darunter liegt eine noch ältere Halle.
+WINGS           Irgendwo oben schlagen leise Flügel.
+MARK_6_4        WIR SCHNITZTEN IHRE GESICHTER\nDAMIT DER STEIN SICH ERINNERT
+MARK_6_5        Die Jungen fragen nicht mehr,\nwie der Himmel aussieht.
+MARK_6_6        DIE ÄLTESTEN SAGEN, DER HUM RUFT\nDIE JÜNGSTEN SAGEN, ER SINGT
+MARK_6_7        Legt mich mit dem Blick nach oben.\nIch will mich an den Heimweg erinnern.
+EMPTY_NICHE     Eine Nische ist leer.\nIhr Zeichen ist ausgekratzt.
+DUST            Dicker Staub. Hier ging lange\nniemand mehr.
+
+# --- Level 7: Der stille Bau ---
+ENTRY_7         Nichts bewegt sich. Nichts klingt.
+MARK_7_1        SIE HABEN KEINE AUGEN\nSIE HABEN KEINE ANGST\nWIR SIND IHRE VÄTER
+MARK_7_2        Nicht rennen. Nicht rufen.\nSie hören alles.
+MARK_7_3        Wir haben das getan.\nWir blieben zu lange.
+QUIET           Jeder Laut trägt hier unten weit.
+SNEAK_HINT      S: Schleichen an/aus. Langsam, lautlos.
+BONES_NOISE     Trockene Knochen knacken unter euch!
+GRAVEL          Lose Steine poltern davon!
+NESTS           Leere Nester. Altes Fell im Stroh.
+BADGER_DEN      Strenger Geruch. Tiefe Krallenspuren.
+ELDER_HALL      Eine große Halle. Etwas atmet.
+TOTEM_NICHE     Eine geschnitzte Nische. Hier lag etwas.
+
+# --- Level 8: Die Herzhöhle ---
+ENTRY_8         Der Hum sitzt euch in den Knochen.
+MARK_8_1        WIR BANDEN ES, UM DEN HUM ZU HALTEN\nDER HUM BAND UNS, ES ZU HÜTEN
+MARK_8_2        Wenn ihr das lest, seid ihr weiter\ngekommen, als wir zurückzugehen wagten.
+MARK_8_3        DER HUM IST KEINE STIMME\nER IST EIN HILFERUF
+MARK_8_4        Etwas da unten bittet darum,\nlosgelassen zu werden.
+HOLLOW          Die Höhle endet nie. Das Licht pulsiert.
+GARDEN          Überall wächst Moos, weich und tief.
+HEART           Vorne schlägt das Herz im Fels.
+SHADES          Gestalten regen sich wie eure Schatten.
+
+# --- Test levels ---
+ENTRY_TEST      Kalter Testkeller. Wände, sonst nichts.
+ENTRY_TEST2     Nasser Stein. Irgendwo rinnt Wasser.

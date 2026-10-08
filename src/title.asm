@@ -14,7 +14,8 @@ FULL_COLS equ   42              ; full screen text: columns, rows
 FULL_ROWS equ   25
 MM_NEW    equ   0               ; main menu lines
 MM_LOAD   equ   1
-MM_QUIT   equ   2
+MM_LANG   equ   2
+MM_QUIT   equ   3
 NAME_MAX  equ   12
 KEY_ENTER equ   10              ; QL key codes
 KEY_ESC   equ   27
@@ -50,6 +51,8 @@ title_loop:
         bsr     menu_addt
         move.w  #T_MM_LOAD,d0
         bsr     menu_addt
+        move.w  #T_MM_LANG,d0
+        bsr     menu_addt
         move.w  #T_MM_QUIT,d0
         bsr     menu_addt
         move.w  #T_TITLE,d0
@@ -59,6 +62,8 @@ title_loop:
         beq.s   .load
         cmp.w   #MM_QUIT,d0
         beq.s   .quit
+        cmp.w   #MM_LANG,d0
+        beq.s   .lang
         tst.w   d0
         bmi.s   .menu
         bsr     new_game        ; NEW GAME (returns only when cancelled)
@@ -78,6 +83,13 @@ title_loop:
 .play   clr.w   v_intitle(a5)
         bra     game_run
 .quit   bra     exit_prog
+.lang   bchg    #0,v_lang+1(a5) ; the other language
+        bsr     text_load
+        beq.s   .lok
+        bchg    #0,v_lang+1(a5) ; its file is missing: back
+        bsr     text_load
+.lok    bsr     cfg_save
+        bra     .menu
 
 ; title_note: d1 = text id; a line in the title menu area until a key
 title_note:
