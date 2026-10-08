@@ -20,6 +20,7 @@
 ;   XPTEST          every cat starts with 18 XP (the next rank needs 20)
 ;   ITEMTEST        the pack starts with some items (see item_test)
 ;   QUICKSTART      no title, names or intro: straight into the first level
+;   NOENEMY         levels without enemy groups (to test the levels)
 ;=====================================================================
 
         include 'textid.inc'    ; T_... text ids         (tools/textc.py)
@@ -167,6 +168,7 @@ v_sptop rs.l    1               ; stack pointer for the title
 v_spgame rs.l   1               ; stack pointer of the running game
 v_intitle rs.w  1               ; 1 while the title menu is shown
 v_slow  rs.w    1               ; 1: the enemies get one more move (cobwebs)
+v_lastdir rs.w  1               ; direction of the party's last step
 v_prog  rs.w    5               ; progress: %, depth, explored %, marks, bosses
 v_cname rs.b    NPARTY*NAME_LEN ; the cats' names
 v_svn   rs.b    10              ; save file name 'hum_svN' (QDOS string)
@@ -496,6 +498,14 @@ level_load:
 .len    moveq   #-1,d0
         cmp.l   #LV_EVENT+1,d1  ; at least map, header, end of events
         blo.s   .e
+        ifd     NOENEMY         ; tests: no groups in the level
+        move.w  v_map+LV_GROUPS(a5),d0
+        lea     v_map(a5),a0
+        move.b  #G_END,0(a0,d0.w)
+        move.w  #32*32-1,d0
+.ng     bclr    #CELL_GROUP,(a0)+
+        dbra    d0,.ng
+        endc
         moveq   #0,d0
 .e      movem.l (sp)+,d1-d4/a0-a3
         tst.l   d0
@@ -602,6 +612,7 @@ move_rel:
         move.w  d1,d3           ; relative direction
         add.w   v_dir(a5),d1
         and.w   #3,d1
+        move.w  d1,v_lastdir(a5) ; the way the party goes (for slipping)
         add.w   d1,d1
         lea     doff(pc),a0
         move.w  v_pos(a5),d0
@@ -652,6 +663,11 @@ move_rel:
         cmpa.w  #0,a3
         beq.s   .shut
         move.w  EV_PARAM(a3),d0
+        cmp.w   #IT_VALVE_WHEEL,d0 ; a door that the valves open
+        bne.s   .key
+        move.w  #T_DOOR_VALVES,d0
+        bra     msg_print
+.key
         bsr     pack_count
         beq.s   .shut
         lea     v_args(a5),a2   ; "The <key> fits the lock."
@@ -672,6 +688,102 @@ move_rel:
         bra     msg_print
 .group  bsr     group_at        ; walked into an enemy group
         bra     encounter
+
+; wake_guards: every guard group of the level hunts now (not the bosses)
+wake_guards:
+        movem.l d0/a0-a1,-(sp)
+        move.w  v_map+LV_GROUPS(a5),d0
+        lea     v_map(a5),a0
+        add.w   d0,a0
+        lea     enemytab(pc),a1
+.g      cmp.b   #G_END,G_X(a0)
+        beq.s   .e
+        cmp.b   #GM_GUARD,G_MODE(a0)
+        bne.s   .n
+        moveq   #0,d0
+        move.b  G_TYPE(a0),d0
+        mulu    #e_size,d0
+        tst.w   e_boss(a1,d0.w)
+        bne.s   .n
+        move.b  #GM_HUNT,G_MODE(a0)
+.n      addq.l  #G_SIZE,a0
+        bra.s   .g
+.e      movem.l (sp)+,d0/a0-a1
+        rts
+
+; slide: one more cell the way the party went, if it is free
+slide:
+        movem.l d0-d1/a0,-(sp)
+        move.w  v_lastdir(a5),d1
+        add.w   d1,d1
+        lea     doff(pc),a0
+        move.w  v_pos(a5),d0
+        add.w   0(a0,d1.w),d0
+        lea     v_map(a5),a0
+        btst    #CELL_GROUP,0(a0,d0.w)
+        bne.s   .e
+        moveq   #CELL_TYPE,d1
+        and.b   0(a0,d0.w),d1
+        lea     celltab(pc),a0
+        btst    #0,0(a0,d1.w)   ; CF_BLOCK
+        bne.s   .e
+        move.w  d0,v_pos(a5)
+        lea     v_map(a5),a0
+        bset    #CELL_SEEN,0(a0,d0.w)
+.e      movem.l (sp)+,d0-d1/a0
+        rts
+
+; valve_turn: a3 = valve event; a Valve Wheel from the pack is fitted and
+;             turned; when every valve of the level is open, the doors
+;             locked with VALVE_WHEEL open
+valve_turn:
+        movem.l d0-d2/a0-a3,-(sp)
+        btst    #0,EV_FLAGS(a3)
+        beq.s   .v1
+        move.w  #T_VALVE_DONE,d0
+        bsr     msg_print
+        bra     .e
+.v1     move.w  #IT_VALVE_WHEEL,d0
+        bsr     pack_count
+        bne.s   .v2
+        move.w  #T_VALVE_EMPTY,d0
+        bsr     msg_print
+        bra.s   .e
+.v2     bsr     pack_take
+        bset    #0,EV_FLAGS(a3)
+        move.w  #T_VALVE_TURN,d0
+        bsr     msg_print
+        lea     v_map+LV_EVENT(a5),a0 ; all valves open?
+.all    cmp.b   #EV_END,EV_X(a0)
+        beq.s   .open
+        cmp.b   #EV_VALVE,EV_TYPE(a0)
+        bne.s   .a1
+        btst    #0,EV_FLAGS(a0)
+        beq.s   .e
+.a1     addq.l  #EV_SIZE,a0
+        bra.s   .all
+.open   lea     v_map+LV_EVENT(a5),a0 ; open the valve doors
+        lea     v_map(a5),a1
+.d      cmp.b   #EV_END,EV_X(a0)
+        beq.s   .said
+        cmp.b   #EV_LOCK,EV_TYPE(a0)
+        bne.s   .d1
+        cmp.w   #IT_VALVE_WHEEL,EV_PARAM(a0)
+        bne.s   .d1
+        moveq   #0,d0
+        move.b  EV_Y(a0),d0
+        lsl.w   #5,d0
+        moveq   #0,d1
+        move.b  EV_X(a0),d1
+        add.w   d1,d0
+        and.b   #~CELL_TYPE,0(a1,d0.w)
+        or.b    #CT_DOOR_OPEN,0(a1,d0.w)
+.d1     addq.l  #EV_SIZE,a0
+        bra.s   .d
+.said   move.w  #T_CISTERN_OPEN,d0
+        bsr     msg_print
+.e      movem.l (sp)+,d0-d2/a0-a3
+        rts
 
 ; event_at: d0 = cell, d1 = event type -> a3 = event (0 if none)
 event_at:
@@ -707,9 +819,9 @@ cell_events:
         cmp.b   #EV_END,d0
         beq     .e
         cmp.b   d3,d0
-        bne.s   .nx
+        bne     .nx
         cmp.b   EV_Y(a3),d4
-        bne.s   .nx
+        bne     .nx
         move.b  EV_TYPE(a3),d0
         cmp.b   #EV_STAIRS,d0
         beq     .stairs
@@ -725,6 +837,12 @@ cell_events:
         beq     .cobweb
         cmp.b   #EV_EXIT,d0
         beq     .exit
+        cmp.b   #EV_ECHO,d0
+        beq     .echo
+        cmp.b   #EV_SLIP,d0
+        beq     .slip
+        cmp.b   #EV_VALVE,d0
+        beq     .valve
         cmp.b   #EV_MESSAGE,d0
         bne     .nx             ; gather, lock: not when entering
         bset    #0,EV_FLAGS(a3) ; message: only the first time
@@ -801,6 +919,18 @@ cell_events:
         bra     .nx
 .exit   move.w  EV_PARAM(a3),d0 ; stairs that lead nowhere
         bsr     msg_print
+        bra     .nx
+.echo   bset    #0,EV_FLAGS(a3) ; an echo trap: once, every guard wakes up
+        bne     .nx
+        move.w  EV_PARAM(a3),d0
+        bsr     msg_print
+        bsr     wake_guards
+        bra     .nx
+.slip   move.w  EV_PARAM(a3),d0 ; slippery: slide one more cell
+        bsr     msg_print
+        bsr     slide
+        bra     .e              ; (the party is somewhere else now)
+.valve  bsr     valve_turn
         bra     .nx
 .trap   bset    #0,EV_FLAGS(a3) ; trap: only the first time
         bne     .nx
@@ -894,13 +1024,36 @@ groups_act:
         bsr     .dist
 .seen   cmp.w   #1,d0
         beq     .attack
-        move.w  d1,d5           ; try the longer axis first, then the other
-        bpl.s   .a1
-        neg.w   d5
+        bsr.s   .step
+        bsr.s   .dist
+        cmp.w   #1,d0
+        beq.s   .attack
+        cmp.b   #GM_FLUTTER,G_MODE(a3) ; flutterers: a second move
+        bne.s   .nx
+        bsr.s   .step
+        bsr.s   .dist
+        cmp.w   #1,d0
+        beq.s   .attack
+.nx     addq.l  #G_SIZE,a3
+        bra     .grp
+.attack bsr     encounter
+.e      movem.l (sp)+,d0-d7/a0-a3
+        rts
+.step   move.w  d1,d5           ; one step: the longer axis first, then
+        bpl.s   .a1             ; the other (flutterers sometimes the
+        neg.w   d5              ; other way round: erratic)
 .a1     move.w  d2,d7
         bpl.s   .a2
         neg.w   d7
-.a2     cmp.w   d7,d5
+.a2     cmp.b   #GM_FLUTTER,G_MODE(a3)
+        bne.s   .a3
+        move.w  d0,-(sp)
+        bsr     rand100
+        cmp.w   #33,d0
+        movem.w (sp)+,d0        ; (keeps the flags)
+        bhs.s   .a3
+        exg     d5,d7
+.a3     cmp.w   d7,d5
         blt.s   .ydir
         bsr.s   .stepx
         beq.s   .moved
@@ -909,14 +1062,7 @@ groups_act:
 .ydir   bsr.s   .stepy
         beq.s   .moved
         bsr.s   .stepx
-.moved  bsr.s   .dist
-        cmp.w   #1,d0
-        beq.s   .attack
-.nx     addq.l  #G_SIZE,a3
-        bra     .grp
-.attack bsr     encounter
-.e      movem.l (sp)+,d0-d7/a0-a3
-        rts
+.moved  rts
 .dist   moveq   #0,d1           ; dx = party x - group x, dy likewise
         move.b  G_X(a3),d1
         neg.w   d1
@@ -1589,6 +1735,7 @@ item_test:                      ; the pack for tests
         move.l  #IT_MARIGOLD_LEAF<<24|2<<16|IT_STARFOLK_FEATHER<<8|1,(a0)+
         move.l  #IT_THISTLE_CHARM<<24|1<<16|IT_COBWEB_WRAP<<8|1,(a0)+
         move.l  #IT_STALE_PREY<<24|1<<16|IT_HERB<<8|2,(a0)+
+        move.w  #IT_VALVE_WHEEL<<8|3,(a0)+
         rts
         endc
 

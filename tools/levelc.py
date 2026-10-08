@@ -29,11 +29,20 @@ Level source:
     event X Y cobweb TEXT          every time: TEXT, and the enemies get one
                                    more move (cobwebs slow the party)
     event X Y exit TEXT            on stairs that lead nowhere (yet): TEXT
+    event X Y echo TEXT            the first time: TEXT, every guard of the
+                                   level wakes up and hunts
+    event X Y slip TEXT            every time: TEXT, the party slides one
+                                   more cell the way it went
+    event X Y valve                a valve socket: a Valve Wheel from the pack
+                                   is fitted and turned; when all valves of
+                                   the level are turned, the locked doors with
+                                   `lock X Y VALVE_WHEEL` open
     test yes                       a test level: not counted for the progress
-    group X Y ENEMY COUNT guard|hunt|swim   enemy group (ENEMY = id from
+    group X Y ENEMY COUNT guard|hunt|swim|flutter   enemy group (ENEMY = id from
                                    data/enemies.txt); guards stay, hunters
                                    come closer when the party is near,
-                                   swimmers too, but only through water
+                                   swimmers too, but only through water,
+                                   flutterers twice a turn and erratic
 
 Every stairs cell needs a stairs or exit event. A stairs target must be an
 open cell of a level compiled in the same run; a level that is not built
@@ -97,9 +106,10 @@ BY_TYPE = {c[1]: c for c in CELLS}
 CF_BLOCK = 1
 
 EVENTS = {'stairs': 1, 'mark': 2, 'message': 3, 'trap': 4, 'item': 5, 'gather': 6,
-          'lock': 7, 'boards': 8, 'cobweb': 9, 'exit': 10}
+          'lock': 7, 'boards': 8, 'cobweb': 9, 'exit': 10, 'echo': 11, 'slip': 12,
+          'valve': 13}
 ITEM_IDS = {it['id']: i + 1 for i, it in enumerate(items.read())}
-MODES = {'guard': 0, 'hunt': 1, 'swim': 2}
+MODES = {'guard': 0, 'hunt': 1, 'swim': 2, 'flutter': 3}
 MAXGROUPS = 16
 MAXDOORS = 40                     # LVD_NDOORS in hum.asm
 MAXEVENTS = 64                    # flags kept per level (state.asm)
@@ -147,7 +157,7 @@ def parse(path, textids):
         elif key == 'group':
             if (len(args) != 5 or args[2] not in ENEMY_IDS or args[4] not in MODES
                     or not 1 <= int(args[3]) <= 9):
-                fail('%s: group X Y ENEMY COUNT(1-9) guard|hunt|swim' % where)
+                fail('%s: group X Y ENEMY COUNT(1-9) %s' % (where, '|'.join(MODES)))
             lv['groups'].append((int(args[0]), int(args[1]), ENEMY_IDS[args[2]],
                                  int(args[3]), MODES[args[4]], where))
         elif key == 'entry':
@@ -159,7 +169,7 @@ def parse(path, textids):
         elif key == 'test':
             lv['test'] = args == ['yes']
         elif key == 'event':
-            if len(args) < 4 or args[2] not in EVENTS:
+            if len(args) < 3 or args[2] not in EVENTS:
                 fail('%s: event X Y %s ...' % (where, '|'.join(EVENTS)))
             x, y, kind = int(args[0]), int(args[1]), args[2]
             if kind == 'stairs':
@@ -174,6 +184,10 @@ def parse(path, textids):
                 if len(args) != 4 or args[3] not in ITEM_IDS:
                     fail('%s: event X Y lock ITEM' % where)
                 param = ITEM_IDS[args[3]]
+            elif kind == 'valve':
+                if len(args) != 3:
+                    fail('%s: event X Y valve' % where)
+                param = 0
             elif kind == 'boards':
                 if len(args) != 5 or not args[3].isdigit() or not 1 <= int(args[3]) <= 9 \
                         or args[4] not in textids:
@@ -187,7 +201,7 @@ def parse(path, textids):
                 param = int(args[3]) << 12 | textids[args[4]]
             else:
                 if len(args) != 4 or args[3] not in textids:
-                    fail('%s: unknown text id %s' % (where, args[3]))
+                    fail('%s: event X Y %s TEXT (a known text id)' % (where, kind))
                 param = textids[args[3]]
             lv['events'].append((x, y, kind, param, where))
         else:
@@ -328,7 +342,8 @@ def write_inc(path, levels):
                 % sum(1 << n for n, lv in levels.items() if lv.get('test')))
         f.write('G_SIZE   equ 6\nG_X      equ 0\nG_Y      equ 1\nG_TYPE   equ 2\n'
                 'G_COUNT  equ 3\nG_MODE   equ 4\nG_FLAGS  equ 5\nG_END    equ $ff\n'
-                'GM_GUARD equ 0\nGM_HUNT  equ 1\nGM_SWIM  equ 2\nGF_GONE  equ 0\nGF_SEEN  equ 1\n')
+                'GM_GUARD equ 0\nGM_HUNT  equ 1\nGM_SWIM  equ 2\nGM_FLUTTER equ 3\n'
+                'GF_GONE  equ 0\nGF_SEEN  equ 1\n')
         f.write('CF_BLOCK equ %d\n' % CF_BLOCK)
         for c, t, name, blk, col, vc in CELLS:
             f.write('CT_%-12s equ %d\n' % (name, t))

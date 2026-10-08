@@ -91,6 +91,50 @@ LEECH_HALF = [
 ]
 
 
+BAT_HALF = [
+    "..............m.",
+    ".............mmm",
+    "m...........mm*m",
+    "mm.........mmmmm",
+    "mmm.......mmmmmm",
+    "mmmmm...mmmmmmmm",
+    ".mmmmmmmmmmmmmmm",
+    "..mmm.mmm.mmmmmm",
+    "...m...m...mmmmm",
+    "............mmmm",
+    ".............mmm",
+    "..............m.",
+]
+
+CRICKET_HALF = [
+    "Y...........",
+    ".y..........",
+    "..y.....YYYY",
+    "...y..YYYY+Y",
+    "......YYYYYY",
+    "...yyyYYYYYY",
+    ".yy..yYYYYYY",
+    "y...y..yyyyy",
+    "...y...y...y",
+    "..y...y....y",
+]
+
+SNAKE_HALF = [
+    "........cccc",
+    ".......cCCCC",
+    ".......CC+CC",
+    "........CCCC",
+    ".........CCC",
+    "........cCCC",
+    ".......cCCc.",
+    "......cCCc..",
+    "......CCc...",
+    ".....cCCc...",
+    "..bbbbCCCbbb",
+    "bbbbbbbbbbbb",
+]
+
+
 def mirror(half):
     return [row + row[::-1] for row in half]
 
@@ -129,6 +173,9 @@ SIZE = {
     'eel': (40, 44),
     'leech': (40, 16),
     'gaterat': (72, 52),
+    'bat': (48, 30),
+    'cricket': (40, 30),
+    'snake': (32, 40),
 }
 
 def gate_rat():
@@ -144,6 +191,9 @@ ART = {
     'eel': mirror(EEL_HALF),
     'leech': mirror(LEECH_HALF),
     'gaterat': gate_rat(),
+    'bat': mirror(BAT_HALF),
+    'cricket': mirror(CRICKET_HALF),
+    'snake': mirror(SNAKE_HALF),
 }
 
 

@@ -144,6 +144,18 @@ GRATE           A broken grate bites into a paw.
 SLUICE          A rusted sluice gate. Something waits.
 DRIP_TUNNEL     Water drips from the ceiling.
 
+# --- Level 3: The Old Cistern ---
+PALE_LIGHT      Pale light falls from far above.
+ECHO_TRAP       Your steps ring out. Something wakes.
+SLIPPERY        The wet stone is slippery. You slide!
+VALVE_EMPTY     A valve socket. Its wheel is missing.
+VALVE_TURN      You fit a Valve Wheel and turn it.
+VALVE_DONE      This valve is open.
+CISTERN_OPEN    Far off, a heavy door grinds open.
+DOOR_VALVES     The door does not move. Valves hold it.
+CISTERN_DOOR    A heavy iron door bars the way.
+MOSS_CORNER     Moss grows thick in this corner.
+
 # --- Traps ---
 TRAP_GLASS      Broken glass cuts into a paw.
 TRAP_THORNS     Thorns tear at the fur.
@@ -201,6 +213,12 @@ EN_EELS         Eels
 EN_LEECH        Leech
 EN_LEECHES      Leeches
 EN_GATE_RAT     The Gate Rat
+EN_BAT          Bat
+EN_BATS         Bats
+EN_CRICKET      Cave Cricket
+EN_CRICKETS     Cave Crickets
+EN_SNAKE        Water Snake
+EN_SNAKES       Water Snakes
 
 # --- Party panel ---
 @width 15
@@ -300,6 +318,7 @@ ENTRY_TEST      A cold test cellar. Walls, nothing else.
 ENTRY_TEST2     Wet stone. Water runs somewhere.
 ENTRY_1         Dust and old apples.
 ENTRY_2         Dark water runs below.
+ENTRY_3         Your steps echo for a long time.
 
 # --- Scratch-Marks, level 1 ---
 MARK_SEEN       Scratch-Marks are carved here:
@@ -307,3 +326,5 @@ MARK_1_1        WE WENT DOWN\nWE WERE NOT AFRAID
 MARK_1_2        The cellar is only the first step.
 MARK_2_1        FOLLOW THE WATER\nIT KNOWS THE WAY
 MARK_2_2        The gate rat guards what we left behind.
+MARK_3_1        THE HUM IS CALM HERE\nWE SLEPT WELL
+MARK_3_2        Three wheels. Three turns. Do not rush.

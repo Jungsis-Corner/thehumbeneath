@@ -63,6 +63,7 @@ SPRITE_LIGHT = (0.70, 0.18)        # enemy pictures: light at depth 1, loss per 
 SPRITESETS = {                     # set number: sprite names (the bundle is added)
     1: ['rat', 'spider', 'bigrat'],               # root cellar
     2: ['rat', 'eel', 'leech', 'gaterat'],        # drain tunnels
+    3: ['bat', 'cricket', 'snake'],               # old cistern
 }
 MAGIC = b'HWS1'
 ENTRY = 22                         # bytes per draw list entry
@@ -186,6 +187,10 @@ WALLSETS = {
     # drain tunnels: small wet bricks, moss, a wet floor, water
     2: StoneSet(BLUE, GREEN, BLUE, 0.3, BLUE, 0.0, edge=CYAN, rows=5, cols=3,
                 flats=('down', 'up', 'water'), **DARK),
+    # old cistern: huge pale blocks, pale light from far above, water
+    3: StoneSet(CYAN, WHITE, BLUE, 0.3, BLUE, 0.12, edge=WHITE, rows=2, cols=2,
+                flats=('down', 'up', 'water'), water=(BLUE, WHITE),
+                **dict(DARK, light0=0.55)),
 }
 
 # view classes, as in levelc.py

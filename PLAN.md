@@ -3,7 +3,7 @@
 Status: approved 2026-10-07 (open questions answered with the proposals, see section 8).
 Changes to the architecture below need approval (CLAUDE.md).
 
-Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9.1-M9.2 (levels 1-2) done.
+Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9.1-M9.3 (levels 1-3) done.
 
 ## 1. Toolchain (taken over from FUSE RUNNER)
 
@@ -376,6 +376,17 @@ draws a level source as PNG for review.
   (slow, eels). Fen Moss: gather spots and one moss item.
   Memory: 73.3 KB (WALLMAX 24 KB for the water pictures; floor pictures are
   chosen per wall set). Sprite sets now list their pictures per level.
+- **M9.3 The Old Cistern: DONE.** data/levels/l3.txt, wall set 3 (huge pale
+  blocks, a little more light from above, water), sprite set 3 (bat, cave
+  cricket, water snake). Bats: new group mode `flutter` (two moves a turn,
+  sometimes the other axis first). Cave crickets: high defence ("hard to
+  hit"). Water snakes swim, poison. New events: `echo` (once: every guard
+  of the level hunts), `slip` (the party slides one more cell), `valve`
+  (a Valve Wheel from the pack is fitted; when all valves are open, doors
+  with `lock X Y VALVE_WHEEL` open). Puzzle: one wheel from level 2, two in
+  level 3, three valves in the north, east and south halls.
+  Tests: switch NOENEMY (no groups), tools/walkto.py (keys for a path).
+  Memory: 74.3 KB - the text file (4.8 KB) has to be loaded in parts next.
 **M10 – endings, sound, polish, distribution** (win image, README, MiSTer test).
 
 ## 7. Testing

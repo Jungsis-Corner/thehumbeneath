@@ -1,0 +1,84 @@
+# Level 3: The Old Cistern (STORY.md)
+# Huge stone halls, long echoes, pale light from above. Bats, cave crickets,
+# water snakes in the pools. Echo traps wake the guards, wet stone at the
+# pools is slippery. Puzzle: three valve wheels (one from level 2, two found
+# here) turn the three valves; then the cistern door opens to the stairs.
+number  3
+start   3 3 E
+wallset 3
+sprites 3
+entry   ENTRY_3
+map
+################################
+#.....##.............##........#
+#.<..................##........#
+#.....##..#..#..#..#.##........#
+#.....##.................#..#..#
+###.####.............##........#
+###.####..#..#..#..#.##........#
+###.####.~~~.........##........#
+###.####.~~~.........##..#..#..#
+###.##########.########........#
+###.##########.########........#
+###.#####...........###........#
+###.####.............##..#..#..#
+###.####...~~~~~~~...##........#
+###.####...~~~~~~~...##.########
+###........~~~~~~~...##.########
+###.####...~~~~~~~......########
+###.####...~~~~~~~...###########
+###.####...~~~~~~~...###########
+###.####.............###########
+###.#####...........############
+###.##########.#################
+###.##########.###########.....#
+#..............#.........#.....#
+#........................L.....#
+#..............#.........#.....#
+#...#...#...#..###########.....#
+#..............###########.....#
+#.~~~~.........###########.....#
+#.~~~~.........###########...>.#
+#..............###########.....#
+################################
+
+event 2 2 stairs 2 29 29
+event 6 2 message PALE_LIGHT
+# north hall: valve 1, the first mark
+event 18 2 valve
+event 17 2 mark MARK_3_2
+event 14 5 echo ECHO_TRAP
+event 9 6 slip SLIPPERY
+event 12 7 slip SLIPPERY
+event 20 8 gather FEN_MOSS 2
+# east hall: valve 2, a valve wheel
+event 29 2 valve
+event 30 13 item VALVE_WHEEL 1
+event 23 1 gather FEN_MOSS 2
+event 26 6 echo ECHO_TRAP
+# central hall
+event 10 12 slip SLIPPERY
+event 18 19 slip SLIPPERY
+event 9 19 item MARIGOLD_LEAF 1
+# west passage: the calm mark
+event 3 12 mark MARK_3_1
+# south hall: valve 3, a valve wheel
+event 13 29 valve
+event 1 30 item VALVE_WHEEL 1
+event 6 27 slip SLIPPERY
+event 14 23 gather HERB 2
+# the cistern door
+event 25 24 lock VALVE_WHEEL
+event 16 24 message CISTERN_DOOR
+event 30 22 item THISTLE_CHARM 1
+event 29 29 stairs 4 2 2
+
+# enemies
+group 16 4 BAT 2 flutter
+group 27 10 CAVE_CRICKET 2 guard
+group 24 2 CAVE_CRICKET 1 guard
+group 14 15 WATER_SNAKE 1 swim
+group 16 17 WATER_SNAKE 1 swim
+group 7 24 BAT 3 flutter
+group 11 27 CAVE_CRICKET 2 guard
+group 3 29 WATER_SNAKE 1 swim
