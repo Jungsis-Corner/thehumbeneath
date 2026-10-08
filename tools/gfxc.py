@@ -66,6 +66,7 @@ SPRITESETS = {                     # set number: sprite names (the bundle is add
     3: ['bat', 'cricket', 'snake'],               # old cistern
     4: ['fox', 'crow', 'beetle', 'vixen'],        # rail tunnel
     5: ['adder', 'moth', 'toad'],                 # glowcap caverns
+    6: ['bonerat', 'shadecat', 'owl'],            # bone halls
 }
 MAGIC = b'HWS1'
 ENTRY = 22                         # bytes per draw list entry
@@ -217,6 +218,31 @@ class GlowSet(StoneSet):
         return None
 
 
+class BoneSet(StoneSet):
+    """Carved catacomb stone; every other row of blocks has niches with
+    small skulls in them."""
+    def wall(self, x, y, u, v, z, side):
+        r = int(v * self.rows)
+        fv = (v * self.rows) % 1
+        fu = u * self.cols + (0.5 if r & 1 else 0)
+        if fv < 0.07 or fu % 1 < 0.03:
+            return BLACK
+        lt = self.light(z, side)
+        gu = fu % 1
+        if r & 1 == 0 and 0.18 < gu < 0.82 and 0.2 < fv < 0.94:
+            a = 4 * self.cols / 2               # (Mode 8 pixels are wide)
+            q = ((gu - 0.5) * a) ** 2 + ((fv - 0.6) / 0.3) ** 2
+            if q < 1:                           # a skull in the niche
+                e = ((abs(gu - 0.5) - 0.11) * a) ** 2 + ((fv - 0.55) / 0.1) ** 2
+                if e < 0.5 or (abs(gu - 0.5) < 0.03 and 0.72 < fv < 0.8):
+                    return BLACK
+                return dither(x, y, min(lt * 1.4, 1), self.odd)
+            return BLACK
+        if self.edge is not None and fv < 0.13:
+            return dither(x, y, lt * 0.8, self.edge)
+        return dither(x, y, lt, self.stone)
+
+
 # Dark caves (decided 2026-10-07): little light that fades quickly, black
 # ceiling, a wide dark band at the horizon, dark stone colours.
 DARK = dict(light0=0.48, lightz=0.13, side=0.65, fog=20)
@@ -235,6 +261,8 @@ WALLSETS = {
     # glowcap caverns: rough rock, glowing moss and caps, a glowing pool
     5: GlowSet(BLUE, MAG, GREEN, 0.18, BLUE, 0.08, rows=3, cols=2,
                flats=('down', 'up', 'water'), water=(CYAN, WHITE), **DARK),
+    # bone halls: carved pale stone, niches with skulls, a dusty floor
+    6: BoneSet(YEL, WHITE, RED, 0.12, BLUE, 0.0, edge=WHITE, rows=4, cols=3, **DARK),
 }
 
 # view classes, as in levelc.py

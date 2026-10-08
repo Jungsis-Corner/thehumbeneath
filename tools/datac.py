@@ -17,7 +17,8 @@ One party member (all words):
   p_press (bleeding levels held back by Press and Hold until the fight ends)
 
 One enemy type (all words): e_name e_plural (text ids), e_hp, e_atk, e_def,
-  e_spd, e_bleed, e_poison, e_boss, e_xp. The types are numbered in file
+  e_spd, e_bleed, e_poison, e_boss, e_xp, e_trait (0 none, 1 revive,
+  2 illusion). The types are numbered in file
   order (ET_<id>).
 
 One item (all words): i_name (text id), i_kind (IK_...), i_value. Items are
@@ -31,7 +32,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import enemies  # noqa: E402
 import items  # noqa: E402
 
-EFIELDS = ['name', 'plural', 'hp', 'atk', 'def', 'spd', 'bleed', 'poison', 'boss', 'xp']
+EFIELDS = ['name', 'plural', 'hp', 'atk', 'def', 'spd', 'bleed', 'poison', 'boss', 'xp',
+           'trait']
 FIELDS = ['name', 'role', 'rank', 'xp', 'hp', 'hpmax', 'hpbase', 'atk', 'def',
           'spd', 'find', 'bleed', 'flags', 'fen', 'dry', 'glow', 'mosscap', 'row',
           'guard', 'gear', 'wrap', 'press']

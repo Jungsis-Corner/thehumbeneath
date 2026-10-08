@@ -2,14 +2,15 @@
 
 read(path) -> list of dicts in file order (the index is the enemy type):
   id, name, plural (text id names), hp, atk, def, spd, bleed, poison, boss,
-  xp, sprite
+  xp, sprite, trait (0 none, 1 revive, 2 illusion)
 """
 import os
 import sys
 
 DEFAULT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                        'data', 'enemies.txt')
-NUMBERS = ('hp', 'atk', 'def', 'spd', 'bleed', 'poison', 'boss', 'xp')
+NUMBERS = ('hp', 'atk', 'def', 'spd', 'bleed', 'poison', 'boss')
+TRAITS = ('-', 'revive', 'illusion')
 
 
 def read(path=DEFAULT):
@@ -19,12 +20,14 @@ def read(path=DEFAULT):
         if not f:
             continue
         where = '%s:%d' % (path, n)
-        if f[0] != 'enemy' or len(f) != 13:
+        if f[0] != 'enemy' or len(f) != 14 or f[11] not in TRAITS:
             sys.exit('enemies: %s: enemy ID NAME PLURAL hp atk def spd bleed poison '
-                     'boss xp SPRITE' % where)
-        e = {'id': f[1], 'name': f[2], 'plural': f[3], 'sprite': f[12], 'where': where}
+                     'boss %s xp SPRITE' % (where, '|'.join(TRAITS)))
+        e = {'id': f[1], 'name': f[2], 'plural': f[3], 'sprite': f[13], 'where': where,
+             'trait': TRAITS.index(f[11])}
         try:
-            e.update(zip(NUMBERS, map(int, f[4:12])))
+            e.update(zip(NUMBERS, map(int, f[4:11])))
+            e['xp'] = int(f[12])
         except ValueError:
             sys.exit('enemies: %s: number expected' % where)
         if not 0 <= e['bleed'] <= 3:

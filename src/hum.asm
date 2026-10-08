@@ -196,6 +196,7 @@ v_mtop  rs.w    1               ; menu: top line of the box on the screen
 v_fight rs.w    1               ; 1 while a fight is going on
 v_charm rs.w    1               ; rounds of the Starfolk Charm left
 v_charmed rs.w  1               ; the charm was used in this fight
+v_crev  rs.b    10              ; combat: enemy n got up again (byte n)
 v_mcount rs.w   1               ; menu: number of lines
 v_mtxt  rs.b    MENU_MAX*MENU_LEN ; menu: the lines
 v_mitem rs.b    MENU_MAX        ; menu: item of each line (pack menus)
@@ -942,6 +943,8 @@ cell_events:
         beq     .sink
         cmp.b   #EV_REST,d0
         beq     .rest
+        cmp.b   #EV_COLLAPSE,d0
+        beq     .coll
         cmp.b   #EV_MESSAGE,d0
         bne     .nx             ; gather, lock: not when entering
         bset    #0,EV_FLAGS(a3) ; message: only the first time
@@ -1066,8 +1069,12 @@ cell_events:
         bsr     panel_show
 .sp1    movem.l (sp)+,a2-a3
         bra     .nx
+.coll   bset    #0,EV_FLAGS(a3) ; a collapsing floor: once
+        bne     .nx
+        move.w  #T_COLLAPSE,d0
+        bra.s   .fall
 .sink   move.w  #T_SINKHOLE,d0  ; a sinkhole: down to the cave below, hurt
-        bsr     msg_print
+.fall   bsr     msg_print
         move.w  EV_PARAM(a3),d0 ; y<<5 | x
         move.w  d0,v_pos(a5)
         lea     v_map(a5),a0

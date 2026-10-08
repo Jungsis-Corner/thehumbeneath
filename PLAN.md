@@ -3,7 +3,7 @@
 Status: approved 2026-10-07 (open questions answered with the proposals, see section 8).
 Changes to the architecture below need approval (CLAUDE.md).
 
-Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9.1-M9.5 (levels 1-5) done.
+Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9.1-M9.6 (levels 1-6) done.
 
 ## 1. Toolchain (taken over from FUSE RUNNER)
 
@@ -424,6 +424,19 @@ draws a level source as PNG for review.
   the pool, in the deep cave and in the toad cave. No mini-boss (none in
   STORY.md). The stairs down lead to level 6 (not built yet: "Rubble
   blocks the way down"). 82.7 KB in use, tested at 384 KB.
+- **M9.6 The Bone Halls: DONE.** data/levels/l6.txt, wall set 6 (carved
+  pale stone, every other row of blocks with niches and small skulls, a
+  dusty floor), sprite set 6 (bone rat, shade cat, wraith owl). New column
+  `trait` in data/enemies.txt (e_trait): `revive` = the enemy gets up once
+  more with half its HP (Bone Rat, "comes back once"), `illusion` = a third
+  of the attacks on it hit only a shadow (Shade Cat, "false targets"; the
+  targets are chosen automatically, so the illusions make attacks miss).
+  Wraith Owls make Deep Wounds, and so do the three spike pits (trap 3).
+  New event `collapse TX TY` (once: the floor breaks, the party falls,
+  every cat takes 2 damage); the one in the east corridor is a shortcut
+  towards the stairs down. Seven Scratch-Marks (the three of STORY.md and
+  four new ones, MARK_6_4..7, written 2026-10-08 on request, added to STORY.md) and two more messages; dry moss only. 83.4 KB in
+  use, tested at 384 KB.
 **M10 – endings, sound, polish, distribution** (win image, README, MiSTer test).
 
 ## 7. Testing

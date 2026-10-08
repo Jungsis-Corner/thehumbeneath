@@ -20,7 +20,7 @@ COL = {'#': (110, 110, 120), '.': (25, 25, 30), 'D': (140, 90, 40), 'd': (90, 60
        'S': (130, 110, 130)}
 MARK = {'mark': 'M', 'message': '!', 'trap': 'T', 'boards': 'T', 'cobweb': 'T',
         'item': 'I', 'gather': 'G', 'exit': 'X', 'stairs': '', 'lock': '',
-        'spores': 'T', 'sinkhole': 'T', 'rest': 'R'}
+        'spores': 'T', 'sinkhole': 'T', 'collapse': 'T', 'rest': 'R'}
 
 
 def main():

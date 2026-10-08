@@ -227,6 +227,66 @@ TOAD_HALF = [
     "gggg............",
 ]
 
+BONERAT_HALF = [
+    "......WW............",
+    ".....WKKW...........",
+    ".....WKKKW..........",
+    "......WKKWW.........",
+    ".......WWW.W.W.W.W.W",
+    "......WWW.WWWWWWWWWW",
+    ".....WWK.W.W.W.W.W.W",
+    ".....WK**WWWWWWWWWWW",
+    ".....WK**W.W.W.W.W.W",
+    "......WWWWWWWWWWWWWW",
+    ".......WW.W.....W...",
+    "........WW.....W....",
+    "......WWWW.W..W.W...",
+    "...........W...W....",
+    "...........W...W....",
+    "..........WW..WW....",
+]
+
+SHADECAT_HALF = [
+    "..b.............",
+    "..bb............",
+    "..bBb...........",
+    "..bBBb..........",
+    "..bBBBbbbbbbbbbb",
+    "...bBBBBBBBBBBBB",
+    "...bBBBBBBBBBBBB",
+    "...bBB++BBBBBBBB",
+    "....bBBBBBBBBBBB",
+    "...b.bBBBBBBBBBK",
+    "..b...bBBBBBBBBB",
+    ".......bBBBBBBBB",
+    "......bBBBBBBBBB",
+    ".....bBBBBBBBBBB",
+    "....bBBBBBBBBBBB",
+    "....bBBBBb.bBBBB",
+    "....bBBb...bBBBB",
+    "....bbb.....bbbb",
+]
+
+OWL_HALF = [
+    "...c............",
+    "...cC...........",
+    "...cCCCCCCCCCCCC",
+    "....CWWWWWWCCCCC",
+    "...CWWKKKWWWCCCC",
+    "...CWK**KKWWWWCY",
+    "...CWWKKKWWWWWYY",
+    "c...CWWWWWWWWWCY",
+    "cc...CCCCCCCCCCC",
+    "cCc..cCCWCCWCCWC",
+    "cCCc.cCCCCCCCCCC",
+    ".cCCccCCWCCWCCWC",
+    "..cCCCCCCCCCCCCC",
+    "...ccCCCWCCWCCWC",
+    ".....cCCCCCCCCCC",
+    "......cCCCCCCCCC",
+    ".......cccYccYcc",
+]
+
 
 def mirror(half):
     return [row + row[::-1] for row in half]
@@ -276,6 +336,9 @@ SIZE = {
     'adder': (40, 38),
     'moth': (48, 32),
     'toad': (56, 40),
+    'bonerat': (48, 34),
+    'shadecat': (40, 52),
+    'owl': (48, 50),
 }
 
 def gate_rat():
@@ -306,6 +369,9 @@ ART = {
     'adder': mirror(ADDER_HALF),
     'moth': mirror(MOTH_HALF),
     'toad': mirror(TOAD_HALF),
+    'bonerat': mirror(BONERAT_HALF),
+    'shadecat': mirror(SHADECAT_HALF),
+    'owl': mirror(OWL_HALF),
 }
 
 

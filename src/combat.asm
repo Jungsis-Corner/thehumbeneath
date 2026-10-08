@@ -19,6 +19,9 @@ CM_ITEM   equ   3
 CM_FLEE   equ   4
 CE_VICTORY equ  1               ; v_cend
 CE_FLED   equ   2
+TR_REVIVE equ   1               ; e_trait: gets up once more
+TR_SHADOW equ   2               ; e_trait: illusions
+SHADOW_PCT equ  33              ; chance that an attack hits only a shadow
 
 ; combat: a3 = enemy group next to the party, the party faces it
 combat:
@@ -45,6 +48,10 @@ combat:
         move.w  #1,v_fight(a5)
         clr.w   v_charm(a5)
         clr.w   v_charmed(a5)
+        lea     v_crev(a5),a0
+        clr.l   (a0)+
+        clr.l   (a0)+
+        clr.w   (a0)
         lea     v_party(a5),a0
         moveq   #NPARTY-1,d0
 .g0     clr.w   p_guard(a0)
@@ -228,7 +235,15 @@ cat_attack:
 .find   tst.w   (a1)+
         beq.s   .find
         subq.l  #2,a1           ; a1 = its hit points
-        move.w  p_atk(a2),d1    ; chance 75 % + 5 % per attack above defence
+        cmp.w   #TR_SHADOW,e_trait(a4) ; an illusion: only a shadow is hit
+        bne.s   .real
+        bsr     rand100
+        cmp.w   #SHADOW_PCT,d0
+        bhs.s   .real
+        move.w  #T_SHADOW,d0
+        move.w  p_name(a2),d1
+        bra     name_msg
+.real   move.w  p_atk(a2),d1    ; chance 75 % + 5 % per attack above defence
         sub.w   e_def(a4),d1
         muls    #5,d1
         add.w   #75,d1
@@ -237,7 +252,7 @@ cat_attack:
         bsr     clamp
         bsr     rand100
         cmp.w   d1,d0
-        bhs.s   .miss
+        bhs     .miss
         move.w  p_atk(a2),d1    ; damage 1 + random(attack) - defence/2
         bsr     randn
         addq.w  #1,d0
@@ -262,7 +277,24 @@ cat_attack:
         move.w  #T_FALLS,d0
         move.w  e_name(a4),d1
         bsr     name_msg
-        bsr     foes_left
+        cmp.w   #TR_REVIVE,e_trait(a4) ; it gets up again, once
+        bne.s   .left
+        move.l  a1,d0
+        lea     v_cfoe(a5),a0
+        sub.l   a0,d0
+        lsr.w   #1,d0           ; enemy number
+        lea     v_crev(a5),a0
+        bset    #0,0(a0,d0.w)
+        bne.s   .left
+        move.w  e_hp(a4),d0
+        addq.w  #1,d0
+        lsr.w   #1,d0
+        move.w  d0,(a1)
+        move.w  #T_GETS_UP,d0
+        move.w  e_name(a4),d1
+        bsr     name_msg
+        bra.s   .draw
+.left   bsr     foes_left
         bne.s   .draw
         move.w  #CE_VICTORY,v_cend(a5)
 .draw   bra     foes_draw

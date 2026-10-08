@@ -140,6 +140,9 @@ HANDCAR_NO      An old handcar. Its lever is missing.
 SINKHOLE        The ground gives way! You fall.
 REST            The glowing pool soothes every wound.
 REST_UP         %s stands up again.
+COLLAPSE        The floor breaks under you!
+SHADOW          %s strikes only a shadow.
+GETS_UP         %s gets up again!
 DOOR_VALVES     The door does not move. Valves hold it.
 
 # --- Traps ---
@@ -218,6 +221,12 @@ EN_MOTH         Spore Moth
 EN_MOTHS        Spore Moths
 EN_TOAD         Cave Toad
 EN_TOADS        Cave Toads
+EN_BONE_RAT     Bone Rat
+EN_BONE_RATS    Bone Rats
+EN_SHADE_CAT    Shade Cat
+EN_SHADE_CATS   Shade Cats
+EN_OWL          Wraith Owl
+EN_OWLS         Wraith Owls
 
 # --- Party panel ---
 @width 15
@@ -398,6 +407,28 @@ POOL            A pool glows softly in the dark.
 GLOW_ROCK       Green light pulses in the rock.
 TOAD_CAVE       Something big breathes in the dark.
 DEEP_CAVE       This cave lies deeper than the rest.
+
+@level 6
+@width 40
+@digits 6
+@strlen 12
+# --- The Bone Halls ---
+ENTRY_6         The walls are lined with bones.
+MARK_6_1        HERE WE LAID THEM DOWN\nTHE HUM TOOK THEIR NAMES
+MARK_6_2        We could not leave.\nWe could not stop listening.
+MARK_6_3        Our kits were born deaf to the sun.
+SPIKES          Sharp bones stand up in a pit!
+NICHES          Small skulls rest in rows of niches.
+CARVED          Carved cats watch you from the walls.
+CRYPT           A burial chamber. The air is still.
+LOWER_HALL      An older hall lies below the first.
+WINGS           Soft wings beat somewhere above.
+MARK_6_4        WE CARVED THEIR FACES\nSO THE STONE REMEMBERS
+MARK_6_5        The young ones no longer ask\nwhat the sky looks like.
+MARK_6_6        THE OLDEST SAY THE HUM CALLS\nTHE YOUNGEST SAY IT SINGS
+MARK_6_7        Lay me facing up.\nI want to remember the way home.
+EMPTY_NICHE     One niche is empty.\nIts sign is scratched out.
+DUST            Thick dust. Nothing walked here\nfor a long time.
 
 @level 0
 @width 40

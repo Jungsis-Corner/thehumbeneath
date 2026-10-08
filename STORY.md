@@ -362,6 +362,22 @@ We could not stop listening.
 ```
 Our kits were born deaf to the sun.
 ```
+```
+WE CARVED THEIR FACES
+SO THE STONE REMEMBERS
+```
+```
+The young ones no longer ask
+what the sky looks like.
+```
+```
+THE OLDEST SAY THE HUM CALLS
+THE YOUNGEST SAY IT SINGS
+```
+```
+Lay me facing up.
+I want to remember the way home.
+```
 
 **Level 7**
 ```

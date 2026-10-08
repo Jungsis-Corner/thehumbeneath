@@ -40,6 +40,8 @@ Level source:
                                    poisoned (half the time)
     event X Y sinkhole TX TY       every time: the party falls to TX TY and
                                    every cat takes 2 damage
+    event X Y collapse TX TY       once: the floor breaks, the party falls
+                                   to TX TY and every cat takes 2 damage
     event X Y rest                 a safe place: every cat is healed, the
                                    fallen stand up again
     event X Y valve                a valve socket: a Valve Wheel from the pack
@@ -117,7 +119,7 @@ CF_BLOCK = 1
 EVENTS = {'stairs': 1, 'mark': 2, 'message': 3, 'trap': 4, 'item': 5, 'gather': 6,
           'lock': 7, 'boards': 8, 'cobweb': 9, 'exit': 10, 'echo': 11, 'slip': 12,
           'valve': 13, 'rubble': 14, 'handcar': 15, 'spores': 16, 'sinkhole': 17,
-          'rest': 18}
+          'rest': 18, 'collapse': 19}
 ITEM_IDS = {it['id']: i + 1 for i, it in enumerate(items.read())}
 MODES = {'guard': 0, 'hunt': 1, 'swim': 2, 'flutter': 3}
 MAXGROUPS = 16
@@ -202,7 +204,7 @@ def parse(path, textids):
                 if len(args) != 3:
                     fail('%s: event X Y rest' % where)
                 param = 0
-            elif kind in ('handcar', 'sinkhole'):
+            elif kind in ('handcar', 'sinkhole', 'collapse'):
                 if len(args) != 5:
                     fail('%s: event X Y %s TX TY' % (where, kind))
                 param = int(args[4]) << 5 | int(args[3])
@@ -293,7 +295,7 @@ def check(lv):
             fail('%s: cell %d,%d is taken' % (where, x, y))
     for tx, ty, where in lv.get('rides', []):
         if not (0 < tx < SIZE - 1 and 0 < ty < SIZE - 1) or blocks(rows[ty][tx]):
-            fail('%s: the handcar must end on an open cell' % where)
+            fail('%s: the target cell must be open' % where)
     for x, y, _, _, mode, where in lv['groups']:
         if mode == MODES['swim'] and rows[y][x] != '~':
             fail('%s: swimmers start in the water' % where)
