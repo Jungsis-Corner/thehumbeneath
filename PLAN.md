@@ -3,7 +3,7 @@
 Status: approved 2026-10-07 (open questions answered with the proposals, see section 8).
 Changes to the architecture below need approval (CLAUDE.md).
 
-Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9 done (levels 1-8, three endings), M9.9 (balance, polish) done, M9.10 (random places) done.
+Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9 done (levels 1-8, three endings), M9.9 (balance, polish) done, M9.10 (random places) done, M10a (sound) done.
 
 ## 1. Toolchain (taken over from FUSE RUNNER)
 
@@ -528,6 +528,14 @@ draws a level source as PNG for review.
   shown as empty). Test switches SEED=n and MAPALL (the map shows all).
   mapview.py shows other places in lower case.
 **M10 – endings, sound, polish, distribution** (win image, README, MiSTer test).
+- **M10a Sound: DONE** (2026-10-08). src/sound.asm: `sound` (d0 = S_...)
+  sends one IPC "initiate sound" block for an effect, or starts a tune
+  (pitch, frames ... 0) that `music_tick` plays from `frame`. Effects: wall
+  bump, door, item found, Scratch-Mark, trap/fall damage, hit, hurt, miss,
+  a fighter falls, Hum pulse. Tunes: stairs, victory, rank up, game over,
+  ending. Game menu line SOUND: ON/OFF (v_mute, not saved). Measured in
+  sQLux: f = 11065 / (8 + pitch) Hz. tools/sound_notes.py (from FUSE
+  RUNNER) lists the notes of emu/sound.raw.
 
 ## 7. Testing
 

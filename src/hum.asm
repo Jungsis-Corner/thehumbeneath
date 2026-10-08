@@ -212,6 +212,10 @@ v_cround rs.w   1               ; combat: rounds (for the Hum pulses)
 v_humc  rs.w    1               ; actions since the last Hum pulse
 v_regen rs.w    1               ; steps since the last hit point regained
 v_pounce rs.w   1               ; combat: the attack is a pounce
+v_mute  rs.w    1               ; 1 = sound off
+v_mwait rs.w    1               ; frames until the next note
+v_mptr  rs.l    1               ; next note of the tune, 0 = none
+v_beep  rs.b    16              ; IPC block of a note
 v_mcount rs.w   1               ; menu: number of lines
 v_mtxt  rs.b    MENU_MAX*MENU_LEN ; menu: the lines
 v_mitem rs.b    MENU_MAX        ; menu: item of each line (pack menus)
@@ -811,11 +815,13 @@ move_rel:
 .block  cmp.b   #CT_DOOR_LOCKED,d1
         beq.s   .locked
         cmp.b   #CT_DOOR,d1
-        bne.s   .wall
+        bne     .wall
         tst.w   d3
         bne.s   .door
         and.b   #~CELL_TYPE,0(a0,d0.w) ; closed -> open door
         or.b    #CT_DOOR_OPEN,0(a0,d0.w)
+        moveq   #S_DOOR,d0
+        bsr     sound
         move.w  #T_DOOR_OPENS,d0
         bra     msg_print
 .door   move.w  #T_DOOR_BLOCKS,d0
@@ -843,11 +849,15 @@ move_rel:
         lea     v_map(a5),a0
         and.b   #~CELL_TYPE,0(a0,d2.w)
         or.b    #CT_DOOR_OPEN,0(a0,d2.w)
+        moveq   #S_DOOR,d0
+        bsr     sound
         move.w  #T_DOOR_OPENS,d0
         bra     msg_print
 .shut   move.w  #T_DOOR_LOCKED,d0
         bra     msg_print
-.wall   move.w  #T_BLOCKED,d0
+.wall   moveq   #S_BUMP,d0
+        bsr     sound
+        move.w  #T_BLOCKED,d0
         bra     msg_print
 .group  bsr     group_at        ; walked into an enemy group
         bra     encounter
@@ -855,6 +865,8 @@ move_rel:
 ; hurt_all: d1 = damage for every cat still standing
 hurt_all:
         movem.l d0-d3/a0-a3,-(sp)
+        moveq   #S_TRAP,d0
+        bsr     sound
         lea     v_party(a5),a3
         moveq   #NPARTY-1,d3
 .c      tst.w   p_hp(a3)
@@ -985,6 +997,8 @@ hum_tick:
 .p      cmp.w   #HUM_STEPS,d0
         blo.s   .x
         clr.w   v_humc(a5)
+        moveq   #S_HUM,d0
+        bsr     sound
         move.w  #T_HUM_PULSE,d0
         bsr     msg_print
         bsr     groups_act
@@ -1210,6 +1224,8 @@ cell_events:
         bsr     msg_print
         bra.s   .nx
 .mark   bset    #0,EV_FLAGS(a3) ; (found: counts for the progress)
+        moveq   #S_MARK,d0
+        bsr     sound
         move.w  #T_MARK_SEEN,d0 ; Scratch-Mark: the carved text in yellow
         bsr     msg_print
         moveq   #C_YEL,d1
@@ -1245,6 +1261,8 @@ cell_events:
         move.l  a1,(a2)
         move.l  (sp)+,d1
         move.l  d1,4(a2)
+        moveq   #S_FOUND,d0
+        bsr     sound
         move.w  #T_FOUND,d0
         bsr     msg_print
         cmp.w   d1,d2           ; not all of the moss found room
@@ -1353,6 +1371,8 @@ cell_events:
         bra     .nx
 .trap   bset    #0,EV_FLAGS(a3) ; trap: only the first time
         bne     .nx
+        moveq   #S_TRAP,d0
+        bsr     sound
         move.w  EV_PARAM(a3),d1 ; bleed<<12 | text id
         move.w  d1,d0
         and.w   #$fff,d0
@@ -1369,7 +1389,9 @@ cell_events:
         move.w  #T_NOT_YET,d0   ; not built yet: the way is blocked
         bsr     msg_print
         bra     .e
-.go     move.w  #T_STAIRS_DOWN,d0
+.go     moveq   #S_STAIRS,d0
+        bsr     sound
+        move.w  #T_STAIRS_DOWN,d0
         move.w  v_pos(a5),d1
         lea     v_map(a5),a0
         moveq   #CELL_TYPE,d2
@@ -2082,7 +2104,7 @@ frame:                          ; give the CPU away for one frame (20 ms)
         sub.l   a1,a1
         trap    #1
         movem.l (sp)+,d0-d3/a0-a3
-        rts
+        bra     music_tick
 
 wait_esc:                       ; wait until ESC is pressed and released
 .down   bsr.s   frame
@@ -2337,6 +2359,7 @@ draw_map:
         include 'skills.asm'    ; healer skills, moss
         include 'state.asm'     ; level memory, save, load, game menu
         include 'title.asm'     ; title, names, intro, game over
+        include 'sound.asm'     ; IPC beeps and tunes
 
 ;=====================================================================
 ; Party
@@ -2575,6 +2598,8 @@ fall_check:
         move.w  p_name(a3),d0
         bsr     text_get
         move.l  a1,(a2)
+        moveq   #S_FALL,d0
+        bsr     sound
         move.w  #T_FALLS,d0
         bsr     msg_print
 .done   movem.l (sp)+,d0-d1/a1-a2

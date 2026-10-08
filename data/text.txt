@@ -43,6 +43,8 @@ PROG_EXPLORED   Explored: %d%% of the caves
 GM_CONTINUE     CONTINUE
 GM_SAVE         SAVE GAME
 GM_LOAD         LOAD GAME
+GM_SOUND_ON     SOUND: ON
+GM_SOUND_OFF    SOUND: OFF
 GM_QUIT         QUIT
 @digits 1
 SLOT_USED       Slot %d: level %d, %d%%

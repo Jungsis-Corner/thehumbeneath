@@ -315,6 +315,8 @@ cat_attack:
         bge.s   .dmg
         moveq   #1,d0
 .dmg    move.w  d0,d2
+        moveq   #S_HIT,d0
+        bsr     sound
         sub.w   d2,(a1)
         move.w  d2,v_echo(a5)   ; what an Echo Shade copies
         move.w  #T_HIT_FOR,d0
@@ -323,6 +325,8 @@ cat_attack:
         tst.w   (a1)
         bgt.s   .draw
         clr.w   (a1)
+        moveq   #S_FALL,d0
+        bsr     sound
         move.w  #T_FALLS,d0
         move.w  e_name(a4),d1
         bsr     name_msg
@@ -347,7 +351,9 @@ cat_attack:
         bne.s   .draw
         move.w  #CE_VICTORY,v_cend(a5)
 .draw   bra     foes_draw
-.miss   move.w  #T_MISSES,d0
+.miss   moveq   #S_MISS,d0
+        bsr     sound
+        move.w  #T_MISSES,d0
         move.w  p_name(a2),d1
         bra     name_msg
 
@@ -419,6 +425,8 @@ foe_attack:
         bge.s   .dmg
         moveq   #1,d0
 .dmg    move.w  d0,d2
+        moveq   #S_HURT,d0
+        bsr     sound
         sub.w   d2,p_hp(a3)
         move.w  #T_HIT_FOR,d0
         move.w  p_name(a3),d1
@@ -457,7 +465,9 @@ foe_attack:
         bsr     panel_show
         bsr     party_check
         bra.s   .e
-.miss   move.w  #T_MISSES,d0
+.miss   moveq   #S_MISS,d0
+        bsr     sound
+        move.w  #T_MISSES,d0
         move.w  e_name(a4),d1
         bsr     name_msg
 .e      bsr     pause
@@ -513,6 +523,8 @@ pick_target:
 ; victory: XP for every standing cat, ranks, the group is gone
 victory:
         movem.l d0-d3/a0-a3,-(sp)
+        moveq   #S_VICTORY,d0
+        bsr     sound
         move.w  #T_VICTORY,d0
         bsr     msg_print
         bsr     pause
@@ -539,6 +551,8 @@ victory:
         cmp.w   p_xp(a3),d1
         bhi.s   .nx
         addq.w  #1,p_rank(a3)
+        moveq   #S_RANK,d0
+        bsr     sound
         ifne    UP_HP
         addq.w  #UP_HP,p_hpbase(a3)
         addq.w  #UP_HP,p_hpmax(a3)

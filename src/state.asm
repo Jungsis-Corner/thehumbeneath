@@ -20,7 +20,8 @@ IO_DELET   equ  $04
 GM_CONTINUE equ 0               ; game menu lines
 GM_SAVE    equ  1
 GM_LOAD    equ  2
-GM_QUIT    equ  3
+GM_SOUND   equ  3
+GM_QUIT    equ  4
 
 ; lv_slot: d0 = level -> a0 = its place in v_lvstore
 lv_slot:
@@ -468,6 +469,9 @@ game_menu:
         bsr     menu_addt
         move.w  #T_GM_LOAD,d0
         bsr     menu_addt
+        move.w  #T_GM_SOUND_ON,d0
+        add.w   v_mute(a5),d0   ; (T_GM_SOUND_OFF follows)
+        bsr     menu_addt
         move.w  #T_GM_QUIT,d0
         bsr     menu_addt
         move.w  #T_TITLE,d0
@@ -479,9 +483,15 @@ game_menu:
         beq.s   .load
         cmp.w   #GM_QUIT,d0
         beq     .quit
+        cmp.w   #GM_SOUND,d0
+        beq.s   .sound
 .e      bsr     redraw
         movem.l (sp)+,d0-d2/a0-a2
         rts
+.sound  bchg    #0,v_mute+1(a5) ; sound on/off
+        moveq   #S_FOUND,d0     ; (heard only when on)
+        bsr     sound
+        bra     .back
 .save   bsr     view_refresh
         move.w  #T_GM_SAVE,d0
         bsr     slot_menu

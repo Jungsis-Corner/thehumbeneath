@@ -515,6 +515,8 @@ END_B   equ     1               ; the Silence: the Keeper beaten
 END_C   equ     2               ; the Stay: laid down at the Heart
 ending:
         move.w  d0,d7
+        moveq   #S_ENDING,d0
+        bsr     sound
         moveq   #100,d1         ; a moment to read the last messages
 .w      bsr     frame
         dbra    d1,.w
@@ -547,6 +549,8 @@ ending:
 ;---------------------------------------------------------------------
 game_over:
         bsr     panel_show
+        moveq   #S_GAMEOVER,d0
+        bsr     sound
         move.w  #T_GAME_OVER,d0
         bsr     msg_print
         moveq   #100,d1         ; a moment to read the last messages
