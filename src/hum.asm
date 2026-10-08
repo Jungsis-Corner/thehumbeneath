@@ -17,10 +17,11 @@
 ;   DEBUG=1         position and render time (frames of 1/50 s) in the panel
 ;   HPTEST          start with reduced hit points (to see the bar colours)
 ;   BLEEDTEST       start with bleeding cats (Scratch, Gash, Deep Wound)
-;   XPTEST          every cat starts with 18 XP (the next rank needs 20)
+;   XPTEST          every cat starts with 38 XP (the next rank needs 40)
 ;   ITEMTEST        the pack starts with some items (see item_test)
 ;   QUICKSTART      no title, names or intro: straight into the first level
 ;   NOENEMY         levels without enemy groups (to test the levels)
+;   ANGRYTEST       the party has attacked a calm Pale One (Elder Pale test)
 ;=====================================================================
 
         include 'textid.inc'    ; T_... text ids         (tools/textc.py)
@@ -54,10 +55,11 @@ MENU_MAX   equ  16              ; menu lines
 MENU_LEN   equ  24              ; bytes per menu line (zero-terminated)
 MENU_W     equ  24              ; menu box width in words
 PF_POISON  equ  0               ; p_flags: poisoned
-PF_FEAR    equ  2               ; p_flags: afraid (no source yet)
+PF_FEAR    equ  2               ; p_flags: afraid (Wraith Owls; ends with the fight)
 PF_FEATHER equ  3               ; p_flags: the feather was used on this level
 SF_SPARED  equ  0               ; v_story: the Elder Pale was spared
 SF_PFOUGHT equ  1               ; v_story: the party fought Pale Ones
+SF_PATTACK equ  2               ; v_story: it chose to attack calm Pale Ones
 NOISE_STEP equ  3               ; a normal step wakes listeners this near
 NOISE_LOUD equ  6               ; a noise event wakes listeners this near
 HUM_STEPS  equ  10              ; Hum levels: a pulse every 10 actions
@@ -125,7 +127,7 @@ K_RIGHT equ     4
 K_SPACE equ     6
 K_DOWN  equ     7
 K_SHIFT equ     8               ; from KEYROW(7), added by readkeys
-K_MAP   equ     9               ; M (KEYROW(2)): debug map on/off
+K_MAP   equ     9               ; M (KEYROW(2)): map on/off
 K_SHEET equ     10              ; C (KEYROW(2)): party sheet on/off
 K_PACK  equ     11              ; I (KEYROW(5)): pack page on/off
 K_SNEAK equ     12              ; S (KEYROW(3)): sneak on/off
@@ -206,6 +208,8 @@ v_crev  rs.b    10              ; combat: enemy n got up again (byte n)
 v_echo  rs.w    1               ; combat: damage of the last cat's hit (0 = none)
 v_cround rs.w   1               ; combat: rounds (for the Hum pulses)
 v_humc  rs.w    1               ; actions since the last Hum pulse
+v_regen rs.w    1               ; steps since the last hit point regained
+v_pounce rs.w   1               ; combat: the attack is a pounce
 v_mcount rs.w   1               ; menu: number of lines
 v_mtxt  rs.b    MENU_MAX*MENU_LEN ; menu: the lines
 v_mitem rs.b    MENU_MAX        ; menu: item of each line (pack menus)
@@ -446,6 +450,7 @@ mainloop:
 .act    bsr     do_keys
         bsr     groups_act
         bsr     hum_tick        ; the Hum may cost the party a turn
+        bsr     hazard_warn     ; the scout (or a lantern) sees traps ahead
         tst.w   v_sneak(a5)     ; sneaking: the enemies move twice as often
         beq.s   .slw
         bsr     groups_act
@@ -679,7 +684,10 @@ level_start:
 ;           2 back, 3 left), d2 = text id shown when the step succeeds.
 ;           A step forward into a closed door opens it.
 move_rel:
-        move.w  d1,d3           ; relative direction
+        tst.w   v_sneak(a5)     ; sneaking: "You creep on."
+        beq.s   .walk
+        move.w  #T_CREEP,d2
+.walk   move.w  d1,d3           ; relative direction
         add.w   v_dir(a5),d1
         and.w   #3,d1
         move.w  d1,v_lastdir(a5) ; the way the party goes (for slipping)
@@ -812,6 +820,77 @@ rest:
         dbra    d3,.c
         bsr     panel_show
         movem.l (sp)+,d0-d3/a0-a3
+        rts
+
+; hazard_warn: a standing scout warns of a hazard in the cell ahead; a
+;              cat with the Lantern Shard sees two cells ahead. Each
+;              hazard is told once (event flag bit 1).
+hazard_warn:
+        movem.l d0-d5/a0-a3,-(sp)
+        lea     v_party(a5),a3  ; who can see it, and how far?
+        moveq   #NPARTY-1,d3
+        moveq   #0,d4           ; range
+        sub.l   a2,a2
+.who    tst.w   p_hp(a3)
+        ble.s   .wn
+        bsr     gear_kind
+        cmp.w   #IK_GEAR_LIGHT,d0
+        bne.s   .scout
+        moveq   #2,d4
+        move.l  a3,a2
+        bra.s   .look
+.scout  cmp.w   #T_ROLE_SCOUT,p_role(a3)
+        bne.s   .wn
+        tst.w   d4
+        bne.s   .wn
+        moveq   #1,d4
+        move.l  a3,a2
+.wn     lea     p_size(a3),a3
+        dbra    d3,.who
+        tst.w   d4
+        beq     .e
+.look   lea     doff(pc),a0
+        move.w  v_dir(a5),d0
+        add.w   d0,d0
+        move.w  0(a0,d0.w),d5   ; one cell forward
+        move.w  v_pos(a5),d3
+        subq.w  #1,d4
+.cell   add.w   d5,d3           ; d3 = the cell looked at
+        lea     v_map(a5),a0
+        moveq   #CELL_TYPE,d0
+        and.b   0(a0,d3.w),d0
+        lea     celltab(pc),a1
+        btst    #0,0(a1,d0.w)   ; a wall: nothing further
+        bne.s   .e
+        moveq   #31,d1
+        and.w   d3,d1           ; x
+        move.w  d3,d2
+        lsr.w   #5,d2           ; y
+        lea     v_map+LV_EVENT(a5),a3
+.ev     cmp.b   #EV_END,EV_X(a3)
+        beq.s   .nc
+        cmp.b   EV_X(a3),d1
+        bne.s   .nx
+        cmp.b   EV_Y(a3),d2
+        bne.s   .nx
+        btst    #0,EV_FLAGS(a3) ; (a trap that has gone off: no danger)
+        bne.s   .nx
+        lea     hazards(pc),a1
+        move.b  EV_TYPE(a3),d0
+.hz     tst.b   (a1)
+        beq.s   .nx
+        cmp.b   (a1)+,d0
+        bne.s   .hz
+        bset    #1,EV_FLAGS(a3) ; told once
+        bne.s   .nx
+        move.w  #T_WARN,d0
+        move.w  p_name(a2),d1
+        bsr     name_msg
+        bra.s   .e
+.nx     addq.l  #EV_SIZE,a3
+        bra.s   .ev
+.nc     dbra    d4,.cell
+.e      movem.l (sp)+,d0-d5/a0-a3
         rts
 
 ; hum_tick: after an action on a Hum level: a warning two actions
@@ -1234,6 +1313,11 @@ cell_events:
         bset    #CELL_SEEN,0(a0,d1.w)
         move.w  LV_ENTRY(a0),d0
         bsr     msg_print
+        moveq   #0,d0           ; a new level: the game is saved in slot 0
+        bsr     game_save
+        bne.s   .e
+        move.w  #T_AUTOSAVED,d0
+        bsr     msg_print
 .e      movem.l (sp)+,d0-d4/a0-a3
         rts
 
@@ -1443,16 +1527,23 @@ encounter:
         cmp.w   #TR_ELDER,d1
         beq.s   .elder
         cmp.w   #TR_PALE,d1
-        bne.s   .fight
+        bne     .fight
         cmp.b   #GM_LISTEN,G_MODE(a3) ; (awake ones just attack)
         bne.s   .pfight
         move.w  #T_PALE_MEET,d0
         move.w  #T_PASS,d1
         bsr     pale_choice
-        bne.s   .chose
+        bne.s   .pchose
         move.w  #T_PALE_PASS,d0
         bra.s   .gone
-.elder  move.w  #T_ELDER_MEET,d0
+.pchose bset    #SF_PATTACK,v_story+1(a5) ; a calm Pale One attacked
+        bra     .chose
+.elder  btst    #SF_PATTACK,v_story+1(a5) ; the party hurt her children:
+        beq.s   .eldc           ; no words, no choice
+        move.w  #T_ELDER_ANGRY,d0
+        bsr     msg_print
+        bra     .pfight
+.eldc   move.w  #T_ELDER_MEET,d0
         move.w  #T_SPARE,d1
         bsr     pale_choice
         bne.s   .chose
@@ -1974,9 +2065,10 @@ draw_frame:                     ; placeholder layout: separator line
 
 redraw:                         ; after a step or turn
         move.w  #VIEW_H,v_mtop(a5) ; no menu box on the screen any more
+        bsr     mark_view
         cmp.w   #PG_MAP,v_page(a5)
         bne.s   .nomap
-        bsr.s   draw_map
+        bsr     draw_map
         bra     panel_show
 .nomap  cmp.w   #PG_SHEET,v_page(a5)
         bne.s   .nosh
@@ -1995,6 +2087,76 @@ redraw:                         ; after a step or turn
 
 ; draw_map: debug view, the whole level as 4x4 pixel cells in the
 ; viewport, visited floor in blue, the player as a yellow arrow
+; mark_view: the open cells the party can see ahead (up to 3, until a
+;            wall or closed door) and the open cells left and right of
+;            them count as seen (for the map and the progress)
+mark_view:
+        movem.l d0-d4/a0-a1,-(sp)
+        lea     doff(pc),a0
+        move.w  v_dir(a5),d0
+        add.w   d0,d0
+        move.w  0(a0,d0.w),d2   ; one cell forward
+        move.w  v_dir(a5),d0
+        addq.w  #1,d0
+        and.w   #3,d0
+        add.w   d0,d0
+        move.w  0(a0,d0.w),d3   ; one cell to the right
+        lea     v_map(a5),a0
+        lea     celltab(pc),a1
+        move.w  v_pos(a5),d0
+        moveq   #3-1,d4
+.fw     add.w   d2,d0
+        bsr.s   .open
+        beq.s   .e              ; a wall: nothing further is seen
+        bset    #CELL_SEEN,0(a0,d0.w)
+        move.w  d0,-(sp)
+        add.w   d3,d0           ; right
+        bsr.s   .open
+        beq.s   .l
+        bset    #CELL_SEEN,0(a0,d0.w)
+.l      move.w  (sp),d0
+        sub.w   d3,d0           ; left
+        bsr.s   .open
+        beq.s   .n
+        bset    #CELL_SEEN,0(a0,d0.w)
+.n      move.w  (sp)+,d0
+        dbra    d4,.fw
+.e      movem.l (sp)+,d0-d4/a0-a1
+        rts
+.open   cmp.w   #1024,d0        ; d0 = cell -> NE = inside and open
+        bhs.s   .no
+        moveq   #CELL_TYPE,d1
+        and.b   0(a0,d0.w),d1
+        btst    #0,0(a1,d1.w)   ; CF_BLOCK
+        eori.b  #4,ccr          ; (blocking: EQ)
+        rts
+.no     cmp.w   d0,d0           ; EQ
+        rts
+
+; map_known: a1 = map cell, d4 = x, d5 = y -> NE = the party has seen it
+;            (walked on it or next to it)
+map_known:
+        btst    #CELL_SEEN,(a1)
+        bne.s   .e
+        tst.w   d4
+        beq.s   .x1
+        btst    #CELL_SEEN,-1(a1)
+        bne.s   .e
+.x1     cmp.w   #31,d4
+        beq.s   .y0
+        btst    #CELL_SEEN,1(a1)
+        bne.s   .e
+.y0     tst.w   d5
+        beq.s   .y1
+        btst    #CELL_SEEN,-32(a1)
+        bne.s   .e
+.y1     cmp.w   #31,d5
+        beq.s   .no
+        btst    #CELL_SEEN,32(a1)
+.e      rts
+.no     moveq   #0,d0           ; (sets EQ; d0 is free here)
+        rts
+
 draw_map:
         movem.l d0-d7/a0-a4,-(sp)
         lea     SCREEN+MAP_X*2,a0
@@ -2004,10 +2166,16 @@ draw_map:
         moveq   #31,d7          ; rows
 .row    move.l  a0,a4
         moveq   #31,d6          ; cells
-.cell   move.b  (a1)+,d0
+.cell   moveq   #31,d4          ; only what the party has seen: the cells
+        sub.w   d6,d4           ; it walked on and their neighbours
+        moveq   #31,d5
+        sub.w   d7,d5
+        moveq   #0,d2           ; (unknown: black)
+        bsr     map_known
+        beq.s   .col
+        move.b  (a1),d0
         moveq   #CELL_TYPE,d1
         and.b   d0,d1
-        moveq   #0,d2
         move.b  0(a3,d1.w),d2
         btst    #CELL_GROUP,d0
         beq.s   .ng
@@ -2025,6 +2193,7 @@ draw_map:
         move.w  d2,LINEB*2(a4)
         move.w  d2,LINEB*3(a4)
         addq.l  #2,a4
+        addq.l  #1,a1
         dbra    d6,.cell
         lea     LINEB*4(a0),a0
         dbra    d7,.row
@@ -2035,6 +2204,19 @@ draw_map:
         bne.s   .inx
         btst    #0,EV_FLAGS(a1)
         bne.s   .inx
+        moveq   #0,d5           ; only where the party has been
+        move.b  EV_Y(a1),d5
+        moveq   #0,d4
+        move.b  EV_X(a1),d4
+        move.w  d5,d0
+        lsl.w   #5,d0
+        add.w   d4,d0
+        move.l  a1,-(sp)
+        lea     v_map(a5),a1
+        add.w   d0,a1
+        bsr     map_known
+        movem.l (sp)+,a1        ; (keeps the flags)
+        beq.s   .inx
         moveq   #0,d0
         move.b  EV_Y(a1),d0
         mulu    #LINEB*4,d0
@@ -2113,10 +2295,10 @@ party_init:
         clr.w   3*p_size+p_hp(a1)
         endc
         ifd     XPTEST
-        move.w  #18,p_xp(a1)
-        move.w  #18,p_size+p_xp(a1)
-        move.w  #18,2*p_size+p_xp(a1)
-        move.w  #18,3*p_size+p_xp(a1)
+        move.w  #38,p_xp(a1)
+        move.w  #38,p_size+p_xp(a1)
+        move.w  #38,2*p_size+p_xp(a1)
+        move.w  #38,3*p_size+p_xp(a1)
         endc
         ifd     BLEEDTEST       ; Ashclaw Deep Wound, Mossfern Scratch,
         move.w  #3,p_bleed(a1)  ; Quickwhisker Gash
@@ -2216,13 +2398,39 @@ bleed_step:
         subq.w  #1,(a0)
 .wn     lea     p_size(a0),a0
         dbra    d0,.wr
-        addq.w  #1,v_steps(a5)
+        addq.w  #1,v_regen(a5)  ; resting while walking: a hit point back
+        cmp.w   #REGEN_STEPS,v_regen(a5)
+        blo.s   .bl
+        clr.w   v_regen(a5)
+        bsr.s   regen
+.bl     addq.w  #1,v_steps(a5)
         cmp.w   #BLEED_STEPS,v_steps(a5)
         blo.s   .e
         clr.w   v_steps(a5)
         bsr.s   wound_tick
         bra     party_check
 .e      rts
+
+; regen: every standing cat that neither bleeds nor is poisoned gets a hit
+;        point back (up to its maximum)
+regen:
+        movem.l d0-d1/a0,-(sp)
+        lea     v_party(a5),a0
+        moveq   #NPARTY-1,d0
+.c      tst.w   p_hp(a0)
+        ble.s   .n
+        tst.w   p_bleed(a0)
+        bne.s   .n
+        btst    #PF_POISON,p_flags+1(a0)
+        bne.s   .n
+        move.w  p_hp(a0),d1
+        cmp.w   p_hpmax(a0),d1
+        bge.s   .n
+        addq.w  #1,p_hp(a0)
+.n      lea     p_size(a0),a0
+        dbra    d0,.c
+        movem.l (sp)+,d0-d1/a0
+        rts
 
 ; wound_tick: bleeding cats lose 1-3 hit points (a Deep Wound also lowers
 ;             the maximum), poisoned cats 1; every BLEED_STEPS steps and
@@ -2311,9 +2519,13 @@ cat_status:
         ble.s   .e
         move.w  p_bleed(a3),d0
         bne.s   .e
-        btst    #0,p_flags+1(a3)
-        beq.s   .e
         moveq   #5,d0
+        btst    #0,p_flags+1(a3)
+        bne.s   .e
+        moveq   #6,d0           ; afraid
+        btst    #PF_FEAR,p_flags+1(a3)
+        bne.s   .e
+        moveq   #0,d0
 .e      rts
 
 ;=====================================================================
@@ -2333,6 +2545,8 @@ arrows: dc.w    $2828,$aaaa,$2828,$2828 ; player on the debug map: N
         dc.w    $0808,$aaaa,$0808,$0000 ; E
         dc.w    $2828,$2828,$aaaa,$2828 ; S
         dc.w    $2020,$aaaa,$2020,$0000 ; W
+hazards: dc.b   EV_TRAP,EV_BOARDS,EV_RUBBLE,EV_SPORES,EV_SINKHOLE,EV_COLLAPSE
+        dc.b    EV_NOISE,0      ; what the scout warns of
 newline: dc.b   10
 notxt:  dc.b    0
         even

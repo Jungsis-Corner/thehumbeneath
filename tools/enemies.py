@@ -3,7 +3,7 @@
 read(path) -> list of dicts in file order (the index is the enemy type):
   id, name, plural (text id names), hp, atk, def, spd, bleed, poison, boss,
   xp, sprite, trait (0 none, 1 revive, 2 illusion, 3 pale, 4 elder,
-  5 echo, 6 keeper)
+  5 echo, 6 keeper, 7 fear)
 """
 import os
 import sys
@@ -11,7 +11,7 @@ import sys
 DEFAULT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                        'data', 'enemies.txt')
 NUMBERS = ('hp', 'atk', 'def', 'spd', 'bleed', 'poison', 'boss')
-TRAITS = ('-', 'revive', 'illusion', 'pale', 'elder', 'echo', 'keeper')
+TRAITS = ('-', 'revive', 'illusion', 'pale', 'elder', 'echo', 'keeper', 'fear')
 
 
 def read(path=DEFAULT):

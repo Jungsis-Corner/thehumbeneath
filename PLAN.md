@@ -3,7 +3,7 @@
 Status: approved 2026-10-07 (open questions answered with the proposals, see section 8).
 Changes to the architecture below need approval (CLAUDE.md).
 
-Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9 done (levels 1-8, three endings).
+Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9 done (levels 1-8, three endings), M9.9 (balance, polish) done.
 
 ## 1. Toolchain (taken over from FUSE RUNNER)
 
@@ -484,6 +484,34 @@ draws a level source as PNG for review.
   ITEMTEST now also packs the Heart Stone. 90.0 KB in use, tested at
   384 KB (endings A, B, C each seen in the emulator; B with a Keeper of 1
   HP for the test only).
+- **M9.9 Balance and polish: DONE.** After a review as a player and as a
+  game designer (2026-10-08; a simulation of every fight with the formulas
+  of combat.asm showed: single fights far too easy from level 3 on, the
+  highest rank reached before level 5, but no recovery at all, so the
+  attrition killed the party in level 6). Changes:
+  - Balance: a hit point back every 8 steps (`regensteps` in party.txt;
+    not while bleeding or poisoned); fallen cats get back up with 1 HP
+    after a won fight; ranks at 0/40/150/350/700 XP, +3 HP per rank;
+    later enemies and the mini-bosses hit harder (HP as in STORY.md);
+    level 6 has 12 groups instead of 15. Simulated: normal groups cost
+    5-20 % of the party's HP, mini-bosses 20-30 %, the Keeper about half.
+  - The map (M) is an automap: the cells walked on, the open cells seen
+    ahead (up to 3, and left/right of them) and their neighbours; enemy
+    groups and items only there. M is in the tutorial text.
+  - Pale Ones: attacking a calm one by choice sets SF_PATTACK; then the
+    Elder Pale does not talk ("You hurt my children.") and fights.
+  - Autosave: every change of level saves to slot 0 ("Auto", in the load
+    menus only). Sneaking steps say "You creep on". Loading ends sneaking.
+  - Roles: the hunter's Pounce (fight skill, front row only: 15 % less
+    likely to hit, twice the damage). The scout warns of a hazard in the
+    cell ahead (trap, boards, rubble, spores, sinkhole, collapse, noise;
+    once each, event flag bit 1).
+  - Items: Lantern Shard (level 6) worn: hazards are seen two cells ahead.
+    Echo Pebble (level 4, two more in level 7): hunting groups within 6
+    cells stop, awake Pale Ones listen again. Trait `fear` (Wraith Owl):
+    30 % of its hits make a cat afraid; an afraid cat loses half of its
+    turns; fear ends with the fight; Poppy Seed calms.
+  - Test switch ANGRYTEST. 91.4 KB in use, tested at 384 KB.
 **M10 – endings, sound, polish, distribution** (win image, README, MiSTer test).
 
 ## 7. Testing

@@ -143,6 +143,9 @@ new_init:                       ; a new party, nothing visited
         clr.w   v_inlv(a5)
         clr.w   v_deep(a5)
         clr.w   v_story(a5)
+        ifd     ANGRYTEST       ; as if a calm Pale One had been attacked
+        move.w  #1<<SF_PATTACK,v_story(a5)
+        endc
         clr.w   v_sneak(a5)
         clr.w   v_humc(a5)
         clr.w   v_steps(a5)
@@ -203,6 +206,7 @@ new_start:                      ; the first level
 
 ; game_run: after loading: the game screen, then play
 game_run:
+        clr.w   v_sneak(a5)     ; (after loading: walking again)
         bsr     game_screen
         move.w  #T_LOADED,d0
         bsr     msg_print

@@ -65,6 +65,8 @@ event 27 7 message BADGER_DEN
 event 25 2 message TOTEM_NICHE
 event 25 2 item PALE_TOTEM 1
 # supplies
+event 10 10 item ECHO_PEBBLE 1
+event 19 13 item ECHO_PEBBLE 1
 event 2 18 item HERB 2
 event 3 14 gather FEN_MOSS 2
 event 9 24 item MARIGOLD_LEAF 1

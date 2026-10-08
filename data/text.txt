@@ -47,6 +47,9 @@ GM_QUIT         QUIT
 @digits 1
 SLOT_USED       Slot %d: level %d, %d%%
 SLOT_EMPTY      Slot %d: empty
+SLOT_AUTO       Auto: level %d, %d%%
+SLOT_NOAUTO     Auto: empty
+AUTOSAVED       (The game was saved: Auto.)
 @digits 6
 SAVED           Save complete.
 SAVE_FAILED     The game could not be saved.
@@ -89,6 +92,7 @@ PALE_HEARS      A pale shape lifts its head.\nIt heard you!
 PALE_MEET       A pale shape turns its head.\nIt has no eyes.\nIt listens.\nIt does not attack.\n"You are... warm."\n"Are you... ours?"
 PALE_PASS       The pale shape steps back into the dark.
 ELDER_MEET      The Elder Pale rises.\n"We were once like you."\n"The Hum kept us. It did not let go."
+ELDER_ANGRY     The Elder Pale rises.\n"You hurt my children."\n"Then you are not ours."
 ELDER_SPARE     The Elder Pale lowers its head.\n"Take the Heart Stone.\n End what we could not."
 FIGHT           Fight
 FIGHT_ON        So be it. The party attacks!
@@ -127,6 +131,12 @@ HEALED          %s feels better.
 CANNOT_HELP     %s cannot be helped.
 WRAPPED         The wrap holds the bleeding.
 CALM            %s is calm again.
+AFRAID          %s is afraid!
+FROZEN          %s is too afraid to move.
+POUNCES         %s pounces!
+WARN            %s: Careful! Danger ahead.
+PEBBLE          The pebble clatters far away.\nThe hunters turn to the sound.
+NO_ROOM         %s needs room: front row only.
 NOT_NOW         Not now.
 NO_GEAR         Nothing to wear.
 NOTHING         The pack is empty.
@@ -170,6 +180,7 @@ REST_UP         %s stands up again.
 COLLAPSE        The floor breaks under you!
 SHADOW          %s strikes only a shadow.
 GETS_UP         %s gets up again!
+GETS_BACK       %s gets back up, weak.
 DOOR_VALVES     The door does not move. Valves hold it.
 
 # --- Traps ---
@@ -188,6 +199,7 @@ STATUS_GASH     Gash
 STATUS_DEEP     Deep Wound
 STATUS_FALLEN   Fallen
 STATUS_POISON   Poisoned
+STATUS_AFRAID   Afraid
 NAME_ASHCLAW    Ashclaw
 NAME_MOSSFERN   Mossfern
 NAME_QUICKWHISKER Quickwhisker
@@ -289,6 +301,7 @@ PSTAT_GASH      Gash
 PSTAT_DEEP      Deep
 PSTAT_FALLEN    Fallen
 PSTAT_POISON    Poison
+PSTAT_AFRAID    Afraid
 
 # --- Combat menu and enemy line (4 px font) ---
 @width 15
@@ -302,6 +315,7 @@ SK_HERB         Herb Chew
 SK_CHARM        Starfolk Charm
 SK_GATHER       Gather
 SK_APPLY        Apply Moss
+SK_POUNCE       Pounce
 CMB_FLEE        Flee
 CMB_MARK        >
 MENU_PARTY      Party
@@ -355,6 +369,7 @@ TURN_LEFT       You turn left.
 TURN_RIGHT      You turn right.
 STEP_BACK       You step back.
 STEP_SIDE       You step aside.
+CREEP           You creep on, without a sound.
 DOOR_BLOCKS     A door blocks the way.
 DOOR_LOCKED     The door is locked.
 DOOR_OPENS      The door creaks open.
@@ -383,7 +398,7 @@ MARK_1_1        WE WENT DOWN\nWE WERE NOT AFRAID
 MARK_1_2        The cellar is only the first step.
 EXIT_1          The camp is behind you. Follow the Hum.
 TUT_1           Cursor keys walk and turn the party.
-TUT_2           SPACE: party menu. I: pack. C: cats.
+TUT_2           SPACE: menu. I: pack. C: cats. M: map.
 TUT_3           ESC: save, load or quit the game.
 APPLES          Crates of old apples line the walls.
 APPLE_RACKS     Old apples rot on wooden racks.

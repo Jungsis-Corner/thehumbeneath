@@ -25,6 +25,10 @@ TR_PALE   equ   3               ; e_trait: a Pale One (a choice when calm)
 TR_ELDER  equ   4               ; e_trait: the Elder Pale (fight or spare)
 TR_ECHO   equ   5               ; e_trait: copies the party's last action
 TR_KEEPER equ   6               ; e_trait: the Hollow-Keeper (the endings)
+TR_FEAR   equ   7               ; e_trait: its hits can make a cat afraid
+FEAR_PCT  equ   30              ; chance that such a hit frightens
+FROZEN_PCT equ  50              ; chance that an afraid cat loses its turn
+POUNCE_PCT equ  15              ; a pounce hits less often...
 HUM_ROUNDS equ  4               ; Hum levels: every 4th round a pulse
 SHADOW_PCT equ  33              ; chance that an attack hits only a shadow
 
@@ -122,7 +126,8 @@ combat:
         tst.w   p_hp(a0)
         ble.s   .prn
         add.w   d1,p_bleed(a0)
-.prn    lea     p_size(a0),a0
+.prn    bclr    #PF_FEAR,p_flags+1(a0) ; fear ends with the fight
+        lea     p_size(a0),a0
         dbra    d0,.prs
         cmp.w   #CE_VICTORY,v_cend(a5)
         bne.s   .e
@@ -141,6 +146,15 @@ cat_turn:
         move.w  d0,v_cact(a5)   ; highlighted in the panel
         bsr     panel_show
         move.l  v_cetab(a5),a4
+        btst    #PF_FEAR,p_flags+1(a2) ; afraid: maybe too afraid to act
+        beq.s   .ask
+        bsr     rand100
+        cmp.w   #FROZEN_PCT,d0
+        bhs.s   .ask
+        move.w  #T_FROZEN,d0
+        move.w  p_name(a2),d1
+        bsr     name_msg
+        bra     .e
 .ask    bsr     menu_clear      ; Attack, Defend, Item, Flee
         move.w  #T_CMB_ATTACK,d0
         bsr     menu_addt
@@ -252,7 +266,10 @@ cat_turn:
 ; cat_attack: a2 = cat, a4 = enemy type; the first enemy still up
 cat_attack:
         move.w  #T_ATTACKS,d0
-        move.w  p_name(a2),d1
+        tst.w   v_pounce(a5)
+        beq.s   .say
+        move.w  #T_POUNCES,d0
+.say    move.w  p_name(a2),d1
         bsr     name_msg
         bsr     pause
         lea     v_cfoe(a5),a1
@@ -271,7 +288,10 @@ cat_attack:
         sub.w   e_def(a4),d1
         muls    #5,d1
         add.w   #75,d1
-        moveq   #20,d2
+        tst.w   v_pounce(a5)
+        beq.s   .chance
+        sub.w   #POUNCE_PCT,d1
+.chance moveq   #20,d2
         moveq   #95,d3
         bsr     clamp
         bsr     rand100
@@ -280,6 +300,10 @@ cat_attack:
         move.w  p_atk(a2),d1    ; damage 1 + random(attack) - defence/2
         bsr     randn
         addq.w  #1,d0
+        tst.w   v_pounce(a5)    ; ...but twice as hard
+        beq.s   .one
+        add.w   d0,d0
+.one
         move.w  e_def(a4),d1
         lsr.w   #1,d1
         sub.w   d1,d0
@@ -401,7 +425,18 @@ foe_attack:
         bsr     name_num_msg
         tst.w   p_hp(a3)
         ble.s   .fall
-        move.w  e_bleed(a4),d2  ; the wound may bleed
+        cmp.w   #TR_FEAR,e_trait(a4) ; the hit may frighten
+        bne.s   .bld
+        btst    #PF_FEAR,p_flags+1(a3)
+        bne.s   .bld
+        bsr     rand100
+        cmp.w   #FEAR_PCT,d0
+        bhs.s   .bld
+        bset    #PF_FEAR,p_flags+1(a3)
+        move.w  #T_AFRAID,d0
+        move.w  p_name(a3),d1
+        bsr     name_msg
+.bld    move.w  e_bleed(a4),d2  ; the wound may bleed
         beq.s   .poison
         cmp.w   p_bleed(a3),d2
         bls.s   .poison
@@ -532,6 +567,16 @@ victory:
         bra.s   .rank
 .nx     lea     p_size(a3),a3
         dbra    d2,.cat
+        lea     v_party(a5),a3  ; the fallen get up again, weak
+        moveq   #NPARTY-1,d2
+.up     tst.w   p_hp(a3)
+        bgt.s   .up1
+        move.w  #1,p_hp(a3)
+        move.w  #T_GETS_BACK,d0
+        move.w  p_name(a3),d1
+        bsr     name_msg
+.up1    lea     p_size(a3),a3
+        dbra    d2,.up
         move.l  v_cgrp(a5),a3   ; the group is gone
         bset    #GF_GONE,G_FLAGS(a3)
         moveq   #0,d0

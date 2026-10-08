@@ -11,6 +11,7 @@ SK_HERB      equ 2
 SK_CHARM     equ 3
 SK_GATHER    equ 4
 SK_APPLY     equ 5
+SK_POUNCE    equ 6              ; the hunter, in a fight, from the front row
 PACK_HEAL    equ 3              ; hit points a Moss Pack gives
 CHARM_ROUNDS equ 3              ; rounds of half damage
 MOSS_FEN     equ 1              ; moss kinds (as i_value of the moss items)
@@ -24,7 +25,13 @@ skill_menu:
         bsr     menu_clear
         lea     v_mitem(a5),a0
         lea     .other(pc),a1
-        cmp.w   #T_ROLE_HEALER,p_role(a2)
+        cmp.w   #T_ROLE_HUNTER,p_role(a2)
+        bne.s   .nohunt
+        tst.w   v_fight(a5)
+        beq.s   .list
+        lea     .hunt(pc),a1
+        bra.s   .list
+.nohunt cmp.w   #T_ROLE_HEALER,p_role(a2)
         bne.s   .list
         lea     .heal(pc),a1
         tst.w   v_fight(a5)
@@ -49,6 +56,7 @@ skill_menu:
 .fight  dc.b    SK_MOSS_PACK,SK_PRESS,SK_HERB,SK_CHARM,-1
 .heal   dc.b    SK_MOSS_PACK,SK_HERB,SK_GATHER,-1
 .other  dc.b    SK_APPLY,-1
+.hunt   dc.b    SK_POUNCE,SK_APPLY,-1
         even
 
 ; use_skill: d0 = skill, a2 = cat using it -> NE = done (a turn used)
@@ -60,6 +68,8 @@ use_skill:
         beq     .charm
         cmp.w   #SK_GATHER,d7
         beq     .gather
+        cmp.w   #SK_POUNCE,d7
+        beq     .pounce
         move.w  #T_MENU_WHO,d0  ; the others need a cat to work on
         bsr     menu_cats       ; -> a3
         tst.w   d0
@@ -213,6 +223,18 @@ use_skill:
 .g2     move.w  d2,d0
         move.w  p_name(a2),d1
         bsr     name_msg
+        bra     .done
+
+.pounce tst.w   p_row(a2)       ; Pounce: twice the damage, less often a
+        beq.s   .pc             ; hit; only with room (from the front row)
+        move.w  #T_NO_ROOM,d0
+        move.w  p_name(a2),d1
+        bsr     name_msg
+        bra     .no
+.pc     move.l  v_cetab(a5),a4
+        move.w  #1,v_pounce(a5)
+        bsr     cat_attack
+        clr.w   v_pounce(a5)
         bra     .done
 
 .noneed move.w  #T_NO_NEED,d0

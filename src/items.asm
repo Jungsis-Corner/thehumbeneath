@@ -190,8 +190,10 @@ use_item:
         cmp.w   #IK_WRAP,d1
         beq.s   .wrap
         cmp.w   #IK_CALM,d1
-        beq.s   .calm
-        move.w  #T_NOT_NOW,d0   ; herb, lure, key: not here
+        beq     .calm
+        cmp.w   #IK_LURE,d1
+        beq.s   .lure
+        move.w  #T_NOT_NOW,d0   ; herb, key: not here
         bsr     msg_print
         bra     .kept
 .heal   tst.w   p_hp(a3)
@@ -223,6 +225,13 @@ use_item:
         move.w  #T_WRAPPED,d0
         bsr     msg_print
         bra.s   .used
+.lure   tst.w   v_fight(a5)     ; the Echo Pebble: thrown far away
+        beq.s   .throw
+        move.w  #T_NOT_NOW,d0
+        bsr     msg_print
+        bra.s   .kept
+.throw  bsr     pebble
+        bra.s   .used
 .calm   bclr    #PF_FEAR,p_flags+1(a3)
         move.w  #T_CALM,d0
         move.w  p_name(a3),d1
@@ -234,6 +243,52 @@ use_item:
         rts
 .kept   movem.l (sp)+,d0-d3/a0-a2
         cmp.w   d0,d0           ; EQ
+        rts
+
+; pebble: the echo draws the enemies within 6 cells away: hunters stop
+;         hunting (they guard where they are), awake Pale Ones listen again
+pebble:
+        movem.l d0-d4/a0-a1,-(sp)
+        move.w  #T_PEBBLE,d0
+        bsr     msg_print
+        move.w  v_pos(a5),d3
+        moveq   #31,d2
+        and.w   d3,d2           ; party x
+        lsr.w   #5,d3           ; party y
+        move.w  v_map+LV_GROUPS(a5),d0
+        lea     v_map(a5),a0
+        add.w   d0,a0
+        lea     enemytab(pc),a1
+.g      cmp.b   #G_END,G_X(a0)
+        beq.s   .e
+        cmp.b   #GM_HUNT,G_MODE(a0)
+        bne.s   .n
+        moveq   #0,d0
+        move.b  G_X(a0),d0
+        sub.w   d2,d0
+        bpl.s   .x
+        neg.w   d0
+.x      cmp.w   #6,d0
+        bhi.s   .n
+        moveq   #0,d0
+        move.b  G_Y(a0),d0
+        sub.w   d3,d0
+        bpl.s   .y
+        neg.w   d0
+.y      cmp.w   #6,d0
+        bhi.s   .n
+        moveq   #0,d0
+        move.b  G_TYPE(a0),d0
+        mulu    #e_size,d0
+        moveq   #GM_GUARD,d4
+        cmp.w   #TR_PALE,e_trait(a1,d0.w)
+        bne.s   .set
+        moveq   #GM_LISTEN,d4
+.set    move.b  d4,G_MODE(a0)
+        bclr    #GF_SEEN,G_FLAGS(a0)
+.n      addq.l  #G_SIZE,a0
+        bra.s   .g
+.e      movem.l (sp)+,d0-d4/a0-a1
         rts
 
 ; equip: a3 = cat, d0 = gear item from the pack (0 = take off)

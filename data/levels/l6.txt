@@ -54,6 +54,7 @@ event 9 5 message CRYPT
 event 7 7 item COBWEB_WRAP 1
 event 11 6 mark MARK_6_4
 event 13 5 gather DRY_MOSS 2
+event 17 7 item LANTERN_SHARD 1
 event 19 7 item POPPY_SEED 1
 event 20 6 mark MARK_6_6
 event 25 2 message EMPTY_NICHE
@@ -88,13 +89,10 @@ group 3 6 BONE_RAT 1 guard
 group 15 6 SHADE_CAT 1 hunt
 group 26 6 BONE_RAT 3 guard
 group 9 10 WRAITH_OWL 1 flutter
-group 21 9 WRAITH_OWL 1 flutter
 group 3 14 BONE_RAT 2 guard
 group 15 14 SHADE_CAT 2 hunt
 group 27 14 WRAITH_OWL 1 flutter
-group 12 19 SHADE_CAT 1 hunt
 group 3 20 BONE_RAT 2 hunt
 group 9 26 WRAITH_OWL 2 flutter
 group 22 29 SHADE_CAT 2 guard
-group 27 27 BONE_RAT 2 guard
 group 29 28 WRAITH_OWL 2 guard

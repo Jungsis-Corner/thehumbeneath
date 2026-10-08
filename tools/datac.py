@@ -68,7 +68,7 @@ def main():
             continue
         key, args = line[0], line[1:]
         try:
-            if key in ('bleedsteps', 'deepmin') and len(args) == 1:
+            if key in ('bleedsteps', 'deepmin', 'regensteps') and len(args) == 1:
                 consts[key] = int(args[0])
             elif key == 'rank' and len(args) == 2:
                 ranks.append((text(where, args[0]), int(args[1])))
@@ -95,7 +95,7 @@ def main():
         fail('%s: %d cats needed' % (src, NPARTY))
     if not ranks or ranks[0][1] != 0 or any(a[1] >= b[1] for a, b in zip(ranks, ranks[1:])):
         fail('%s: ranks must start at 0 XP and rise' % src)
-    for k in ('bleedsteps', 'deepmin', 'rankup'):
+    for k in ('bleedsteps', 'deepmin', 'regensteps', 'rankup'):
         if k not in consts:
             fail('%s: missing "%s"' % (src, k))
 
@@ -112,6 +112,7 @@ def main():
         f.write('NPARTY      equ %d\n' % NPARTY)
         f.write('NRANKS      equ %d\n' % len(ranks))
         f.write('BLEED_STEPS equ %d  ; steps per bleeding tick\n' % consts['bleedsteps'])
+        f.write('REGEN_STEPS equ %d  ; steps per hit point regained\n' % consts['regensteps'])
         f.write('DEEP_MIN    equ %d  ; percent of max HP a Deep Wound leaves\n'
                 % consts['deepmin'])
         for k, v in zip(('HP', 'ATK', 'DEF', 'SPD'), consts['rankup']):

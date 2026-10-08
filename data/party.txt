@@ -3,17 +3,19 @@
 # Values are first proposals and meant to be tuned.
 
 bleedsteps 4        # steps per bleeding tick outside combat
+regensteps 8        # steps per hit point regained (not while bleeding or
+                    # poisoned)
 deepmin    50       # Deep Wound lowers max HP, but not below this percent
 
 #      gains per new rank: hp atk def spd
-rankup 2 1 0 0
+rankup 3 1 0 0
 
 #    rank name        XP needed
 rank RANK_KIT         0
-rank RANK_POUNCE      20
-rank RANK_FENWALKER   50
-rank RANK_EMBERGUARD  100
-rank RANK_DEEPWALKER  180
+rank RANK_POUNCE      40
+rank RANK_FENWALKER   150
+rank RANK_EMBERGUARD  350
+rank RANK_DEEPWALKER  700
 
 # row: front (melee, attacked more often) or back (half damage, safer)
 #   name              role          row    hp  atk def spd find mosscap fen dry glow

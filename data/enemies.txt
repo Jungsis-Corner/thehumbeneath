@@ -1,13 +1,16 @@
 # THE HUM BENEATH - enemy types (numbers only; names are text ids)
 #
-# HP from STORY.md, the other values are first proposals.
+# HP from STORY.md; the other values tuned in M9.9 with a simulation of
+# every fight (normal groups cost 5-20 % of the party's HP, mini-bosses
+# 20-30 %, the Hollow-Keeper about half).
 # bleed: bleeding a hit can cause (0 none, 1 Scratch, 2 Gash, 3 Deep Wound)
 # poison: 1 = a hit can poison
 # boss: 1 = mini-boss, the party cannot flee
 # trait: - none, revive (gets up once more with half its HP), illusion
 #        (a third of the attacks on it hit only a shadow), pale (a calm
 #        group gives the choice fight or pass), elder (fight or spare),
-#        echo (copies the last cat's hit, or waits), keeper (the endings)
+#        echo (copies the last cat's hit, or waits), keeper (the endings),
+#        fear (a hit may make a cat afraid: it may lose its turns)
 # sprite: picture name in tools/sprites.py
 #
 #     id               name              plural             hp  atk def spd bleed poison boss trait    xp   sprite
@@ -17,23 +20,23 @@ enemy OLD_WHISKERLESS  EN_WHISKERLESS    EN_WHISKERLESS     18  5   2   2   1   
 enemy SEWER_RAT        EN_SEWER_RAT      EN_SEWER_RATS      7   3   1   3   0     1      0    -        4    rat
 enemy EEL              EN_EEL            EN_EELS            8   4   1   4   1     0      0    -        4    eel
 enemy LEECH            EN_LEECH          EN_LEECHES         4   2   0   1   1     0      0    -        2    leech
-enemy GATE_RAT         EN_GATE_RAT       EN_GATE_RAT        24  6   2   3   2     1      1    -        25   gaterat
+enemy GATE_RAT         EN_GATE_RAT       EN_GATE_RAT        24  7   2   3   2     1      1    -        25   gaterat
 enemy BAT              EN_BAT            EN_BATS            5   2   1   7   1     0      0    -        3    bat
-enemy CAVE_CRICKET     EN_CRICKET        EN_CRICKETS        6   3   4   5   0     0      0    -        4    cricket
-enemy WATER_SNAKE      EN_SNAKE          EN_SNAKES          9   4   1   4   0     1      0    -        5    snake
+enemy CAVE_CRICKET     EN_CRICKET        EN_CRICKETS        6   4   4   5   0     0      0    -        4    cricket
+enemy WATER_SNAKE      EN_SNAKE          EN_SNAKES          9   5   1   4   0     1      0    -        5    snake
 enemy FOX              EN_FOX            EN_FOXES           14  5   2   5   2     0      0    -        8    fox
 enemy CROW             EN_CROW           EN_CROWS           8   3   1   6   1     0      0    -        5    crow
 enemy RUST_BEETLE      EN_BEETLE         EN_BEETLES         10  3   6   2   0     0      0    -        6    beetle
-enemy VIXEN_REDBRUSH   EN_VIXEN          EN_VIXEN           30  7   3   6   2     0      1    -        40   vixen
-enemy ADDER            EN_ADDER          EN_ADDERS          10  4   2   5   1     1      0    -        7    adder
+enemy VIXEN_REDBRUSH   EN_VIXEN          EN_VIXEN           30  8   4   6   2     0      1    -        40   vixen
+enemy ADDER            EN_ADDER          EN_ADDERS          10  5   2   5   1     1      0    -        7    adder
 enemy SPORE_MOTH       EN_MOTH           EN_MOTHS           6   2   1   6   0     1      0    -        5    moth
-enemy CAVE_TOAD        EN_TOAD           EN_TOADS           12  7   3   1   0     0      0    -        8    toad
+enemy CAVE_TOAD        EN_TOAD           EN_TOADS           12  8   3   1   0     0      0    -        8    toad
 enemy BONE_RAT         EN_BONE_RAT       EN_BONE_RATS       9   4   2   4   1     0      0    revive   9    bonerat
 enemy SHADE_CAT        EN_SHADE_CAT      EN_SHADE_CATS      12  5   2   6   2     0      0    illusion 11   shadecat
-enemy WRAITH_OWL       EN_OWL            EN_OWLS            16  6   2   5   3     0      0    -        14   owl
-enemy PALE_ONE         EN_PALE           EN_PALES           14  5   2   5   1     0      0    pale     12   pale
-enemy WARREN_RAT       EN_WARREN_RAT     EN_WARREN_RATS     10  4   1   5   1     0      0    -        8    warrenrat
-enemy STALKER_BADGER   EN_BADGER         EN_BADGERS         28  8   4   3   2     0      0    -        25   badger
-enemy ELDER_PALE       EN_ELDER          EN_ELDER           36  7   3   4   2     0      1    elder    50   elder
+enemy WRAITH_OWL       EN_OWL            EN_OWLS            16  6   2   5   3     0      0    fear     14   owl
+enemy PALE_ONE         EN_PALE           EN_PALES           14  6   2   5   1     0      0    pale     12   pale
+enemy WARREN_RAT       EN_WARREN_RAT     EN_WARREN_RATS     10  5   1   5   1     0      0    -        8    warrenrat
+enemy STALKER_BADGER   EN_BADGER         EN_BADGERS         28  10  5   3   2     0      0    -        25   badger
+enemy ELDER_PALE       EN_ELDER          EN_ELDER           36  9   4   5   2     0      1    elder    50   elder
 enemy ECHO_SHADE       EN_ECHO           EN_ECHOS           20  6   2   4   1     0      0    echo     18   echoshade
 enemy HOLLOW_KEEPER    EN_KEEPER         EN_KEEPER          60  9   4   3   3     0      1    keeper   100  keeper

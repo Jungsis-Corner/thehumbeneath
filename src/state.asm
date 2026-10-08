@@ -412,13 +412,18 @@ game_load:
         tst.l   d0
         rts
 
-; slot_menu: d0 = title text id -> d0 = slot 1-3, -1 = cancelled
+; slot_menu: d0 = title text id -> d0 = slot 1-3 (loading: 0-3, slot 0
+;            is the automatic save), -1 = cancelled
 slot_menu:
-        movem.l d1-d5/a0-a2,-(sp)
+        movem.l d1-d6/a0-a2,-(sp)
         move.w  d0,d5
         bsr     menu_clear
         lea     v_args(a5),a2
-        moveq   #1,d4
+        moveq   #1,d4           ; first slot in the menu
+        cmp.w   #T_GM_LOAD,d5
+        bne.s   .first
+        moveq   #0,d4
+.first  move.w  d4,d6
 .slot   move.l  d4,(a2)
         move.w  d4,d0
         bsr     save_head
@@ -429,8 +434,16 @@ slot_menu:
         move.w  v_shdr+20(a5),d0
         move.l  d0,8(a2)
         move.w  #T_SLOT_USED,d0
+        tst.w   d4
+        bne.s   .add
+        move.l  4(a2),(a2)      ; (no slot number for the automatic save)
+        move.l  8(a2),4(a2)
+        move.w  #T_SLOT_AUTO,d0
         bra.s   .add
 .empty  move.w  #T_SLOT_EMPTY,d0
+        tst.w   d4
+        bne.s   .add
+        move.w  #T_SLOT_NOAUTO,d0
 .add    bsr     text_fmt
         bsr     menu_add
         addq.w  #1,d4
@@ -441,8 +454,8 @@ slot_menu:
         bsr     menu_run
         tst.w   d0
         bmi.s   .e
-        addq.w  #1,d0
-.e      movem.l (sp)+,d1-d5/a0-a2
+        add.w   d6,d0
+.e      movem.l (sp)+,d1-d6/a0-a2
         rts
 
 ; game_menu: (ESC, or Game in the space menu) continue, save, load, quit
