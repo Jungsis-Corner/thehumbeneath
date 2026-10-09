@@ -23,6 +23,7 @@
 ;   NOENEMY         levels without enemy groups (to test the levels)
 ;   ANGRYTEST       the party has attacked a calm Pale One (Elder Pale test)
 ;   SEED=n          the places of things in this game (see lv_shuffle)
+;   HEALERDOWN      the healer starts fallen (Starfolk wake her after a fight)
 ;   MAPALL          the map shows the whole level, groups and items too
 ;=====================================================================
 
@@ -171,7 +172,11 @@ v_msg   rs.l    1               ; message window channel
 v_poll  rs.l    2               ; poll list linkage (50 Hz counter)
 v_text  rs.l    1               ; text file in memory (0 = not loaded)
 v_txtres rs.l   1               ; length of the part in memory
-v_lang  rs.w    1               ; language: 0 English, 1 German
+v_lang  rs.w    1               ; language: 0 English, 1 German (hum_cfg:
+v_asave rs.w    1               ; autosave: AS_LEVEL.. AS_OFF  these three
+v_aslot rs.w    1               ; last auto slot: 0 = slot 0, 1 = AUTO2  words)
+v_asteps rs.w   1               ; steps since the last autosave
+v_slots rs.b    8               ; slot_menu: the slot of every line
 v_ltstart rs.w  1               ; level text block: file offset, length
 v_ltlen rs.w    1
 v_keys  rs.w    1               ; current keys (KEYROW(1) layout)
@@ -659,23 +664,31 @@ cfg_load:
         lea     v_lang(a5),a1
         moveq   #2,d4
         bsr     fread
-        beq.s   .cl
+        beq.s   .more
         clr.w   v_lang(a5)
+        bra.s   .cl
+.more   lea     v_asave(a5),a1  ; autosave setting and slot (since v1.4;
+        moveq   #4,d4           ; an older hum_cfg has only the language)
+        bsr     fread
+        beq.s   .cl
+        clr.l   v_asave(a5)
 .cl     moveq   #IO_CLOSE,d0
         trap    #2
         and.w   #1,v_lang(a5)
+        and.w   #3,v_asave(a5)
+        and.w   #1,v_aslot(a5)
 .e      movem.l (sp)+,d0-d4/a0-a3
         rts
 
-; cfg_save: the language into hum_cfg (errors are ignored)
+; cfg_save: language and autosave into hum_cfg (errors are ignored)
 cfg_save:
         movem.l d0-d4/a0-a3,-(sp)
         lea     cfgname(pc),a2
         moveq   #2,d3
         bsr     file_open
         bne.s   .e
-        lea     v_lang(a5),a1
-        moveq   #2,d4
+        lea     v_lang(a5),a1  ; language, autosave setting and slot
+        moveq   #6,d4
         bsr     fwrite
         moveq   #IO_CLOSE,d0
         trap    #2
@@ -1543,11 +1556,8 @@ cell_events:
         bset    #CELL_SEEN,0(a0,d1.w)
         move.w  LV_ENTRY(a0),d0
         bsr     msg_print
-        moveq   #0,d0           ; a new level: the game is saved in slot 0
-        bsr     game_save
-        bne.s   .e
-        move.w  #T_AUTOSAVED,d0
-        bsr     msg_print
+        moveq   #AS_LEVEL,d0    ; a new level: the game is saved
+        bsr     autosave
 .e      movem.l (sp)+,d0-d4/a0-a3
         rts
 
@@ -2556,6 +2566,9 @@ party_init:
         move.w  #2,2*p_size+p_hp(a1)
         clr.w   3*p_size+p_hp(a1)
         endc
+        ifd     HEALERDOWN      ; Mossfern has fallen
+        clr.w   p_size+p_hp(a1)
+        endc
         ifd     XPTEST
         move.w  #38,p_xp(a1)
         move.w  #38,p_size+p_xp(a1)
@@ -2661,7 +2674,14 @@ bleed_step:
         subq.w  #1,(a0)
 .wn     lea     p_size(a0),a0
         dbra    d0,.wr
-        cmp.w   #TRACK_STEPS,v_track(a5) ; the prey forgets the hunter
+        cmp.w   #AS_STEPS,v_asave(a5) ; autosave every AS_EVERY steps?
+        bne.s   .as
+        addq.w  #1,v_asteps(a5)
+        cmp.w   #AS_EVERY,v_asteps(a5)
+        blo.s   .as
+        moveq   #AS_STEPS,d0
+        bsr     autosave
+.as     cmp.w   #TRACK_STEPS,v_track(a5) ; the prey forgets the hunter
         bhs.s   .tr
         addq.w  #1,v_track(a5)
 .tr     bsr     get_up          ; the fallen get up after a while

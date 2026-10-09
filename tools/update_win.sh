@@ -2,7 +2,7 @@
 # update_win.sh <old.win> [new.win] [out.win]
 #   A new release image with the saves of an old one: copies new.win
 #   (default dist/thehum.win) to out.win (default dist/thehum_update.win)
-#   and writes the save files (hum_sv0..hum_sv3) and the language setting
+#   and writes the save files (hum_sv0..hum_sv4) and the settings
 #   (hum_cfg) of old.win into it. Neither old.win nor new.win is changed.
 #   Needs qxltool (tools/setup_tools.sh), e.g. in ~/toolchain/qxltools.
 #
@@ -24,9 +24,9 @@ OLD=$(cd "$(dirname "$OLD")" && pwd)/$(basename "$OLD")
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 # which files does the old image have?
-names=$(echo ls | qxltool -w "$OLD" 2>/dev/null | awk '{print $1}' | grep -E '^hum_(sv[0-3]|cfg)$')
+names=$(echo ls | qxltool -w "$OLD" 2>/dev/null | awk '{print $1}' | grep -E '^hum_(sv[0-4]|cfg)$')
 if [ -z "$names" ]; then
-  echo "update_win.sh: no saves (hum_sv0..3) and no hum_cfg in $OLD" >&2
+  echo "update_win.sh: no saves (hum_sv0..4) and no hum_cfg in $OLD" >&2
   exit 1
 fi
 for n in $names; do

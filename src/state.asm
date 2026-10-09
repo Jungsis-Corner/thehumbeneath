@@ -21,7 +21,8 @@ GM_CONTINUE equ 0               ; game menu lines
 GM_SAVE    equ  1
 GM_LOAD    equ  2
 GM_SOUND   equ  3
-GM_QUIT    equ  4
+GM_ASAVE   equ  4
+GM_QUIT    equ  5
 
 ; lv_slot: d0 = level -> a0 = its place in v_lvstore
 lv_slot:
@@ -437,19 +438,44 @@ roles_set:
         movem.l (sp)+,d0/a0-a1
         rts
 
-; slot_menu: d0 = title text id -> d0 = slot 1-3 (loading: 0-3, slot 0
-;            is the automatic save), -1 = cancelled
+; slot_menu: d0 = title text id -> d0 = slot, -1 = cancelled. Saving:
+;            slots 1-3; loading: the two automatic saves first (the newest
+;            on top), then 1-3
+AUTO2      equ  4               ; the second automatic save (hum_sv4)
 slot_menu:
-        movem.l d1-d6/a0-a2,-(sp)
+        movem.l d1-d6/a0-a3,-(sp)
         move.w  d0,d5
         bsr     menu_clear
-        lea     v_args(a5),a2
-        moveq   #1,d4           ; first slot in the menu
+        lea     v_slots(a5),a3  ; the slot of every line
         cmp.w   #T_GM_LOAD,d5
-        bne.s   .first
-        moveq   #0,d4
-.first  move.w  d4,d6
-.slot   move.l  d4,(a2)
+        bne.s   .own
+        moveq   #0,d0
+        moveq   #AUTO2,d1
+        tst.w   v_aslot(a5)     ; AUTO2 is the newest: first
+        beq.s   .a1
+        exg     d0,d1
+.a1     move.b  d0,(a3)+
+        move.b  d1,(a3)+
+.own    moveq   #1,d0
+.o      move.b  d0,(a3)+
+        addq.w  #1,d0
+        cmp.w   #SAVE_SLOTS,d0
+        bls.s   .o
+        st      (a3)
+        lea     v_slots(a5),a3
+        lea     v_args(a5),a2
+.line   moveq   #0,d4
+        move.b  (a3)+,d4
+        cmp.b   #$ff,d4
+        beq.s   .run
+        moveq   #1,d6           ; d6 = number shown: slot, or 1/2 for auto
+        tst.w   d4
+        beq.s   .n1
+        moveq   #2,d6
+        cmp.w   #AUTO2,d4
+        beq.s   .n1
+        move.w  d4,d6
+.n1     move.l  d6,(a2)
         move.w  d4,d0
         bsr     save_head
         bne.s   .empty
@@ -459,28 +485,60 @@ slot_menu:
         move.w  v_shdr+20(a5),d0
         move.l  d0,8(a2)
         move.w  #T_SLOT_USED,d0
-        tst.w   d4
-        bne.s   .add
-        move.l  4(a2),(a2)      ; (no slot number for the automatic save)
-        move.l  8(a2),4(a2)
-        move.w  #T_SLOT_AUTO,d0
-        bra.s   .add
+        bra.s   .auto
 .empty  move.w  #T_SLOT_EMPTY,d0
-        tst.w   d4
+.auto   tst.w   d4              ; the automatic saves: their own lines
+        beq.s   .au
+        cmp.w   #AUTO2,d4
         bne.s   .add
-        move.w  #T_SLOT_NOAUTO,d0
+.au     add.w   #T_SLOT_AUTO-T_SLOT_USED,d0 ; (USED, EMPTY, AUTO, NOAUTO)
 .add    bsr     text_fmt
         bsr     menu_add
-        addq.w  #1,d4
-        cmp.w   #SAVE_SLOTS,d4
-        bls.s   .slot
-        move.w  d5,d0
+        bra.s   .line
+.run    move.w  d5,d0
         bsr     text_get
         bsr     menu_run
         tst.w   d0
         bmi.s   .e
-        add.w   d6,d0
-.e      movem.l (sp)+,d1-d6/a0-a2
+        lea     v_slots(a5),a3
+        move.b  0(a3,d0.w),d0
+        ext.w   d0
+.e      movem.l (sp)+,d1-d6/a0-a3
+        rts
+
+; autosave: d0 = why (AS_LEVEL, AS_FIGHT, AS_STEPS): saves into the older
+;           of the two automatic slots if the setting (v_asave) asks for
+;           it: AS_LEVEL always (unless AS_OFF), the others when chosen
+AS_LEVEL   equ  0               ; v_asave: on a new level only
+AS_FIGHT   equ  1               ; ... and after every won fight
+AS_STEPS   equ  2               ; ... and every AS_EVERY steps
+AS_OFF     equ  3               ; never
+AS_EVERY   equ  100
+autosave:
+        movem.l d0-d1/a2,-(sp)
+        move.w  v_asave(a5),d1
+        cmp.w   #AS_OFF,d1
+        beq.s   .e
+        tst.w   d0
+        beq.s   .do
+        cmp.w   d0,d1
+        bne.s   .e
+.do     clr.w   v_asteps(a5)
+        bchg    #0,v_aslot+1(a5) ; the other slot this time
+        moveq   #0,d0
+        tst.w   v_aslot(a5)
+        beq.s   .s
+        moveq   #AUTO2,d0
+.s      bsr     game_save
+        bne.s   .e
+        bsr     cfg_save        ; (which slot is the newest)
+        lea     v_args(a5),a2   ; "(The game was saved: Auto 1.)"
+        moveq   #1,d0
+        add.w   v_aslot(a5),d0
+        move.l  d0,(a2)
+        move.w  #T_AUTOSAVED,d0
+        bsr     msg_print
+.e      movem.l (sp)+,d0-d1/a2
         rts
 
 ; game_menu: (ESC, or Game in the space menu) continue, save, load, quit
@@ -496,6 +554,9 @@ game_menu:
         move.w  #T_GM_SOUND_ON,d0
         add.w   v_mute(a5),d0   ; (T_GM_SOUND_OFF follows)
         bsr     menu_addt
+        move.w  #T_GM_AS_LEVEL,d0 ; (LEVEL, FIGHT, STEPS, OFF in a row)
+        add.w   v_asave(a5),d0
+        bsr     menu_addt
         move.w  #T_GM_QUIT,d0
         bsr     menu_addt
         move.w  #T_TITLE,d0
@@ -509,9 +570,16 @@ game_menu:
         beq     .quit
         cmp.w   #GM_SOUND,d0
         beq.s   .sound
+        cmp.w   #GM_ASAVE,d0
+        beq.s   .asave
 .e      bsr     redraw
         movem.l (sp)+,d0-d2/a0-a2
         rts
+.asave  addq.w  #1,v_asave(a5)  ; the next autosave setting
+        and.w   #3,v_asave(a5)
+        clr.w   v_asteps(a5)
+        bsr     cfg_save
+        bra     .back
 .sound  bchg    #0,v_mute+1(a5) ; sound on/off
         moveq   #S_FOUND,d0     ; (heard only when on)
         bsr     sound
@@ -543,10 +611,10 @@ game_menu:
         bra.s   .back
 .damaged move.w #T_LOAD_FAILED,d0
         bsr     msg_print
-        bra.s   .e
+        bra     .e
 .loaded move.w  #T_LOADED,d0
         bsr     msg_print
-        bra.s   .e
+        bra     .e
 .quit   bsr     view_refresh    ; really?
         bsr     menu_clear
         move.w  #T_NO,d0

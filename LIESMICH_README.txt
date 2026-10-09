@@ -84,8 +84,10 @@ DAS SPIEL
   Beim Gehen kommt langsam Lebenskraft zurueck; Rastplaetze heilen
   alles. Nach einem gewonnenen Kampf hoeren Kratzer auf zu bluten.
   Eine gefallene Katze bleibt liegen: Der Sternenruf der Heilerin
-  (2 Moos) richtet sie auf. Ohne ihn steht sie erst nach 60 Schritten
-  auf, erschoepft, bis Moosverband oder Rastplatz sie heilen.
+  (2 Moos) richtet sie auf; ist die Heilerin selbst gefallen, weckt
+  das Sternvolk sie nach einem gewonnenen Kampf. Ohne Sternenruf steht
+  eine Katze erst nach 60 Schritten auf, erschoepft, bis Moosverband
+  oder Rastplatz sie heilen.
   Erfahrung bringt neue Raenge (Taste C zeigt, wie viele EP noch fehlen).
   An den Waenden haben die verschollenen Tiefenwaechter Kratzzeichen
   hinterlassen - sie erzaehlen, was unten geschah.
@@ -97,15 +99,19 @@ DAS SPIEL
   Es gibt drei verschiedene Enden.
 
 SPEICHERN
-  ESC - Speichern: drei Plaetze. Bei jedem Ebenenwechsel speichert das
-  Spiel zusaetzlich auf den Platz "Auto". Die Zeile im Lademenue zeigt
-  die Ebene und wie viel des Spiels geschafft ist. Die Spielstaende
-  (hum_sv0..hum_sv3) und die gewaehlte Sprache (hum_cfg) liegen auf dem
-  Laufwerk des Spiels.
+  ESC - Speichern: drei Plaetze. Dazu speichert das Spiel automatisch,
+  abwechselnd in "Auto 1" und "Auto 2" (so bleibt immer der vorletzte
+  Stand als Rueckfall). Wann, stellt ESC - AUTOSPEICHERN ein: EBENE (bei
+  jedem Ebenenwechsel, Standard), KAMPF (auch nach jedem gewonnenen
+  Kampf), 100 SCHRITTE (auch alle 100 Schritte) oder AUS. Das Lademenue
+  zeigt den neuesten Auto-Stand oben; jede Zeile zeigt die Ebene und
+  wie viel des Spiels geschafft ist. Spielstaende (hum_sv0..hum_sv4)
+  und Einstellungen (hum_cfg) liegen auf dem Laufwerk des Spiels.
   ESC - Ton: Klaenge an oder aus.
 
 NEUE VERSION, SPIELSTAENDE BEHALTEN
-  Spielstaende und Sprache stehen im Image (hum_sv0..hum_sv3, hum_cfg).
+  Spielstaende und Einstellungen stehen im Image (hum_sv0..hum_sv4,
+  hum_cfg).
   Ein neues thehum.win hat keine. Unter Linux/WSL uebertraegt sie
       ./tools/update_win.sh altes_thehum.win
   in eine Kopie des neuen Images: dist/thehum_update.win. Diese als
@@ -113,8 +119,8 @@ NEUE VERSION, SPIELSTAENDE BEHALTEN
   geht es mit qxltool von Hand:
       echo "cp hum_sv1 > hum_sv1" | qxltool -w altes_thehum.win
       echo "write hum_sv1 hum_sv1" | qxltool -w neues_thehum.win
-  (ebenso fuer hum_sv0, hum_sv2, hum_sv3 und hum_cfg). Spielstaende aus
-  v1.0 lassen sich in v1.1 laden.
+  (ebenso fuer hum_sv0, hum_sv2, hum_sv3, hum_sv4 und hum_cfg).
+  Spielstaende aelterer Versionen lassen sich in neueren laden.
 
 BAUEN
   In src/: ./make.sh  (braucht vasm und Python 3 mit Pillow; fuer
@@ -209,8 +215,10 @@ THE GAME
   stops the bleeding - best in the healer's paws. Herbs cure poison.
   Walking slowly brings strength back; resting places heal everything.
   After a won fight scratches stop bleeding. A fallen cat stays down:
-  the healer's Starfolk Call (2 moss) raises it. Without it, it gets up
-  after 60 steps, worn out until a Moss Pack or a resting place heals it.
+  the healer's Starfolk Call (2 moss) raises it; a fallen healer is
+  woken by the Starfolk after a won fight. Without the Call a cat gets
+  up after 60 steps, worn out until a Moss Pack or a resting place
+  heals it.
   Experience brings new ranks (key C shows how many XP are still missing).
   The lost Deepwardens left Scratch-Marks on the walls - they tell what
   happened down there.
@@ -221,14 +229,18 @@ THE GAME
   There are three different endings.
 
 SAVING
-  ESC - Save: three slots. On every change of level the game also saves
-  to the slot "Auto". The line in the load menu shows the level and how
-  much of the game is done. The saves (hum_sv0..hum_sv3) and the chosen
-  language (hum_cfg) are kept on the drive of the game.
+  ESC - Save: three slots. The game also saves by itself, by turns into
+  "Auto 1" and "Auto 2" (so the save before the last one is always
+  there to fall back on). When, is set in ESC - AUTOSAVE: LEVEL (on
+  every change of level, the default), FIGHTS (also after every won
+  fight), 100 STEPS (also every 100 steps) or OFF. The load menu shows
+  the newest automatic save on top; every line shows the level and how
+  much of the game is done. Saves (hum_sv0..hum_sv4) and settings
+  (hum_cfg) are kept on the drive of the game.
   ESC - Sound: sound on or off.
 
 NEW VERSION, KEEPING THE SAVES
-  Saves and language live in the image (hum_sv0..hum_sv3, hum_cfg). A
+  Saves and settings live in the image (hum_sv0..hum_sv4, hum_cfg). A
   new thehum.win has none. On Linux/WSL
       ./tools/update_win.sh old_thehum.win
   writes them into a copy of the new image: dist/thehum_update.win. Copy
@@ -236,8 +248,8 @@ NEW VERSION, KEEPING THE SAVES
   works with qxltool by hand:
       echo "cp hum_sv1 > hum_sv1" | qxltool -w old_thehum.win
       echo "write hum_sv1 hum_sv1" | qxltool -w new_thehum.win
-  (the same for hum_sv0, hum_sv2, hum_sv3 and hum_cfg). Saves of v1.0
-  load in v1.1.
+  (the same for hum_sv0, hum_sv2, hum_sv3, hum_sv4 and hum_cfg).
+  Saves of older versions load in newer ones.
 
 BUILDING
   In src/: ./make.sh  (needs vasm and Python 3 with Pillow; for

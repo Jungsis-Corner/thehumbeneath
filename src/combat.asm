@@ -140,6 +140,8 @@ combat:
         cmp.w   #CE_VICTORY,v_cend(a5)
         bne.s   .e
         bsr     victory
+        moveq   #AS_FIGHT,d0    ; (if the player chose it)
+        bsr     autosave
 .e      bsr     panel_show
         movem.l (sp)+,d0-d7/a0-a4
         rts
@@ -685,8 +687,18 @@ victory:
         bra.s   .rank
 .nx     lea     p_size(a3),a3
         dbra    d2,.cat
-                                ; (the fallen stay down: the healer's
-                                ; Starfolk Call, or a long rest - get_up)
+        lea     v_party(a5),a3  ; the fallen stay down (the healer's
+        moveq   #NPARTY-1,d2    ; Starfolk Call, or a long rest - get_up),
+.wk     cmp.w   #T_ROLE_HEALER,p_role(a3) ; but the Starfolk wake a fallen
+        bne.s   .wn             ; healer, so that she can call them
+        tst.w   p_hp(a3)
+        bgt.s   .wn
+        move.w  #1,p_hp(a3)
+        move.w  #T_WAKE_HEALER,d0
+        move.w  p_name(a3),d1
+        bsr     name_msg
+.wn     lea     p_size(a3),a3
+        dbra    d2,.wk
         move.l  v_cgrp(a5),a3   ; the group is gone
         bset    #GF_GONE,G_FLAGS(a3)
         moveq   #0,d0

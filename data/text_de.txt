@@ -39,12 +39,16 @@ GM_SAVE         SPEICHERN
 GM_LOAD         LADEN
 GM_SOUND_ON     TON: AN
 GM_SOUND_OFF    TON: AUS
+GM_AS_LEVEL     AUTOSPEICHERN: EBENE
+GM_AS_FIGHT     AUTOSPEICHERN: KAMPF
+GM_AS_STEPS     AUTOSPEICHERN: 100 SCHRITTE
+GM_AS_OFF       AUTOSPEICHERN: AUS
 GM_QUIT         BEENDEN
 SLOT_USED       Platz %d: Ebene %d, %d%% geschafft
 SLOT_EMPTY      Platz %d: leer
-SLOT_AUTO       Auto: Ebene %d, %d%% geschafft
-SLOT_NOAUTO     Auto: leer
-AUTOSAVED       (Das Spiel wurde gespeichert: Auto.)
+SLOT_AUTO       Auto %d: Ebene %d, %d%% geschafft
+SLOT_NOAUTO     Auto %d: leer
+AUTOSAVED       (Gespeichert: Auto %d.)
 SAVED           Gespeichert.
 SAVE_FAILED     Speichern ist fehlgeschlagen.
 NO_SAVE         Kein Spielstand gefunden.
@@ -179,6 +183,7 @@ GETS_BACK       %s rappelt sich auf, schwach.
 GETS_TIRED      %s steht erschöpft wieder auf.
 CALLS           %s ruft das Sternvolk an.
 STARLIGHT       %s steht im Sternenlicht auf.
+WAKE_HEALER     Das Sternvolk weckt %s.
 NEED_MOSS2      Dafür braucht es zwei Moos.
 DOOR_VALVES     Die Tür klemmt. Ventile halten sie.
 

@@ -663,6 +663,17 @@ draws a level source as PNG for review.
   The handcar stop in the lair moved from 25,25 (the only way from the
   south corridor into the lair, so the party was carried off) to the
   corner 30,22; same event index, so saves stay valid.
+- **v1.4 released** (2026-10-09): after a won fight the Starfolk wake a
+  fallen healer with 1 HP (only her), so that she can call the others;
+  before, a victory with the healer down could still end in a game over.
+  Test switch HEALERDOWN.
+  Autosave setting in the game menu (AUTOSAVE: LEVEL / FIGHTS / 100 STEPS
+  / OFF, default LEVEL, v_asave): the game saves by turns into two
+  automatic slots, 0 ("Auto 1") and 4 ("Auto 2", hum_sv4), so the save
+  before the last one stays; the load menu lists the newest on top.
+  hum_cfg holds language, setting and the last automatic slot (6 bytes; a
+  2-byte hum_cfg of older versions still loads). update_win.sh copies
+  hum_sv4 too.
   Fixed: damage could become 32767. A weak back-row cat against a high
   defence (Mossfern, attack 2, against a Rust Beetle, defence 6) made -2,
   and halving it as an unsigned word gave 32767; the same could happen to

@@ -46,13 +46,17 @@ GM_SAVE         SAVE GAME
 GM_LOAD         LOAD GAME
 GM_SOUND_ON     SOUND: ON
 GM_SOUND_OFF    SOUND: OFF
+GM_AS_LEVEL     AUTOSAVE: LEVEL
+GM_AS_FIGHT     AUTOSAVE: FIGHTS
+GM_AS_STEPS     AUTOSAVE: 100 STEPS
+GM_AS_OFF       AUTOSAVE: OFF
 GM_QUIT         QUIT
 @digits 1
 SLOT_USED       Slot %d: level %d, %d%% done
 SLOT_EMPTY      Slot %d: empty
-SLOT_AUTO       Auto: level %d, %d%% done
-SLOT_NOAUTO     Auto: empty
-AUTOSAVED       (The game was saved: Auto.)
+SLOT_AUTO       Auto %d: level %d, %d%% done
+SLOT_NOAUTO     Auto %d: empty
+AUTOSAVED       (The game was saved: Auto %d.)
 @digits 6
 SAVED           Save complete.
 SAVE_FAILED     The game could not be saved.
@@ -197,6 +201,7 @@ GETS_BACK       %s gets back up, weak.
 GETS_TIRED      %s gets back up, worn out.
 CALLS           %s calls on the Starfolk.
 STARLIGHT       %s stands up in the starlight.
+WAKE_HEALER     The Starfolk wake %s.
 NEED_MOSS2      That takes two moss.
 DOOR_VALVES     The door does not move. Valves hold it.
 

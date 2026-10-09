@@ -31,7 +31,7 @@ Vier von ihnen schleichen sich nachts aus dem Lager. Die Kellertür des verlasse
 Die fertigen Spieldateien gibt es unter **[Releases](../../releases/latest)**:
 
 - `thehum.win` – QXL.WIN-Image mit BOOT und Spiel für MiSTer, QPC2, Q-emuLator und QL-SD
-- `thehumbeneath-v1.3.zip` – alle Spieldateien inklusive Anleitung (`LIESMICH_README.txt`)
+- `thehumbeneath-v1.4.zip` – alle Spieldateien inklusive Anleitung (`LIESMICH_README.txt`)
 
 Die ausführliche Anleitung zum Starten (auch auf dem MiSTer), zur Steuerung und zum Spiel
 steht in [LIESMICH_README.txt](LIESMICH_README.txt), eine Übersicht, was gegen Wunden, Gift und
@@ -68,7 +68,7 @@ Four of them slip out of the camp one night. The cellar door of the abandoned fa
 Get the ready-to-play files from **[Releases](../../releases/latest)**:
 
 - `thehum.win` – QXL.WIN image with BOOT and game for MiSTer, QPC2, Q-emuLator and QL-SD
-- `thehumbeneath-v1.3.zip` – all game files including the manual (`LIESMICH_README.txt`)
+- `thehumbeneath-v1.4.zip` – all game files including the manual (`LIESMICH_README.txt`)
 
 How to start the game (including MiSTer), the controls and the game itself are described in
 [LIESMICH_README.txt](LIESMICH_README.txt) (English part below the German one); what helps against

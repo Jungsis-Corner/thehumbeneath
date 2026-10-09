@@ -46,6 +46,8 @@ Angst                                verliert oft ihren Zug (jeden 2.)
 Gefallen (0 LP)                      bleibt liegen, auch nach einem Sieg
   - Sternenruf          Heilerin, ausserhalb von Kaempfen, kostet 2 Moos:
                         steht mit einem Viertel der LP auf
+  - Heilerin gefallen   nach einem gewonnenen Kampf weckt das Sternvolk
+                        sie mit 1 LP - dann kann sie rufen
   - Sternvolkfeder      getragen: einmal pro Level sofort wieder auf
                         (mit einem Viertel der LP)
   - Rastplatz           leuchtender Teich (Level 5) oder Moosgarten
@@ -175,6 +177,8 @@ Fear                                 the cat often loses its turn (1 in 2)
 Fallen (0 HP)                        stays down, also after a victory
   - Starfolk Call       healer, outside fights, costs 2 moss: gets up
                         with a quarter of its HP
+  - healer fallen       after a won fight the Starfolk wake her with
+                        1 HP - then she can call
   - Starfolk Feather    worn: up again at once, once per level
                         (with a quarter of its HP)
   - resting place       glowing pool (level 5) or moss garden (level 8):
