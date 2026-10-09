@@ -125,6 +125,9 @@ help_show:
         cmp.w   #T_HELP_8,d4    ; the lines on menus and joystick
         blo.s   .w
         moveq   #C_CYAN,d2
+        cmp.w   #T_HELP_11,d4   ; ... and on healing
+        blo.s   .w
+        moveq   #C_GREEN,d2
 .w      bsr.s   .ln
         addq.w  #1,d4
         dbra    d5,.l
@@ -136,9 +139,9 @@ help_show:
         moveq   #C_BLACK,d3
         bsr     pdraw
         movem.l (sp)+,d1/d4-d5
-        add.w   #LINE_H+2,d1
+        add.w   #LINE_H+1,d1
         rts
-HELP_LINES equ  10
+HELP_LINES equ  13
 
 ; sheet_show: the party sheet in the viewport (key C)
 sheet_show:
@@ -359,7 +362,12 @@ pack_show:
         move.l  d0,(a2)
         move.l  d1,4(a2)
         move.l  d2,8(a2)
-        move.w  #T_PACK_MOSS,d0
+        add.w   d1,d0
+        add.w   d2,d0
+        tst.w   d0
+        seq     d0              ; none at all: "Moss: none"
+        and.w   #T_PACK_NOMOSS-T_PACK_MOSS,d0
+        add.w   #T_PACK_MOSS,d0
         bsr     text_fmt
         moveq   #1,d0
         move.w  d6,d1

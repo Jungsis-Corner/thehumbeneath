@@ -83,7 +83,8 @@ hum_lN layout:
                  item/gather param = item<<8 | count, lock param = item,
                  boards param = damage<<12 | text id, cobweb/exit = text id
     groups       6 bytes each: x, y, enemy type, count, mode (0 guard,
-                 1 hunt), flags (0; at run time bit 0 = gone, bit 1 = seen);
+                 1 hunt), flags (0; at run time bit 0 = gone, bit 1 = seen,
+                 bit 2 = the scout has told of it);
                  ends with $FF,0
     places       other places: kind (0 event, 1 group), index in its table,
                  number N, then N times x, y; ends with $FF
@@ -497,7 +498,7 @@ def write_inc(path, levels):
                 'G_COUNT  equ 3\nG_MODE   equ 4\nG_FLAGS  equ 5\nG_END    equ $ff\n'
                 'GM_GUARD equ 0\nGM_HUNT  equ 1\nGM_SWIM  equ 2\nGM_FLUTTER equ 3\n'
                 'GM_LISTEN equ 4\n'
-                'GF_GONE  equ 0\nGF_SEEN  equ 1\n')
+                'GF_GONE  equ 0\nGF_SEEN  equ 1\nGF_SPOT  equ 2\n')
         f.write('CF_BLOCK equ %d\n' % CF_BLOCK)
         for c, t, name, blk, col, vc in CELLS:
             f.write('CT_%-12s equ %d\n' % (name, t))

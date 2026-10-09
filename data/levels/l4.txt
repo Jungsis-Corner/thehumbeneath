@@ -4,7 +4,8 @@
 # broken glass at the old station. Vixen Redbrush has claimed the tunnel
 # and waits at the stairs down. Shortcut: the handcar between the stop near
 # the entrance (6,6) and the stop in the lair (25,25); the Handcar Lever
-# lies in the fox den.
+# lies in the west room near the entrance (a rust beetle keeps it), so the
+# ride saves the long way past the fox den (35 instead of 53 steps).
 number  4
 start   3 2 E
 wallset 4
@@ -66,7 +67,7 @@ event 1 16 item FRESH_PREY 1 or 5 16 or 4 14
 event 8 13 gather FEN_MOSS 2
 # fox den: the Handcar Lever
 event 12 7 message FOX_DEN
-event 16 14 item HANDCAR_LEVER 1
+event 1 13 item HANDCAR_LEVER 1
 event 10 11 item STARFOLK_FEATHER 1 or 12 14 or 12 8
 # the long gallery and the second tunnel
 event 22 16 rubble 2 RUBBLE or 22 20 or 24 14

@@ -60,21 +60,33 @@ STEUERUNG
 
 DAS SPIEL
   Die vier Katzen haben eigene Rollen:
-    Kaempfer  viele Lebenspunkte, starker Angriff
+    Kaempfer  viele Lebenspunkte, starker Angriff; Gegner greifen ihn
+              in der vorderen Reihe bevorzugt an; geht er in Deckung,
+              zieht er alle Angriffe auf sich und schuetzt die anderen
     Heiler    Moos, Kraeuter und der Sternzauber, der die Gruppe schuetzt
-    Spaeher   flink, warnt vor Fallen und Gefahren direkt voraus
-    Jaeger    Ansprung: trifft seltener, aber doppelt so hart (nur vorne)
+    Spaeher   flink, warnt vor Fallen direkt voraus und meldet Gegner
+              bis zu zwei Felder voraus
+    Jaeger    Ansprung: trifft seltener, aber doppelt so hart (nur vorne);
+              spuert ausserhalb von Kaempfen Beute auf (danach ist sie
+              eine Weile scheu)
   Die ersten beiden Katzen stehen im Kampf vorne, die anderen hinten.
   Wer in eine Gegnergruppe laeuft (oder von ihr erwischt wird), kaempft.
   Jede Katze waehlt pro Runde: Angriff, Deckung, Faehigkeit, Gegenstand
-  oder Flucht.
+  oder Flucht. Oben links stehen die Lebenspunkte der Gegner.
+  Starke Gegner holen manchmal weit aus (ein "!" hinter ihren
+  Lebenspunkten): Ihr naechster Schlag trifft sicher und doppelt so
+  hart - Zeit fuer Deckung, den Schutz des Kaempfers oder Heilung.
   Wunden bluten weiter, Schritt fuer Schritt: Kratzer, Riss, tiefe Wunde.
   Moos stillt die Blutung - beim Heiler am besten. Kraeuter heilen Gift.
   Beim Gehen kommt langsam Lebenskraft zurueck; leuchtende Teiche heilen
-  alles. Gefallene Katzen stehen nach einem gewonnenen Kampf wieder auf.
+  alles. Nach einem gewonnenen Kampf hoeren Kratzer auf zu bluten, und
+  gefallene Katzen stehen wieder auf.
   Erfahrung bringt neue Raenge (Taste C zeigt, wie viele EP noch fehlen).
   An den Waenden haben die verschollenen Tiefenwaechter Kratzzeichen
   hinterlassen - sie erzaehlen, was unten geschah.
+  Die Karte (Taste M) zeigt nur, was die Gruppe gesehen hat, und keine
+  Gegner. Solange sie offen ist, wird nicht gelaufen: eine Pfeiltaste
+  schliesst sie.
   In der stillen Ebene hilft Schleichen (Taste S): langsamer, aber leise.
   Jedes neue Spiel legt Gegner, Gegenstaende und Fallen an andere Stellen.
   Es gibt drei verschiedene Enden.
@@ -158,20 +170,30 @@ CONTROLS
 
 THE GAME
   The four cats have their own roles:
-    Fighter  many hit points, a strong attack
+    Fighter  many hit points, a strong attack; enemies prefer it in the
+             front row; when it keeps guard it draws every attack and
+             shields the others
     Healer   moss, herbs and the Starfolk Charm that shields the party
-    Scout    quick, warns of traps and hazards just ahead
-    Hunter   Pounce: hits less often but twice as hard (front row only)
+    Scout    quick, warns of traps just ahead and tells of enemies up
+             to two cells ahead
+    Hunter   Pounce: hits less often but twice as hard (front row only);
+             tracks prey outside fights (then the prey is wary for a
+             while)
   The first two cats stand in the front row of a fight, the others behind.
   Walk into an enemy group (or let it catch you) and you fight. Every cat
-  chooses each round: attack, defend, skill, item or flee.
+  chooses each round: attack, defend, skill, item or flee. The enemies'
+  hit points are shown top left. Strong enemies sometimes wind up a blow
+  (a "!" after their hit points): their next blow hits for sure and twice
+  as hard - time to keep guard, let the fighter shield the others, or heal.
   Wounds keep bleeding, step by step: scratch, gash, deep wound. Moss
   stops the bleeding - best in the healer's paws. Herbs cure poison.
   Walking slowly brings strength back; glowing pools heal everything.
-  Fallen cats get back up after a won fight.
+  After a won fight scratches stop bleeding and fallen cats get back up.
   Experience brings new ranks (key C shows how many XP are still missing).
   The lost Deepwardens left Scratch-Marks on the walls - they tell what
   happened down there.
+  The map (key M) shows only what the party has seen, and no enemies.
+  While it is open the party does not walk: a cursor key closes it.
   In the silent level sneaking helps (key S): slower, but quiet.
   Every new game puts enemies, items and traps in other places.
   There are three different endings.

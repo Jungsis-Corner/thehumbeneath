@@ -211,11 +211,13 @@ v_fight rs.w    1               ; 1 while a fight is going on
 v_charm rs.w    1               ; rounds of the Starfolk Charm left
 v_charmed rs.w  1               ; the charm was used in this fight
 v_crev  rs.b    10              ; combat: enemy n got up again (byte n)
+v_cchg  rs.b    10              ; combat: enemy n winds up a heavy blow (byte n)
 v_echo  rs.w    1               ; combat: damage of the last cat's hit (0 = none)
 v_cround rs.w   1               ; combat: rounds (for the Hum pulses)
 v_humc  rs.w    1               ; actions since the last Hum pulse
 v_regen rs.w    1               ; steps since the last hit point regained
 v_pounce rs.w   1               ; combat: the attack is a pounce
+v_track rs.w    1               ; steps since the hunter last tracked prey
 v_mute  rs.w    1               ; 1 = sound off
 v_fx    rs.w    1               ; enemies drawn as FX_HIT or FX_ATTACK (render)
 v_mwait rs.w    1               ; frames until the next note
@@ -418,10 +420,18 @@ mainloop:
         move.w  d1,d2
         bra.s   .act
 .new    move.w  #REP_FIRST,v_rep(a5)
-.act    bsr     do_keys
+.act    tst.w   v_page(a5)      ; a page is open: the key closes it, the
+        beq.s   .walk           ; party walks only with the view in front
+        clr.w   v_page(a5)
+        bsr     clear_view
+        bsr     redraw
+        bsr     wait_free
+        bra     mainloop
+.walk   bsr     do_keys
         bsr     groups_act
         bsr     hum_tick        ; the Hum may cost the party a turn
         bsr     hazard_warn     ; the scout (or a lantern) sees traps ahead
+        bsr     foe_spot        ; ... and the scout enemies
         tst.w   v_sneak(a5)     ; sneaking: the enemies move twice as often
         beq.s   .slw
         bsr     groups_act
@@ -1021,6 +1031,70 @@ hazard_warn:
 .nx     addq.l  #EV_SIZE,a3
         bra.s   .ev
 .nc     dbra    d4,.cell
+.e      movem.l (sp)+,d0-d5/a0-a3
+        rts
+
+; foe_spot: the scout (standing) sees an enemy group up to SPOT_RANGE
+;           cells straight ahead and says what it is, once per group
+SPOT_RANGE equ  2
+foe_spot:
+        movem.l d0-d5/a0-a3,-(sp)
+        lea     v_party(a5),a2
+        moveq   #NPARTY-1,d3
+.who    tst.w   p_hp(a2)
+        ble.s   .wn
+        cmp.w   #T_ROLE_SCOUT,p_role(a2)
+        beq.s   .look
+.wn     lea     p_size(a2),a2
+        dbra    d3,.who
+        bra     .e
+.look   lea     doff(pc),a0
+        move.w  v_dir(a5),d0
+        add.w   d0,d0
+        move.w  0(a0,d0.w),d5   ; one cell forward
+        move.w  v_pos(a5),d3
+        moveq   #SPOT_RANGE-1,d4
+.cell   add.w   d5,d3
+        lea     v_map(a5),a0
+        moveq   #CELL_TYPE,d0
+        and.b   0(a0,d3.w),d0
+        lea     celltab(pc),a1
+        btst    #0,0(a1,d0.w)   ; a wall or a closed door: no further
+        bne.s   .e
+        btst    #CELL_GROUP,0(a0,d3.w)
+        bne.s   .grp
+        dbra    d4,.cell
+        bra.s   .e
+.grp    move.w  d3,d0
+        bsr     group_at        ; -> a3
+        move.l  a3,d0
+        beq.s   .e
+        bset    #GF_SPOT,G_FLAGS(a3)
+        bne.s   .e              ; told before
+        lea     v_args(a5),a1   ; "<scout> spots something: <n> <enemies>"
+        move.w  p_name(a2),d0
+        move.l  a1,-(sp)
+        bsr     text_get
+        move.l  (sp)+,a0
+        move.l  a1,(a0)
+        moveq   #0,d0
+        move.b  G_COUNT(a3),d0
+        move.l  d0,4(a0)
+        moveq   #0,d1
+        move.b  G_TYPE(a3),d1
+        mulu    #e_size,d1
+        lea     enemytab(pc),a1
+        add.w   d1,a1
+        move.w  e_plural(a1),d1
+        cmp.w   #1,d0
+        bne.s   .pl
+        move.w  e_name(a1),d1
+.pl     move.w  d1,d0
+        bsr     text_get
+        move.l  a1,8(a0)
+        move.l  a0,a2           ; (msg_print: a2 = arguments)
+        move.w  #T_SPOTTED,d0
+        bsr     msg_print
 .e      movem.l (sp)+,d0-d5/a0-a3
         rts
 
@@ -2239,8 +2313,9 @@ redraw:                         ; after a step or turn
         move.w  d0,v_rtime(a5)
         bra     panel_show
 
-; draw_map: debug view, the whole level as 4x4 pixel cells in the
-; viewport, visited floor in blue, the player as a yellow arrow
+; draw_map (key M): the automap, the cells the party has seen as 4x4
+; pixel cells, visited floor in blue, items yellow, the player as a yellow
+; arrow; no enemies. The party does not walk while it is open.
 ; mark_view: the open cells the party can see ahead (up to 3, until a
 ;            wall or closed door) and the open cells left and right of
 ;            them count as seen (for the map and the progress)
@@ -2334,12 +2409,8 @@ draw_map:
         move.b  (a1),d0
         moveq   #CELL_TYPE,d1
         and.b   d0,d1
-        move.b  0(a3,d1.w),d2
-        btst    #CELL_GROUP,d0
-        beq.s   .ng
-        moveq   #C_RED,d2       ; enemy group
-        bra.s   .col
-.ng     tst.b   d2
+        move.b  0(a3,d1.w),d2   ; (no enemies on the map: they are seen in
+        tst.b   d2              ; the view, or the scout tells of them)
         bne.s   .col
         btst    #CELL_SEEN,d0
         beq.s   .col
@@ -2557,7 +2628,10 @@ bleed_step:
         subq.w  #1,(a0)
 .wn     lea     p_size(a0),a0
         dbra    d0,.wr
-        addq.w  #1,v_regen(a5)  ; resting while walking: a hit point back
+        cmp.w   #TRACK_STEPS,v_track(a5) ; the prey forgets the hunter
+        bhs.s   .tr
+        addq.w  #1,v_track(a5)
+.tr     addq.w  #1,v_regen(a5)  ; resting while walking: a hit point back
         cmp.w   #REGEN_STEPS,v_regen(a5)
         blo.s   .bl
         clr.w   v_regen(a5)

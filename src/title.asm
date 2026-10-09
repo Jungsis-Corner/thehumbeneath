@@ -243,6 +243,7 @@ new_init:                       ; a new party, nothing visited
         endc
         clr.w   v_sneak(a5)
         clr.w   v_humc(a5)
+        move.w  #TRACK_STEPS,v_track(a5) ; the hunter may track at once
         clr.w   v_steps(a5)
         clr.w   v_page(a5)
         rts

@@ -3,7 +3,7 @@
 #   dist/thehumbeneath-vX.Y.zip  all game files, manual, licence, BASIC loaders
 #   dist/thehum.win              QXL.WIN image with BOOT and game
 # Test levels (hum_l0, hum_l9) are left out.
-V=${1:-1.0}
+V=${1:-1.1}
 T=$(cd "$(dirname "$0")/.." && pwd)
 "$T/src/make.sh" >/dev/null || exit 1
 [ -f "$T/build/thehum.win" ] || { echo "dist.sh: no thehum.win (qxltool missing?)" >&2; exit 1; }

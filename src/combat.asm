@@ -10,6 +10,7 @@
 NFOE      equ   9               ; enemies per group at most
 CMB_PAUSE equ   25              ; frames after a combat message
 FRONT_PCT equ   75              ; chance that an enemy aims at the front row
+FIGHTER_PCT equ 65              ; ... and at the fighter there (with others)
 WOUND_PCT equ   35              ; chance that a hit makes bleed / poisons
 GUARD_DEF equ   3               ; extra defence while keeping guard
 CM_ATTACK equ   0               ; combat menu lines
@@ -28,6 +29,8 @@ TR_KEEPER equ   6               ; e_trait: the Hollow-Keeper (the endings)
 TR_FEAR   equ   7               ; e_trait: its hits can make a cat afraid
 FEAR_PCT  equ   30              ; chance that such a hit frightens
 FROZEN_PCT equ  50              ; chance that an afraid cat loses its turn
+CHARGE_PCT equ  25              ; chance that a strong enemy winds up a blow
+HEAVY_ATK  equ  8               ; (mini-bosses, and enemies with this attack)
 POUNCE_PCT equ  15              ; a pounce hits less often...
 HUM_ROUNDS equ  4               ; Hum levels: every 4th round a pulse
 SHADOW_PCT equ  33              ; chance that an attack hits only a shadow
@@ -35,7 +38,12 @@ SHADOW_PCT equ  33              ; chance that an attack hits only a shadow
 ; combat: a3 = enemy group next to the party, the party faces it
 combat:
         movem.l d0-d7/a0-a4,-(sp)
-        move.l  a3,v_cgrp(a5)
+        tst.w   v_page(a5)      ; a page (map, sheet...) is open: the view
+        beq.s   .vw             ; first, the fight happens there
+        clr.w   v_page(a5)
+        bsr     clear_view
+        bsr     render
+.vw     move.l  a3,v_cgrp(a5)
         lea     enemytab(pc),a4
         moveq   #0,d0
         move.b  G_TYPE(a3),d0
@@ -59,10 +67,10 @@ combat:
         clr.w   v_charmed(a5)
         clr.w   v_echo(a5)
         clr.w   v_cround(a5)
-        lea     v_crev(a5),a0
-        clr.l   (a0)+
-        clr.l   (a0)+
-        clr.w   (a0)
+        lea     v_crev(a5),a0   ; (and v_cchg after it)
+        moveq   #20/2-1,d0
+.cr     clr.w   (a0)+
+        dbra    d0,.cr
         lea     v_party(a5),a0
         moveq   #NPARTY-1,d0
 .g0     clr.w   p_guard(a0)
@@ -183,7 +191,10 @@ cat_turn:
         bra     .e
 .guard  move.w  #1,p_guard(a2)
         move.w  #T_DEFENDS,d0
-        move.w  p_name(a2),d1
+        cmp.w   #T_ROLE_FIGHTER,p_role(a2) ; the fighter shields the others
+        bne.s   .gd
+        move.w  #T_PROTECTS,d0
+.gd     move.w  p_name(a2),d1
         bsr     name_msg
         bra     .e
 .flee   tst.w   e_boss(a4)      ; no way out from a mini-boss
@@ -370,21 +381,50 @@ foes_turn:
         moveq   #NFOE-1,d7
 .foe    tst.w   (a0)+
         beq.s   .nx
+        moveq   #NFOE-1,d6      ; d6 = the enemy's number
+        sub.w   d7,d6
         bsr.s   foe_attack
 .nx     dbra    d7,.foe
         movem.l (sp)+,d0-d7/a0-a4
         rts
 
-; foe_attack: a4 = enemy type
+; foe_attack: a4 = enemy type, d6 = its number. A mini-boss or a strong
+;             enemy may wind up a blow instead (shown with "!" in the
+;             enemy line); next turn it hits for sure and twice as hard -
+;             time to keep guard, to shield with the fighter, or to heal.
 foe_attack:
         movem.l d0-d7/a0-a4,-(sp)
-        move.w  #T_ATTACKS,d0
+        moveq   #0,d5           ; 1 = the heavy blow
+        lea     v_cchg(a5),a1
+        tst.b   0(a1,d6.w)
+        beq.s   .wind
+        clr.b   0(a1,d6.w)
+        moveq   #1,d5
+        move.w  #T_FULL_FORCE,d0
+        bra.s   .say0
+.wind   tst.w   e_boss(a4)
+        bne.s   .w1
+        cmp.w   #HEAVY_ATK,e_atk(a4)
+        blo.s   .norm
+.w1     bsr     rand100
+        cmp.w   #CHARGE_PCT,d0
+        bhs.s   .norm
+        move.b  #1,0(a1,d6.w)
+        move.w  #T_WINDS_UP,d0
         move.w  e_name(a4),d1
+        bsr     name_msg
+        bsr     foes_draw
+        bra     .e
+.norm   move.w  #T_ATTACKS,d0
+.say0   move.w  e_name(a4),d1
         bsr     name_msg
         moveq   #FX_ATTACK,d0   ; it leaps at the party, glowing red
         moveq   #CMB_PAUSE,d1
         bsr     foe_fx
         bsr     pick_target     ; -> a3 = cat
+        bsr     foes_draw       ; (the "!" is gone)
+        tst.w   d5
+        bne.s   .def0
         cmp.w   #TR_ECHO,e_trait(a4) ; an Echo Shade copies the last action
         bne.s   .def0
         move.w  #T_ECHO_WAIT,d0 ; (no blow to copy: it waits)
@@ -409,10 +449,12 @@ foe_attack:
         moveq   #20,d2
         moveq   #95,d3
         bsr     clamp
+        tst.w   d5              ; the heavy blow always hits
+        bne.s   .hit
         bsr     rand100
         cmp.w   d1,d0
         bhs     .miss
-        move.w  e_atk(a4),d1
+.hit    move.w  e_atk(a4),d1
         bsr     randn
         addq.w  #1,d0
         move.w  d0,d1
@@ -420,6 +462,10 @@ foe_attack:
         exg     d0,d1
         lsr.w   #1,d1
         sub.w   d1,d0
+        tst.w   d5              ; ... twice as hard
+        beq.s   .one
+        add.w   d0,d0
+.one
         tst.w   p_guard(a3)     ; keeping guard: half
         beq.s   .chm
         addq.w  #1,d0
@@ -485,6 +531,16 @@ foe_attack:
 ; pick_target: -> a3 = a standing cat; the front row with FRONT_PCT %
 pick_target:
         movem.l d0-d3/a0,-(sp)
+        lea     v_party(a5),a3  ; a fighter keeping guard draws every attack
+        moveq   #NPARTY-1,d0
+.pf     tst.w   p_hp(a3)
+        ble.s   .pn
+        tst.w   p_guard(a3)
+        beq.s   .pn
+        cmp.w   #T_ROLE_FIGHTER,p_role(a3)
+        beq     .e
+.pn     lea     p_size(a3),a3
+        dbra    d0,.pf
         moveq   #0,d2           ; standing cats in front, behind
         moveq   #0,d3
         lea     v_party(a5),a0
@@ -509,7 +565,25 @@ pick_target:
         bhs.s   .row
         moveq   #0,d1
         move.w  d2,d3
-.row    move.w  d1,-(sp)
+.row    tst.w   d1              ; the front row with the fighter and
+        bne.s   .any            ; another cat: the fighter draws most hits
+        cmp.w   #2,d2
+        blo.s   .any
+        bsr     rand100
+        cmp.w   #FIGHTER_PCT,d0
+        bhs.s   .any
+        lea     v_party(a5),a3
+        moveq   #NPARTY-1,d0
+.ff     tst.w   p_hp(a3)
+        ble.s   .fn
+        tst.w   p_row(a3)
+        bne.s   .fn
+        cmp.w   #T_ROLE_FIGHTER,p_role(a3)
+        beq.s   .e
+.fn     lea     p_size(a3),a3
+        dbra    d0,.ff
+        moveq   #0,d1           ; (no fighter in front after all)
+.any    move.w  d1,-(sp)
         move.w  d3,d1           ; one of the cats in that row
         tst.w   (sp)
         bne.s   .r1
@@ -536,7 +610,23 @@ victory:
         move.w  #T_VICTORY,d0
         bsr     msg_print
         bsr     pause
-        move.l  v_cgrp(a5),a3
+        lea     v_party(a5),a3  ; a won fight: scratches stop bleeding
+        moveq   #NPARTY-1,d2
+        moveq   #0,d1
+.scr    tst.w   p_hp(a3)
+        ble.s   .sn
+        cmp.w   #1,p_bleed(a3)
+        bne.s   .sn
+        clr.w   p_bleed(a3)
+        moveq   #1,d1
+.sn     lea     p_size(a3),a3
+        dbra    d2,.scr
+        tst.w   d1
+        beq.s   .nos
+        move.w  #T_SCRATCH_STOPS,d0
+        bsr     msg_print
+        bsr     panel_show
+.nos    move.l  v_cgrp(a5),a3
         move.l  v_cetab(a5),a0
         moveq   #0,d3           ; XP = enemy XP x count
         move.b  G_COUNT(a3),d3
@@ -632,7 +722,7 @@ foes_draw:
         movem.l d0-d7/a0-a4,-(sp)
         moveq   #0,d0
         moveq   #0,d1
-        moveq   #3*NFOE+2,d2
+        moveq   #4*NFOE+2,d2
         moveq   #2*LINE_H+3,d3
         moveq   #C_BLACK,d4
         bsr     fill_rect
@@ -661,6 +751,7 @@ foes_draw:
         subq.w  #1,d7           ; enemy as "now/full"
         lea     v_cfoe(a5),a0
         moveq   #1,d0           ; column
+        moveq   #0,d4           ; enemy number
         subq.l  #8,sp           ; the number as text
 .bar    move.w  (a0)+,d5
         beq.s   .nx
@@ -682,12 +773,17 @@ foes_draw:
         move.b  #'/',(a1)+
         move.w  e_hp(a4),d5
         bsr.s   .num
-.z      clr.b   (a1)
+.z      lea     v_cchg(a5),a2   ; winding up a blow: "!"
+        tst.b   0(a2,d4.w)
+        beq.s   .z1
+        move.b  #'!',(a1)+
+.z1     clr.b   (a1)
         move.l  sp,a1
         moveq   #LINE_H+1,d1
         moveq   #C_BLACK,d3
         bsr     pdraw
-.nx     addq.w  #3,d0
+.nx     addq.w  #4,d0
+        addq.w  #1,d4
         dbra    d7,.bar
         addq.l  #8,sp
 .e      movem.l (sp)+,d0-d7/a0-a4

@@ -12,6 +12,10 @@ SK_CHARM     equ 3
 SK_GATHER    equ 4
 SK_APPLY     equ 5
 SK_POUNCE    equ 6              ; the hunter, in a fight, from the front row
+SK_TRACK     equ 7              ; the hunter, outside fights: prey
+TRACK_STEPS  equ 30             ; steps until the prey is not wary any more
+TRACK_PCT    equ 40             ; chance to catch something, +5 per find point
+STALE_PCT    equ 25             ; ... and that it is stale prey
 PACK_HEAL    equ 3              ; hit points a Moss Pack gives
 CHARM_ROUNDS equ 3              ; rounds of half damage
 MOSS_FEN     equ 1              ; moss kinds (as i_value of the moss items)
@@ -27,6 +31,7 @@ skill_menu:
         lea     .other(pc),a1
         cmp.w   #T_ROLE_HUNTER,p_role(a2)
         bne.s   .nohunt
+        lea     .track(pc),a1
         tst.w   v_fight(a5)
         beq.s   .list
         lea     .hunt(pc),a1
@@ -57,6 +62,7 @@ skill_menu:
 .heal   dc.b    SK_MOSS_PACK,SK_HERB,SK_GATHER,-1
 .other  dc.b    SK_APPLY,-1
 .hunt   dc.b    SK_POUNCE,SK_APPLY,-1
+.track  dc.b    SK_TRACK,SK_APPLY,-1
         even
 
 ; use_skill: d0 = skill, a2 = cat using it -> NE = done (a turn used)
@@ -70,6 +76,8 @@ use_skill:
         beq     .gather
         cmp.w   #SK_POUNCE,d7
         beq     .pounce
+        cmp.w   #SK_TRACK,d7
+        beq     .track
         move.w  #T_MENU_WHO,d0  ; the others need a cat to work on
         bsr     menu_cats       ; -> a3
         tst.w   d0
@@ -223,6 +231,47 @@ use_skill:
 .g2     move.w  d2,d0
         move.w  p_name(a2),d1
         bsr     name_msg
+        bra     .done
+
+.track  cmp.w   #TRACK_STEPS,v_track(a5) ; Track Prey: not again too soon
+        bhs.s   .t1
+        move.w  #T_TOO_SOON,d0
+        bsr     msg_print
+        bra     .no
+.t1     clr.w   v_track(a5)
+        move.w  p_find(a2),d1
+        mulu    #5,d1
+        add.w   #TRACK_PCT,d1
+        bsr     rand100
+        cmp.w   d1,d0
+        bhs     .g0             ; nothing (as Gather)
+        move.w  #IT_FRESH_PREY,d3
+        bsr     rand100
+        cmp.w   #STALE_PCT,d0
+        bhs.s   .t2
+        move.w  #IT_STALE_PREY,d3
+.t2     move.w  d3,d0
+        moveq   #1,d1
+        bsr     pack_add
+        bne.s   .tok
+        move.w  #T_PACK_FULL,d0 ; (the prey runs off; the turn is used)
+        bsr     msg_print
+        bra     .done
+.tok    move.w  #T_CATCHES,d0
+        move.w  p_name(a2),d1
+        bsr     name_msg
+        move.w  d3,d0           ; "Found: <prey> x1."
+        bsr     item_rec
+        move.w  i_name(a0),d0
+        bsr     text_get
+        move.l  a2,-(sp)
+        lea     v_args(a5),a2
+        move.l  a1,(a2)
+        moveq   #1,d0
+        move.l  d0,4(a2)
+        move.w  #T_FOUND,d0
+        bsr     msg_print
+        move.l  (sp)+,a2
         bra     .done
 
 .pounce tst.w   p_row(a2)       ; Pounce: twice the damage, less often a

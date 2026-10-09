@@ -606,7 +606,37 @@ draws a level source as PNG for review.
   opens the lair - the only way to the stairs; Old Whiskerless hunts.
   In fights the enemies' hit points are shown as numbers (now/full for a
   single enemy) instead of bars.
-  Open: GitHub repository and release.
+  Released as v1.0 on GitHub (2026-10-09).
+- **Toward v1.1** (from an external design review, 2026-10-09; not yet
+  released): strong enemies (mini-bosses, attack >= 8) wind up a heavy
+  blow with 25 % (v_cchg, "!" in the enemy line); it hits for sure and
+  twice as hard. A fighter keeping guard draws every attack. A won fight
+  stops Scratch bleeding. The scout tells of an enemy group up to 2 cells
+  ahead, once per group (group flag GF_SPOT). Level 4: the Handcar Lever
+  lies in the west room, so the handcar is a real shortcut (35 instead of
+  53 steps). German intro line fixed.
+  From playing: the automap shows no enemies any more, and a move key
+  with a page open (map, sheet, pack, help) only closes the page - the
+  party walks with the view in front. A fight that starts while a page is
+  open switches to the view first (before, the map could not be closed).
+  The help page (H) has two lines on healing in a fight (HELP_11, 12)
+  and one on what each cat can do (HELP_4B); 13 lines, 8 pixels apart.
+  The hunter tracks prey outside fights (skill SK_TRACK): 40 % + 5 per
+  find point, Fresh Prey (Stale Prey 25 %), then wary for 30 steps
+  (v_track); a try uses a turn, "not yet" does not.
+  Mossfern starts with 4 Fen Moss (was 2): level 1 has no moss.
+  Moss is shown count first ("Moss: 2 fen  0 dry  0 glow"), "Moss: none"
+  when the party has none (the old "fen 0" read like one fen moss).
+  Enemies aiming at the front row hit the fighter with 65 % (FIGHTER_PCT)
+  when another cat stands there too: before, the hunter (14 HP, def 2)
+  took as many hits as the fighter (20 HP, def 3) and fell most often.
+  Simulated: the HP loss per fight is now even between them; the whole
+  game is as hard as before.
+  Loading a save sets every cat's role again from partyinit (roles_set):
+  the role is a text id, and new texts move the ids; so v1.0 saves load
+  in v1.1 (tested). Level 1 kept the event order of v1.0 for the same
+  reason (event flags are saved by index).
+- **v1.1 released** (2026-10-09).
 
 ## 7. Testing
 

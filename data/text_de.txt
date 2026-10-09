@@ -23,7 +23,7 @@ NAME_LINE       %s (%s)
 NAME_HELP1      Tippen, oder hoch/runter und rechts.
 NAME_HELP2      Links löscht, ENTER ist fertig.
 PRESS_KEY       Drücke eine Taste.
-INTRO           Der Hum begann mit dem Tauwetter.\n\nNur die Jungen konnten ihn hören,\nein tiefer Ton unter dem Moor,\nwie ein Herzschlag im Dunkeln.\n\nDie Alten erzählten von den\nTiefenwächtern, die unter der Erde\ngingen und nie heimkehrten.\n\nHeute Nacht schleichen vier Katzen\nüber die Grenze des Lagers.\n\nDie Kellertür steht offen.
+INTRO           Der Hum begann mit dem Tauwetter.\n\nNur die Jungen konnten ihn hören,\nein tiefer Ton unter dem Moor,\nwie ein Herzschlag im Dunkeln.\n\nDie Alten erzählten von den\nTiefenwächtern, die einst hinabstiegen\nund nie heimkehrten.\n\nHeute Nacht schleichen vier Katzen\nüber die Grenze des Lagers.\n\nDie Kellertür steht offen.
 INTRO_END       Folge dem Hum.
 
 # --- Game over and progress ---
@@ -75,6 +75,11 @@ VICTORY         Sieg!
 FLEES           Die Gruppe flieht.
 CANNOT_FLEE     Hier gibt es keine Flucht.
 FLEE_FAILS      Die Gruppe kommt nicht weg.
+WINDS_UP        %s holt weit aus!
+FULL_FORCE      %s schlägt voll zu!
+SPOTTED         %s entdeckt etwas:\n%d %s voraus!
+PROTECTS        %s schützt die anderen.
+SCRATCH_STOPS   Die Kratzer hören auf zu bluten.
 GAIN_XP         Die Gruppe erhält %d EP.
 RISES           %s steigt auf: %s.
 SNEAK_ON        Ihr schleicht. Langsam, aber lautlos.
@@ -145,6 +150,8 @@ CHARM_USED      Das Sternvolk schweigt jetzt.
 GATHERS_MOSS    %s sammelt Moos.
 FINDS_HERBS     %s findet Kräuter.
 FINDS_NOTHING   %s findet hier nichts.
+CATCHES         %s fängt Beute!
+TOO_SOON        Die Beute ist scheu. Noch nicht.
 NO_NEED         %s braucht das nicht.
 NOT_ABLE        %s ist dazu nicht in der Lage.
 
@@ -298,6 +305,7 @@ SK_CHARM        Sternzauber
 SK_GATHER       Sammeln
 SK_APPLY        Moos auflegen
 SK_POUNCE       Ansprung
+SK_TRACK        Beute aufspüren
 CMB_FLEE        Flucht
 CMB_MARK        >
 MENU_PARTY      Katzen
@@ -314,7 +322,8 @@ MENU_COUNT      %s x%d
 # --- Pack page (key I) ---
 PACK_TITLE      Der Beutel - I schließt
 PACK_USED       (%d von %d)
-PACK_MOSS       Moos: Moor %d  trocken %d  Glüh %d
+PACK_MOSS       Moos: %d Moor  %d trocken  %d Glüh
+PACK_NOMOSS     Moos: keins
 WORN            Getragen:
 WORN_NONE       Getragen: nichts
 WORN_BY         %s: %s
@@ -325,7 +334,7 @@ SHEET_NAME      %s, %s, %s
 SHEET_HP        LP %d/%d  EP %d/%d  %s
 SHEET_HP_MAX    LP %d/%d  EP %d  %s
 SHEET_STATS     Ang %d  Abw %d  Tem %d  Fund %d
-SHEET_MOSS      Moos: Moor %d tr. %d Glüh %d max %d
+SHEET_MOSS      Moos: %d Moor %d tr. %d Glüh, max %d
 
 # --- Help page (key H) ---
 HELP_TITLE      Die Tasten - H schließt
@@ -333,12 +342,15 @@ HELP_1          Hoch/Runter vorwärts / zurück
 HELP_2          Links/Rechts  drehen
 HELP_3          SHIFT+Links/Rechts  zur Seite
 HELP_4          LEER        Menü: Beutel, Katzen, Spiel
+HELP_4B         Je Katze: Gegenstand, Anlegen, Fähigkeit
 HELP_5          I  Beutel   C  Katzen   M  Karte
 HELP_6          S  schleichen an/aus   H  diese Seite
 HELP_7          ESC         Speichern, Laden, Ton, Ende
 HELP_8          Menüs: Hoch/Runter wählen, LEER
 HELP_9          oder ENTER nimmt, Links/ESC zurück.
 HELP_10         Joystick: gehen, FEUER = LEER.
+HELP_11         Heilen: Gegenstand (Ringelblume, Beute)
+HELP_12         oder Moosverband (Heilerin, Fähigkeit).
 
 # --- Debug line ---
 DEBUG_POS       X%d Y%d %dF

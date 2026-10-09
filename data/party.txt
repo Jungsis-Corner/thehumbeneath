@@ -20,6 +20,6 @@ rank RANK_DEEPWALKER  700
 # row: front (melee, attacked more often) or back (half damage, safer)
 #   name              role          row    hp  atk def spd find mosscap fen dry glow
 cat NAME_ASHCLAW      ROLE_FIGHTER  front  20  6   3   2   1    3       0   0   0
-cat NAME_MOSSFERN     ROLE_HEALER   back   12  2   2   3   2    9       2   0   0
+cat NAME_MOSSFERN     ROLE_HEALER   back   12  2   2   3   2    9       4   0   0
 cat NAME_QUICKWHISKER ROLE_SCOUT    back   9   3   1   6   5    3       0   0   0
 cat NAME_SEDGEPELT    ROLE_HUNTER   front  14  4   2   4   3    3       0   0   0

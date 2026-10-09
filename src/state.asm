@@ -374,6 +374,7 @@ game_load:
         move.l  #NPARTY*p_size,d4
         bsr     fread
         bne.s   .cl
+        bsr     roles_set       ; (text ids may have moved since the save)
         lea     v_cname(a5),a1
         moveq   #NPARTY*NAME_LEN,d4
         bsr     fread
@@ -420,6 +421,20 @@ game_load:
 .bad    moveq   #-1,d0
 .e      movem.l (sp)+,d1-d5/a0-a2
         tst.l   d0
+        rts
+
+; roles_set: every cat's role again from partyinit (the role is a text
+;            id; a save made with older texts would point elsewhere)
+roles_set:
+        movem.l d0/a0-a1,-(sp)
+        lea     partyinit+p_role(pc),a0
+        lea     v_party+p_role(a5),a1
+        moveq   #NPARTY-1,d0
+.r      move.w  (a0),(a1)
+        lea     p_size(a0),a0
+        lea     p_size(a1),a1
+        dbra    d0,.r
+        movem.l (sp)+,d0/a0-a1
         rts
 
 ; slot_menu: d0 = title text id -> d0 = slot 1-3 (loading: 0-3, slot 0

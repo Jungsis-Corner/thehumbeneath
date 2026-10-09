@@ -85,7 +85,14 @@ VICTORY         Victory!
 FLEES           The party flees.
 CANNOT_FLEE     You cannot flee.
 FLEE_FAILS      The party cannot get away.
+WINDS_UP        %s winds up a blow!
+FULL_FORCE      %s hits with full force!
+@digits 1
+SPOTTED         %s spots something:\n%d %s ahead!
+@digits 6
 @strlen 12
+PROTECTS        %s shields the others.
+SCRATCH_STOPS   The scratches stop bleeding.
 GAIN_XP         The party gains %d XP.
 RISES           %s rises to %s.
 SNEAK_ON        You move softly now. Slow, but silent.
@@ -161,6 +168,8 @@ CHARM_USED      The Starfolk are silent now.
 GATHERS_MOSS    %s gathers moss.
 FINDS_HERBS     %s finds herbs.
 FINDS_NOTHING   %s finds nothing here.
+CATCHES         %s catches prey!
+TOO_SOON        The prey is wary. Not yet.
 NO_NEED         %s does not need it.
 NOT_ABLE        %s is in no state for that.
 
@@ -320,6 +329,7 @@ SK_CHARM        Starfolk Charm
 SK_GATHER       Gather
 SK_APPLY        Apply Moss
 SK_POUNCE       Pounce
+SK_TRACK        Track Prey
 CMB_FLEE        Flee
 CMB_MARK        >
 MENU_PARTY      Party
@@ -344,7 +354,8 @@ MENU_COUNT      %s x%d
 @digits 2
 PACK_TITLE      The pack - I closes
 PACK_USED       (%d of %d)
-PACK_MOSS       Moss: fen %d  dry %d  glow %d
+PACK_MOSS       Moss: %d fen  %d dry  %d glow
+PACK_NOMOSS     Moss: none
 WORN            Worn:
 WORN_NONE       Worn: nothing
 # cat name (12) + item name (16): at most 12+2+16 = 30 characters
@@ -359,21 +370,24 @@ SHEET_NAME      %s, %s, %s
 SHEET_HP        HP %d/%d  XP %d/%d  %s
 SHEET_HP_MAX    HP %d/%d  XP %d  %s
 SHEET_STATS     Att %d  Def %d  Spd %d  Find %d
-SHEET_MOSS      Moss: fen %d dry %d glow %d max %d
+SHEET_MOSS      Moss: %d fen %d dry %d glow, max %d
 
-# --- Help page (key H, 4 px font): HELP_1 .. HELP_10 in this order ---
+# --- Help page (key H, 4 px font): HELP_1 .. HELP_12 (and HELP_4B) in this order ---
 @width 40
 HELP_TITLE      The keys - H closes
 HELP_1          Up/Down     step forward / back
 HELP_2          Left/Right  turn
 HELP_3          SHIFT+Left/Right  step aside
 HELP_4          SPACE       menu: pack, cats, game
+HELP_4B         Each cat: Item, Equip, Skill
 HELP_5          I  pack     C  cats     M  map
 HELP_6          S  sneak on/off   H  this page
 HELP_7          ESC         save, load, sound, quit
 HELP_8          Menus: Up/Down choose, SPACE or
 HELP_9          ENTER take it, Left or ESC back.
 HELP_10         Joystick: move, FIRE = SPACE.
+HELP_11         Heal: Item (Marigold Leaf, Fresh Prey)
+HELP_12         or Moss Pack (healer, Skill).
 
 # --- Debug line under the compass (DEBUG builds only; the panel
 #     cuts it off after 15 characters) ---
