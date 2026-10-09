@@ -632,8 +632,8 @@ foes_draw:
         movem.l d0-d7/a0-a4,-(sp)
         moveq   #0,d0
         moveq   #0,d1
-        moveq   #2*NFOE+2,d2
-        moveq   #LINE_H+5,d3
+        moveq   #3*NFOE+2,d2
+        moveq   #2*LINE_H+3,d3
         moveq   #C_BLACK,d4
         bsr     fill_rect
         move.l  v_cetab(a5),a4
@@ -655,32 +655,52 @@ foes_draw:
         moveq   #C_WHITE,d2
         moveq   #C_BLACK,d3
         bsr     pdraw
-        move.l  v_cgrp(a5),a3
-        moveq   #0,d7
-        move.b  G_COUNT(a3),d7
-        subq.w  #1,d7
+        move.l  v_cgrp(a5),a3   ; under it the hit points of every enemy
+        moveq   #0,d7           ; still up, coloured: green above 1/2,
+        move.b  G_COUNT(a3),d7  ; yellow above 1/4, else red; a single
+        subq.w  #1,d7           ; enemy as "now/full"
         lea     v_cfoe(a5),a0
         moveq   #1,d0           ; column
+        subq.l  #8,sp           ; the number as text
 .bar    move.w  (a0)+,d5
         beq.s   .nx
-        moveq   #C_RED,d4       ; green above 1/2, yellow above 1/4
+        moveq   #C_RED,d2
         move.w  d5,d6
         add.w   d6,d6
         cmp.w   e_hp(a4),d6
         bls.s   .y
-        moveq   #C_GREEN,d4
+        moveq   #C_GREEN,d2
         bra.s   .put
 .y      add.w   d6,d6
         cmp.w   e_hp(a4),d6
         bls.s   .put
-        moveq   #C_YEL,d4
-.put    moveq   #LINE_H+1,d1
-        moveq   #1,d2
-        moveq   #2,d3
-        bsr     fill_rect
-.nx     addq.w  #2,d0
+        moveq   #C_YEL,d2
+.put    move.l  sp,a1
+        bsr.s   .num
+        cmp.b   #1,G_COUNT(a3)  ; a single enemy: "/full" too
+        bne.s   .z
+        move.b  #'/',(a1)+
+        move.w  e_hp(a4),d5
+        bsr.s   .num
+.z      clr.b   (a1)
+        move.l  sp,a1
+        moveq   #LINE_H+1,d1
+        moveq   #C_BLACK,d3
+        bsr     pdraw
+.nx     addq.w  #3,d0
         dbra    d7,.bar
+        addq.l  #8,sp
 .e      movem.l (sp)+,d0-d7/a0-a4
+        rts
+.num    ext.l   d5              ; d5 (0-99) as digits at a1
+        divu    #10,d5
+        tst.w   d5
+        beq.s   .n1
+        add.b   #'0',d5
+        move.b  d5,(a1)+
+.n1     swap    d5
+        add.b   #'0',d5
+        move.b  d5,(a1)+
         rts
 
 ; name_msg:     d0 = message id, d1 = text id of a name for %s

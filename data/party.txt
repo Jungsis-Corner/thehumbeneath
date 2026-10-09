@@ -3,7 +3,7 @@
 # Values are first proposals and meant to be tuned.
 
 bleedsteps 4        # steps per bleeding tick outside combat
-regensteps 8        # steps per hit point regained (not while bleeding or
+regensteps 10       # steps per hit point regained (not while bleeding or
                     # poisoned)
 deepmin    50       # Deep Wound lowers max HP, but not below this percent
 

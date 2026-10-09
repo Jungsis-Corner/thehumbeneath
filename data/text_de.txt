@@ -212,6 +212,7 @@ IT_VALVE        Ventilrad
 IT_LEVER        Draisinenhebel
 IT_TOTEM        Blasses Totem
 IT_HEART_STONE  Herzstein
+IT_RUSTY_KEY    Rostschlüssel
 
 # --- Enemy names (singular, plural), at most 16 characters ---
 EN_RAT          Ratte

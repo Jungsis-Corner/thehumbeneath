@@ -188,6 +188,7 @@ Eight levels, each 32x32 cells. Every level has: an entrance stair, a way down, 
 
 **Key items**
 - **Cellar Key**
+- **Rusty Key** (Root Cellar: opens the closet with the Cellar Key)
 - **Valve Wheel** (x3)
 - **Handcar Lever**
 - **Pale Totem**

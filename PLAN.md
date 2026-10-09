@@ -3,7 +3,7 @@
 Status: approved 2026-10-07 (open questions answered with the proposals, see section 8).
 Changes to the architecture below need approval (CLAUDE.md).
 
-Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9 done (levels 1-8, three endings), M9.9 (balance, polish) done, M9.10 (random places) done, M10a (sound) done, M10b (German) done, M10c (graphics) done, M10d (polish) done.
+Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9 done (levels 1-8, three endings), M9.9 (balance, polish) done, M9.10 (random places) done, M10a (sound) done, M10b (German) done, M10c (graphics) done, M10d (polish) done, M10e (distribution) ready for the MiSTer test.
 
 ## 1. Toolchain (taken over from FUSE RUNNER)
 
@@ -589,6 +589,24 @@ draws a level source as PNG for review.
   mentions it. German text fixes ("ihn hören", "Folgt dem Hum").
   Note for scripted tests: the game reads the keyboard directly, so a key
   pressed during a message pause is lost - wait after event cells.
+- **M10e Distribution** (2026-10-09): README.md (German/English, with
+  screenshots/), LIESMICH_README.txt (manual, ASCII, German/English),
+  LICENSE (MIT, as FUSE RUNNER), tools/setup_tools.sh (from FUSE RUNNER),
+  tools/dist.sh -> dist/thehumbeneath-vX.Y.zip and dist/thehum.win
+  (without the test levels). thehum.win tested in sQLux as WIN1 at 384 KB:
+  boot, language choice kept in hum_cfg, save and load on win1_.
+  MiSTer test passed (2026-10-09, played in German).
+- After the MiSTer test (2026-10-09): level 1 was too easy. Walking heals
+  every 10 steps (was 8); rats, spiders, Old Whiskerless and the level 2
+  enemies hit harder; bigger groups in level 1 (simulated: normal fights
+  4-16 % of the party's HP, Old Whiskerless about 15 %; the pessimistic
+  whole-game run survives less often, ~45 % instead of ~65 %). Level 1
+  has a key chain now: the Rusty Key (new item, west cellar, rats) opens
+  the closet, two spiders guard the Cellar Key inside, the Cellar Key
+  opens the lair - the only way to the stairs; Old Whiskerless hunts.
+  In fights the enemies' hit points are shown as numbers (now/full for a
+  single enemy) instead of bars.
+  Open: GitHub repository and release.
 
 ## 7. Testing
 

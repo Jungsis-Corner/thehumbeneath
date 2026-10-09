@@ -27,3 +27,4 @@ item VALVE_WHEEL       IT_VALVE         key          0
 item HANDCAR_LEVER     IT_LEVER         key          0
 item PALE_TOTEM        IT_TOTEM         key          0
 item HEART_STONE       IT_HEART_STONE   key          0
+item RUSTY_KEY         IT_RUSTY_KEY     key          0

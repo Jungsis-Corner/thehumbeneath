@@ -4,3 +4,4 @@ emu/
 __pycache__/
 src/*.inc
 *:Zone.Identifier
+dist/

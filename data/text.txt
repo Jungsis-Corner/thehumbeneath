@@ -229,6 +229,7 @@ IT_VALVE        Valve Wheel
 IT_LEVER        Handcar Lever
 IT_TOTEM        Pale Totem
 IT_HEART_STONE  Heart Stone
+IT_RUSTY_KEY    Rusty Key
 
 # --- Enemy names (singular, plural), at most 16 characters ---
 @width 16

@@ -38,7 +38,7 @@ printf '10 EXEC_W win1_thehum\n' > $B/boot
 if command -v qxltool >/dev/null 2>&1; then
   ( cd $B && rm -f thehum.win &&
     qxltool -w thehum.win 2 THE HUM </dev/null >/dev/null 2>&1 &&
-    { echo write boot; for f in thehum hum_txt hum_tde hum_scr hum_p? hum_l* hum_w* hum_s?; do echo "write $f"; done; echo quit; } | qxltool -w thehum.win >/dev/null 2>&1 &&
+    { echo write boot; for f in thehum hum_txt hum_tde hum_scr hum_p? hum_l[1-8] hum_w* hum_s?; do echo "write $f"; done; echo quit; } | qxltool -w thehum.win >/dev/null 2>&1 &&
     echo "thehum.win created" )
 fi
 python3 ../tools/sizes.py $B
