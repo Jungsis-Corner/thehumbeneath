@@ -318,7 +318,10 @@ cat_attack:
         move.w  e_def(a4),d1
         lsr.w   #1,d1
         sub.w   d1,d0
-        tst.w   p_row(a2)       ; back row: half
+        cmp.w   #1,d0           ; at least 1 before halving (a negative
+        bge.s   .pos            ; number halved unsigned would be huge)
+        moveq   #1,d0
+.pos    tst.w   p_row(a2)       ; back row: half
         beq.s   .min
         addq.w  #1,d0
         lsr.w   #1,d0
@@ -462,7 +465,10 @@ foe_attack:
         exg     d0,d1
         lsr.w   #1,d1
         sub.w   d1,d0
-        tst.w   d5              ; ... twice as hard
+        cmp.w   #1,d0           ; at least 1 before doubling and halving
+        bge.s   .pos
+        moveq   #1,d0
+.pos    tst.w   d5              ; ... twice as hard
         beq.s   .one
         add.w   d0,d0
 .one

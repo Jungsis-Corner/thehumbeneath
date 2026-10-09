@@ -656,6 +656,18 @@ draws a level source as PNG for review.
   helps a worn-out cat) or a resting place heals it. The moss garden of
   level 8 is a resting place (rest event with its own text). Simulated:
   the whole game is as hard as before (the garden makes up for the rest).
+- **v1.3 released** (2026-10-09): the handcar asks before it rides ("A
+  handcar. Ride it?" Yes/No): before, stepping on its stop in the lair
+  took the party back to the entrance against its will. ITEMTEST adds
+  the Handcar Lever. Handcar stops are shown on the map (magenta dot).
+  The handcar stop in the lair moved from 25,25 (the only way from the
+  south corridor into the lair, so the party was carried off) to the
+  corner 30,22; same event index, so saves stay valid.
+  Fixed: damage could become 32767. A weak back-row cat against a high
+  defence (Mossfern, attack 2, against a Rust Beetle, defence 6) made -2,
+  and halving it as an unsigned word gave 32767; the same could happen to
+  a cat keeping guard against a heavy blow. Damage is now at least 1
+  before it is doubled or halved.
 
 ## 7. Testing
 

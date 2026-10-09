@@ -3,7 +3,8 @@
 # at the shaft, rust beetles in side chambers. Falling rubble hits everybody,
 # broken glass at the old station. Vixen Redbrush has claimed the tunnel
 # and waits at the stairs down. Shortcut: the handcar between the stop near
-# the entrance (6,6) and the stop in the lair (25,25); the Handcar Lever
+# the entrance (6,6) and the stop in the lair (30,22, a corner nobody has
+# to cross; until v1.2 it stood in the way at 25,25); the Handcar Lever
 # lies in the west room near the entrance (a rust beetle keeps it), so the
 # ride saves the long way past the fox den (35 instead of 53 steps).
 number  4
@@ -52,8 +53,8 @@ event 15 5 rubble 1 RUBBLE or 20 5 or 11 4
 event 21 5 mark MARK_4_1
 event 28 5 message TRACK_END
 # handcar stops (both ways)
-event 6 6 handcar 25 25
-event 25 25 handcar 6 6
+event 6 6 handcar 30 22
+event 30 22 handcar 6 6
 # the old station
 event 13 3 message LANTERN
 event 11 1 trap 2 GLASS or 15 2 or 13 4

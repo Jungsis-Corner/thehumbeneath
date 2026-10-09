@@ -82,7 +82,12 @@ GEFAHREN VERMEIDEN
   Fallen            Spaeher warnt 1 Feld voraus, Laternensplitter 2
   Gegner            Spaeher meldet Gruppen bis 2 Felder voraus
   laute Felder      Schleichen (Taste S): leise, aber langsamer
-  Jaeger-Gruppen    Echokiesel werfen: sie wenden sich dem Laut zu
+  Jaeger-Gruppen    Echokiesel werfen (Gegenstand, nicht im Kampf):
+                    jagende Gruppen bis 6 Felder weit hoeren auf zu
+                    jagen und bleiben stehen; aufgeschreckte Blasse
+                    lauschen wieder ruhig. Nicht gegen Waechter,
+                    Flatternde und Schwimmer. Einmal in Level 4,
+                    zweimal in Level 7.
   Flucht            Fluchtversuch im Kampf (nicht bei Mini-Bossen)
 
 MOOS
@@ -104,6 +109,7 @@ KARTE (TASTE M)
   blau              Wasser, und Felder, auf denen die Gruppe war
   gelber Punkt      ein Gegenstand liegt dort (betreten = aufheben)
   tuerkiser Punkt   Ventilfassung (Level 3), weisser Punkt: gedreht
+  lila Punkt        Haltestelle der Draisine (Level 4)
   gelber Pfeil      die Gruppe und ihre Blickrichtung
 
 SCHLUESSEL UND RAETSEL (VERRAET ETWAS)
@@ -204,7 +210,11 @@ AVOIDING DANGER
   traps             the scout warns 1 cell ahead, the Lantern Shard 2
   enemies           the scout tells of groups up to 2 cells ahead
   noisy cells       sneak (key S): quiet, but slower
-  hunting groups    throw an Echo Pebble: they turn to the sound
+  hunting groups    throw an Echo Pebble (item, not in fights):
+                    hunting groups up to 6 cells away stop hunting and
+                    stay where they are; startled Pale Ones listen
+                    calmly again. No use against guards, flyers and
+                    swimmers. Once in level 4, twice in level 7.
   flee              try to flee in a fight (not from mini-bosses)
 
 MOSS
@@ -226,6 +236,7 @@ MAP (KEY M)
   blue              water, and cells the party has been on
   yellow dot        an item lies there (step on it to take it)
   cyan dot          valve socket (level 3), white dot: turned
+  magenta dot       handcar stop (level 4)
   yellow arrow      the party and where it looks
 
 KEYS AND PUZZLES (SPOILERS)

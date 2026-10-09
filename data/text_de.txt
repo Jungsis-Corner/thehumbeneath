@@ -168,6 +168,7 @@ VALVE_DONE      Dieses Ventil ist offen.
 CISTERN_OPEN    In der Ferne knirscht eine schwere Tür.
 HANDCAR_GO      Ihr zieht den Hebel. Die Draisine rollt!
 HANDCAR_NO      Eine alte Draisine. Der Hebel fehlt.
+HANDCAR_ASK     Eine Draisine. Mit ihr fahren?
 SINKHOLE        Der Boden gibt nach! Ihr stürzt.
 REST            Der leuchtende Teich heilt jede Wunde.
 REST_UP         %s steht wieder auf.

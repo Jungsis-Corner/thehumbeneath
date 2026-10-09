@@ -186,6 +186,7 @@ VALVE_DONE      This valve is open.
 CISTERN_OPEN    Far off, a heavy door grinds open.
 HANDCAR_GO      You pull the lever. The handcar rolls!
 HANDCAR_NO      An old handcar. Its lever is missing.
+HANDCAR_ASK     A handcar. Ride it?
 SINKHOLE        The ground gives way! You fall.
 REST            The glowing pool soothes every wound.
 REST_UP         %s stands up again.

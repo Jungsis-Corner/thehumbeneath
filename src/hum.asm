@@ -1445,7 +1445,18 @@ cell_events:
         move.w  #T_HANDCAR_NO,d0
         bsr     msg_print
         bra     .nx
-.ride   move.w  #T_HANDCAR_GO,d0
+.ride   bsr     redraw          ; ride? (stepping on the stop is not
+        bsr     menu_clear      ; enough: the party may only pass by)
+        move.w  #T_YES,d0
+        bsr     menu_addt
+        move.w  #T_NO,d0
+        bsr     menu_addt
+        move.w  #T_HANDCAR_ASK,d0
+        bsr     text_get
+        bsr     menu_run
+        tst.w   d0
+        bne     .nx             ; no, or cancelled
+        move.w  #T_HANDCAR_GO,d0
         bsr     msg_print
         move.w  EV_PARAM(a3),d0 ; y<<5 | x
         move.w  d0,v_pos(a5)
@@ -2320,10 +2331,12 @@ redraw:                         ; after a step or turn
 MAP_ITEM   equ  $2828           ; a dot of 2 pixels: yellow
 MAP_VALVE  equ  $2814           ; ... cyan
 MAP_TURNED equ  $283c           ; ... white
+MAP_HANDCAR equ $003c           ; ... magenta
 
 ; draw_map (key M): the automap, the cells the party has seen as 4x4
 ; pixel cells, visited floor in blue, items yellow, valve sockets cyan
-; (turned: white), the player as a yellow arrow; no enemies. The party does not walk while it is open.
+; (turned: white), handcar stops magenta, the player as a yellow arrow;
+; no enemies. The party does not walk while it is open.
 ; mark_view: the open cells the party can see ahead (up to 3, until a
 ;            wall or closed door) and the open cells left and right of
 ;            them count as seen (for the map and the progress)
@@ -2436,7 +2449,10 @@ draw_map:
         dbra    d7,.row
         lea     v_map+LV_EVENT(a5),a1 ; items not taken: a yellow dot;
 .itm    cmp.b   #EV_END,EV_X(a1)        ; valve sockets: cyan, turned: white
-        beq.s   .iend
+        beq     .iend
+        move.w  #MAP_HANDCAR,d3 ; a handcar stop: magenta
+        cmp.b   #EV_HANDCAR,EV_TYPE(a1)
+        beq.s   .it2
         move.w  #MAP_VALVE,d3
         cmp.b   #EV_VALVE,EV_TYPE(a1)
         bne.s   .it1
@@ -2474,7 +2490,7 @@ draw_map:
         move.w  d3,(a0)
         move.w  d3,LINEB(a0)
 .inx    addq.l  #EV_SIZE,a1
-        bra.s   .itm
+        bra     .itm
 .iend   move.w  v_pos(a5),d0    ; player
         moveq   #31,d1
         and.w   d0,d1
@@ -2561,6 +2577,7 @@ item_test:                      ; the pack for tests
         move.l  #IT_STALE_PREY<<24|1<<16|IT_HERB<<8|2,(a0)+
         move.w  #IT_VALVE_WHEEL<<8|3,(a0)+
         move.w  #IT_HEART_STONE<<8|1,(a0)+
+        move.w  #IT_HANDCAR_LEVER<<8|1,(a0)+
         rts
         endc
 
