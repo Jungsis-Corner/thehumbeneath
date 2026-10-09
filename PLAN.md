@@ -637,6 +637,25 @@ draws a level source as PNG for review.
   in v1.1 (tested). Level 1 kept the event order of v1.0 for the same
   reason (event flags are saved by index).
 - **v1.1 released** (2026-10-09).
+- **v1.2 released** (2026-10-09): valve sockets are visible - a valve wheel
+  picture on the wall next to each one (cell type 18 VALVE_WALL, view
+  class 9, set by levelc like the Scratch-Mark wall; only wall set 3 has
+  the picture, VALVE_SETS) and a cyan dot on the map (white when turned).
+  The three valves of level 3 moved one cell to the hall walls (18,1),
+  (29,1), (13,30); same event order, so saves stay valid.
+  The third valve wheel stays in level 2 (variant B): a message in its
+  room ("Something made of iron lies in the mud.", appended event) and an
+  empty valve socket adds "The tunnels above had wheels too."
+  HILFEN_REMEDIES.txt (what helps with what, map legend, puzzle hints) is
+  part of the release package.
+  Falling counts now (decided 2026-10-09): no getting up after a won
+  fight. The healer's Starfolk Call (SK_CALL, outside fights, 2 moss)
+  raises a fallen cat with a quarter of its HP. Without it, it gets up by
+  itself after 60 steps without a fight (get_up, v_down) with 1 HP, worn
+  out: the maximum a quarter lower until a Moss Pack (which now also
+  helps a worn-out cat) or a resting place heals it. The moss garden of
+  level 8 is a resting place (rest event with its own text). Simulated:
+  the whole game is as hard as before (the garden makes up for the rest).
 
 ## 7. Testing
 

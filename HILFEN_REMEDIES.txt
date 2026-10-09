@@ -1,0 +1,244 @@
+THE HUM BENEATH - Was hilft wobei?
+===================================
+(English version below)
+
+Eine Kurzuebersicht fuer unterwegs: welche Plage was kostet und was
+dagegen hilft. "Wundtick" heisst: alle 4 Schritte und jede Kampfrunde.
+Solange eine Katze blutet oder vergiftet ist, heilt sie beim Gehen nicht.
+
+WUNDEN UND ZUSTAENDE
+--------------------
+Kratzer (leichte Blutung)            -1 LP je Wundtick
+  - Moos auflegen       jede Katze (Faehigkeit), jedes Moos
+  - Moosverband         Heilerin, +3 LP
+  - gewonnener Kampf    Kratzer hoeren von selbst auf
+  - leuchtender Teich   (Level 5) heilt alles
+  - Spinnwebverband     haelt die Blutung 10 Schritte an
+  - Fest andruecken     Heilerin, nur im Kampf: eine Stufe weniger
+
+Riss (mittlere Blutung)              -2 LP je Wundtick
+  - Moosverband         Heilerin, jedes Moos, +3 LP
+  - leuchtender Teich
+  - Spinnwebverband     haelt sie 10 Schritte an
+  - Fest andruecken     im Kampf wird ein Kratzer daraus
+  - NICHT: Moos auflegen (zu schwach), Sieg im Kampf
+
+Tiefe Wunde (schwere Blutung)        -3 LP je Wundtick, die hoechsten
+                                     LP sinken (bis auf die Haelfte)
+  - Moosverband         Heilerin, nur Moor- oder Gluehkappenmoos
+                        (Trockenmoos ist zu schwach); gibt die hoechsten
+                        LP zurueck
+  - leuchtender Teich
+  - Spinnwebverband     haelt sie 10 Schritte an
+
+Gift                                 -1 LP je Wundtick
+  - Kraeuter kauen      Heilerin, kostet 1 Kraut
+  - Moosverband         Heilerin, nur mit Gluehkappenmoos
+  - leuchtender Teich
+  - vorbeugen:          Distelamulett tragen
+  - kommt von:          Kanalratten, Kreuzottern, Sporen, Alter Beute
+
+Angst                                verliert oft ihren Zug (jeden 2.)
+  - Mohnsamen           (Gegenstand)
+  - endet mit dem Kampf
+  - kommt von:          Geistereulen
+
+Gefallen (0 LP)                      bleibt liegen, auch nach einem Sieg
+  - Sternenruf          Heilerin, ausserhalb von Kaempfen, kostet 2 Moos:
+                        steht mit einem Viertel der LP auf
+  - Sternvolkfeder      getragen: einmal pro Level sofort wieder auf
+                        (mit einem Viertel der LP)
+  - Rastplatz           leuchtender Teich (Level 5) oder Moosgarten
+                        (Level 8): steht mit vollen LP auf
+  - 60 Schritte Ruhe    ohne Kampf rappelt sie sich allein auf, mit 1 LP
+                        und erschoepft: die hoechsten LP sind um ein
+                        Viertel gesenkt, bis ein Moosverband oder ein
+                        Rastplatz das heilt
+
+LEBENSPUNKTE ZURUECK
+--------------------
+  Ringelblume       +5 LP      Gegenstand, jede Katze
+  Frische Beute     +4 LP      Gegenstand
+  Alte Beute        +2 LP      Gegenstand, 1 zu 4: vergiftet
+  Moosverband       +3 LP      Heilerin, stillt auch Blutung
+  Gehen             +1 LP      alle 10 Schritte, jede Katze
+  Rastplatz         alles      Teich (Level 5), Moosgarten (Level 8)
+  Beute aufspueren  Beute      Jaeger, ausserhalb von Kaempfen, dann
+                               30 Schritte Pause
+
+WENIGER SCHADEN IM KAMPF
+------------------------
+  Deckung           halber Schaden, +3 Abwehr bis zum naechsten Zug
+  Deckung (Kaempfer) zieht alle Angriffe auf sich, schuetzt die anderen
+  Sternzauber       Heilerin: 3 Runden halber Schaden fuer alle,
+                    einmal pro Kampf
+  Dornenhalsband    getragen: +1 Abwehr
+  hintere Reihe     wird seltener angegriffen
+  Wuchtschlag ("!") naechster Schlag sicher und doppelt -> Deckung,
+                    Schutz durch den Kaempfer oder vorher heilen
+
+GEFAHREN VERMEIDEN
+------------------
+  Fallen            Spaeher warnt 1 Feld voraus, Laternensplitter 2
+  Gegner            Spaeher meldet Gruppen bis 2 Felder voraus
+  laute Felder      Schleichen (Taste S): leise, aber langsamer
+  Jaeger-Gruppen    Echokiesel werfen: sie wenden sich dem Laut zu
+  Flucht            Fluchtversuch im Kampf (nicht bei Mini-Bossen)
+
+MOOS
+----
+  Moormoos          stillt jede Blutung
+  Trockenmoos       Kratzer und Risse, keine tiefen Wunden
+  Gluehkappenmoos   alles, heilt auch Gift (ab Level 5)
+  Die Heilerin traegt bis 9 Moos, die anderen bis 3. Der Moosverband
+  nimmt das schwaechste Moos, das noch hilft.
+
+KARTE (TASTE M)
+---------------
+  Die Karte zeigt nur, was die Gruppe gesehen hat, und keine Gegner.
+  weiss             Wand
+  gelbe Flaeche     Kisten (Level 1)
+  rot               Tuer, geschlossen oder verschlossen
+  lila              offene Tuer
+  gruen             Treppe
+  blau              Wasser, und Felder, auf denen die Gruppe war
+  gelber Punkt      ein Gegenstand liegt dort (betreten = aufheben)
+  tuerkiser Punkt   Ventilfassung (Level 3), weisser Punkt: gedreht
+  gelber Pfeil      die Gruppe und ihre Blickrichtung
+
+SCHLUESSEL UND RAETSEL (VERRAET ETWAS)
+-------------------------------------
+  Level 1   Der Rostschluessel liegt im Westkeller und oeffnet die
+            Kammer im Sueden; dort liegt der Kellerschluessel. Er
+            oeffnet die Tuer zum Bau mit der Treppe.
+  Level 3   Drei Ventile oeffnen die Zisternentuer. Zwei Raeder liegen
+            in Level 3, das dritte in Level 2 im Raum mit der Treppe
+            nach unten. Jedes Ventil verbraucht ein Rad.
+  Level 4   Der Draisinenhebel liegt im Westraum nahe dem Eingang. Mit
+            ihm faehrt die Draisine (Halt beim Eingang) bis vor den Bau
+            mit der Treppe.
+  Level 7   Das Blasse Totem oeffnet die Tuer zur Halle des Aeltesten.
+  Level 8   Der Herzstein (oder Gnade gegenueber dem Aeltesten Blassen)
+            entscheidet ueber das Ende.
+
+----------------------------------------------------------------------
+
+THE HUM BENEATH - What helps with what?
+=======================================
+
+A pocket guide: what each plague costs and what helps against it.
+"Wound tick" means: every 4 steps and every combat round. While a cat
+bleeds or is poisoned it does not heal by walking.
+
+WOUNDS AND CONDITIONS
+---------------------
+Scratch (light bleeding)             -1 HP per wound tick
+  - Apply Moss          any cat (Skill), any moss
+  - Moss Pack           healer, +3 HP
+  - a won fight         scratches stop by themselves
+  - glowing pool        (level 5) heals everything
+  - Cobweb Wrap         holds the bleeding for 10 steps
+  - Press and Hold      healer, fights only: one level less
+
+Gash (medium bleeding)               -2 HP per wound tick
+  - Moss Pack           healer, any moss, +3 HP
+  - glowing pool
+  - Cobweb Wrap         holds it for 10 steps
+  - Press and Hold      in a fight it becomes a scratch
+  - NOT: Apply Moss (too weak), a won fight
+
+Deep Wound (heavy bleeding)          -3 HP per wound tick, the maximum
+                                     HP drop (down to half)
+  - Moss Pack           healer, fen or glowcap moss only (dry moss is
+                        too weak); gives the maximum HP back
+  - glowing pool
+  - Cobweb Wrap         holds it for 10 steps
+
+Poison                               -1 HP per wound tick
+  - Herb Chew           healer, uses 1 herb
+  - Moss Pack           healer, with glowcap moss only
+  - glowing pool
+  - prevent it:         wear the Thistle Charm
+  - comes from:         sewer rats, adders, spores, stale prey
+
+Fear                                 the cat often loses its turn (1 in 2)
+  - Poppy Seed          (item)
+  - ends with the fight
+  - comes from:         wraith owls
+
+Fallen (0 HP)                        stays down, also after a victory
+  - Starfolk Call       healer, outside fights, costs 2 moss: gets up
+                        with a quarter of its HP
+  - Starfolk Feather    worn: up again at once, once per level
+                        (with a quarter of its HP)
+  - resting place       glowing pool (level 5) or moss garden (level 8):
+                        gets up with full HP
+  - 60 quiet steps      without a fight it gets up by itself, with 1 HP
+                        and worn out: the maximum HP are a quarter lower
+                        until a Moss Pack or a resting place heals it
+
+HIT POINTS BACK
+---------------
+  Marigold Leaf     +5 HP      item, any cat
+  Fresh Prey        +4 HP      item
+  Stale Prey        +2 HP      item, 1 in 4: poisoned
+  Moss Pack         +3 HP      healer, also stops bleeding
+  walking           +1 HP      every 10 steps, every cat
+  resting place     all        pool (level 5), moss garden (level 8)
+  Track Prey        prey       hunter, outside fights, then 30 steps
+                               pause
+
+LESS DAMAGE IN FIGHTS
+---------------------
+  Defend            half damage, +3 defence until the next turn
+  Defend (fighter)  draws every attack, shields the others
+  Starfolk Charm    healer: half damage for all for 3 rounds,
+                    once per fight
+  Bramble Collar    worn: +1 defence
+  back row          is attacked less often
+  heavy blow ("!")  next blow hits for sure and twice as hard ->
+                    defend, let the fighter shield, or heal first
+
+AVOIDING DANGER
+---------------
+  traps             the scout warns 1 cell ahead, the Lantern Shard 2
+  enemies           the scout tells of groups up to 2 cells ahead
+  noisy cells       sneak (key S): quiet, but slower
+  hunting groups    throw an Echo Pebble: they turn to the sound
+  flee              try to flee in a fight (not from mini-bosses)
+
+MOSS
+----
+  Fen Moss          stops any bleeding
+  Dry Moss          scratches and gashes, no deep wounds
+  Glowcap Moss      everything, also cures poison (from level 5)
+  The healer carries up to 9 moss, the others up to 3. The Moss Pack
+  uses the weakest moss that still helps.
+
+MAP (KEY M)
+-----------
+  The map shows only what the party has seen, and no enemies.
+  white             wall
+  yellow area       crates (level 1)
+  red               door, closed or locked
+  magenta           open door
+  green             stairs
+  blue              water, and cells the party has been on
+  yellow dot        an item lies there (step on it to take it)
+  cyan dot          valve socket (level 3), white dot: turned
+  yellow arrow      the party and where it looks
+
+KEYS AND PUZZLES (SPOILERS)
+---------------------------
+  Level 1   The Rusty Key lies in the west cellar and opens the closet
+            in the south; the Cellar Key lies there. It opens the door
+            to the lair with the stairs.
+  Level 3   Three valves open the cistern door. Two wheels lie in
+            level 3, the third in level 2, in the room with the stairs
+            down. Every valve uses one wheel.
+  Level 4   The Handcar Lever lies in the west room near the entrance.
+            With it the handcar (stop at the entrance) rides to the
+            lair with the stairs.
+  Level 7   The Pale Totem opens the door to the Elder's hall.
+  Level 8   The Heart Stone (or mercy for the Elder Pale) decides the
+            ending.

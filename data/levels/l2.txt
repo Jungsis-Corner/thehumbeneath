@@ -68,6 +68,8 @@ event 23 24 message SLUICE
 event 28 23 item VALVE_WHEEL 1
 event 30 30 mark MARK_2_2
 event 29 29 stairs 3 2 2
+# (added in v1.2, at the end: the event flags of older saves stay right)
+event 27 26 message IRON_MUD
 
 # enemies
 group 9 8 EEL 1 swim or 4 8 or 14 8

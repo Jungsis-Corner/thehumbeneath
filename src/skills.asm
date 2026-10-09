@@ -13,6 +13,8 @@ SK_GATHER    equ 4
 SK_APPLY     equ 5
 SK_POUNCE    equ 6              ; the hunter, in a fight, from the front row
 SK_TRACK     equ 7              ; the hunter, outside fights: prey
+SK_CALL      equ 8              ; the healer, outside fights: a fallen cat up
+CALL_MOSS    equ 2              ; moss the Starfolk Call costs
 TRACK_STEPS  equ 30             ; steps until the prey is not wary any more
 TRACK_PCT    equ 40             ; chance to catch something, +5 per find point
 STALE_PCT    equ 25             ; ... and that it is stale prey
@@ -59,7 +61,7 @@ skill_menu:
 .e      movem.l (sp)+,d1-d2/a0-a1
         rts
 .fight  dc.b    SK_MOSS_PACK,SK_PRESS,SK_HERB,SK_CHARM,-1
-.heal   dc.b    SK_MOSS_PACK,SK_HERB,SK_GATHER,-1
+.heal   dc.b    SK_MOSS_PACK,SK_HERB,SK_GATHER,SK_CALL,-1
 .other  dc.b    SK_APPLY,-1
 .hunt   dc.b    SK_POUNCE,SK_APPLY,-1
 .track  dc.b    SK_TRACK,SK_APPLY,-1
@@ -82,6 +84,8 @@ use_skill:
         bsr     menu_cats       ; -> a3
         tst.w   d0
         bmi     .no
+        cmp.w   #SK_CALL,d7
+        beq     .call
         tst.w   p_hp(a3)
         bgt.s   .alive
         move.w  #T_CANNOT_HELP,d0
@@ -124,6 +128,9 @@ use_skill:
         lea     .any(pc),a0
         tst.w   p_bleed(a3)
         bne.s   .p3
+        move.w  p_hpmax(a3),d0  ; worn out (lower maximum): it helps
+        cmp.w   p_hpbase(a3),d0
+        blo.s   .p3
         move.w  p_hp(a3),d0     ; no wound: only when hit points are missing
         cmp.w   p_hpmax(a3),d0
         bge     .noneed
@@ -274,6 +281,33 @@ use_skill:
         move.l  (sp)+,a2
         bra     .done
 
+.call   tst.w   p_hp(a3)        ; Starfolk Call: a fallen cat stands up
+        ble.s   .cl0            ; with a quarter of its hit points
+        bra     .noneed
+.cl0    bsr     moss_count
+        cmp.w   #CALL_MOSS,d0
+        bhs.s   .cl1
+        move.w  #T_NEED_MOSS2,d0
+        bsr     msg_print
+        bra     .no
+.cl1    moveq   #CALL_MOSS-1,d1
+.cl2    lea     .any(pc),a0
+        bsr     moss_take
+        dbra    d1,.cl2
+        move.w  #T_CALLS,d0
+        move.w  p_name(a2),d1
+        bsr     name_msg
+        move.w  p_hpmax(a3),d0
+        lsr.w   #2,d0
+        bne.s   .cl3
+        moveq   #1,d0
+.cl3    move.w  d0,p_hp(a3)
+        move.w  #T_STARLIGHT,d0
+        move.w  p_name(a3),d1
+        bsr     name_msg
+        bsr     panel_show
+        bra     .done
+
 .pounce tst.w   p_row(a2)       ; Pounce: twice the damage, less often a
         beq.s   .pc             ; hit; only with room (from the front row)
         move.w  #T_NO_ROOM,d0
@@ -342,6 +376,20 @@ moss_take:
 .none   moveq   #-1,d0
 .e      movem.l (sp)+,d1/a0-a1/a3
         tst.w   d0
+        rts
+
+; moss_count: -> d0 = all moss of all cats
+moss_count:
+        movem.l d1/a0,-(sp)
+        moveq   #0,d0
+        lea     v_party(a5),a0
+        moveq   #NPARTY-1,d1
+.l      add.w   p_fen(a0),d0
+        add.w   p_dry(a0),d0
+        add.w   p_glow(a0),d0
+        lea     p_size(a0),a0
+        dbra    d1,.l
+        movem.l (sp)+,d1/a0
         rts
 
 ; moss_has: d0 = moss kind -> NE if any cat carries it

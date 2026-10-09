@@ -188,11 +188,11 @@ use_item:
         cmp.w   #IK_STALE,d1
         beq.s   .heal
         cmp.w   #IK_WRAP,d1
-        beq.s   .wrap
+        beq     .wrap
         cmp.w   #IK_CALM,d1
         beq     .calm
         cmp.w   #IK_LURE,d1
-        beq.s   .lure
+        beq     .lure
         move.w  #T_NOT_NOW,d0   ; herb, key: not here
         bsr     msg_print
         bra     .kept

@@ -44,8 +44,9 @@ Level source:
                                    to TX TY and every cat takes 2 damage
     event X Y noise TEXT           every time, unless the party sneaks: TEXT,
                                    listeners within 6 cells wake up and hunt
-    event X Y rest                 a safe place: every cat is healed, the
-                                   fallen stand up again
+    event X Y rest [TEXT]          a safe place: every cat is healed, the
+                                   fallen stand up again (TEXT: what it
+                                   says, else REST, the glowing pool)
     event X Y valve                a valve socket: a Valve Wheel from the pack
                                    is fitted and turned; when all valves of
                                    the level are turned, the locked doors with
@@ -105,8 +106,8 @@ LV_GROUPS = MAPLEN + 8        # offset of the group table offset
 DIRS = 'NESW'
 
 # view classes (how a cell is drawn in the first-person view)
-VC_NONE, VC_WALL, VC_DOOR, VC_DOWN, VC_UP, VC_WATER, VC_DECOA, VC_DECOB, VC_MARK = range(9)
-VC_NAMES = ['NONE', 'WALL', 'DOOR', 'DOWN', 'UP', 'WATER', 'DECOA', 'DECOB', 'MARK']
+VC_NONE, VC_WALL, VC_DOOR, VC_DOWN, VC_UP, VC_WATER, VC_DECOA, VC_DECOB, VC_MARK, VC_VALVE = range(10)
+VC_NAMES = ['NONE', 'WALL', 'DOOR', 'DOWN', 'UP', 'WATER', 'DECOA', 'DECOB', 'MARK', 'VALVE']
 
 # char, type, name, blocks movement, debug map colour (0-7), view class
 CELLS = [
@@ -130,6 +131,7 @@ CELLS = [
     ('*', 15, 'DECO_A', 1, 7, VC_DECOA),
     ('+', 16, 'DECO_B', 1, 7, VC_DECOB),
     ('=', 17, 'MARK_WALL', 1, 7, VC_MARK),
+    ('&', 18, 'VALVE_WALL', 1, 7, VC_VALVE),
 ]
 BY_CHAR = {c[0]: c for c in CELLS}
 BY_TYPE = {c[1]: c for c in CELLS}
@@ -247,9 +249,9 @@ def parse(path, textids):
                     fail('%s: event X Y valve' % where)
                 param = 0
             elif kind == 'rest':
-                if len(args) != 3:
-                    fail('%s: event X Y rest' % where)
-                param = 0
+                if len(args) not in (3, 4) or (len(args) == 4 and args[3] not in textids):
+                    fail('%s: event X Y rest [TEXT]' % where)
+                param = textids[args[3]] if len(args) == 4 else 0
             elif kind in ('handcar', 'sinkhole', 'collapse'):
                 if len(args) != 5:
                     fail('%s: event X Y %s TX TY' % (where, kind))
@@ -406,11 +408,12 @@ DECO = 12                         # % of the walls next to open cells
 
 def decorate(lv):
     """Wall cells that get a picture: the carved wall next to every
-    Scratch-Mark (the one seen along the longest open line), then some of
-    the walls next to open cells, never two side by side."""
+    Scratch-Mark and the valve wheel next to every valve socket (the wall
+    seen along the longest open line), then some of the walls next to open
+    cells, never two side by side."""
     rows = [list(r) for r in lv['rows']]
     for x, y, kind, _, _ in lv['events']:
-        if kind != 'mark':
+        if kind not in ('mark', 'valve'):
             continue
         best = None
         for dx, dy in ((0, -1), (1, 0), (0, 1), (-1, 0)):
@@ -423,7 +426,7 @@ def decorate(lv):
             if best is None or n > best[0]:
                 best = (n, x + dx, y + dy)
         if best:
-            rows[best[2]][best[1]] = '='
+            rows[best[2]][best[1]] = '=' if kind == 'mark' else '&'
     pct = lv.get('deco', DECO)
     for y in range(SIZE):
         for x in range(SIZE):
@@ -433,7 +436,7 @@ def decorate(lv):
                        and not blocks(rows[y + dy][x + dx])
                        for dx, dy in ((0, -1), (1, 0), (0, 1), (-1, 0))):
                 continue
-            if any(rows[y + dy][x + dx] in '*+='
+            if any(rows[y + dy][x + dx] in '*+=&'
                    for dy in (-1, 0, 1) for dx in (-1, 0, 1)
                    if 0 <= x + dx < SIZE and 0 <= y + dy < SIZE):
                 continue

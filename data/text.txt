@@ -180,7 +180,7 @@ NOT_YET         Rubble blocks the way down.
 WATER_COLD      Cold water reaches your bellies.
 
 # --- Level 3: The Old Cistern ---
-VALVE_EMPTY     A valve socket. Its wheel is missing.
+VALVE_EMPTY     A valve socket. Its wheel is missing.\nThe tunnels above had wheels too.
 VALVE_TURN      You fit a Valve Wheel and turn it.
 VALVE_DONE      This valve is open.
 CISTERN_OPEN    Far off, a heavy door grinds open.
@@ -193,6 +193,10 @@ COLLAPSE        The floor breaks under you!
 SHADOW          %s strikes only a shadow.
 GETS_UP         %s gets up again!
 GETS_BACK       %s gets back up, weak.
+GETS_TIRED      %s gets back up, worn out.
+CALLS           %s calls on the Starfolk.
+STARLIGHT       %s stands up in the starlight.
+NEED_MOSS2      That takes two moss.
 DOOR_VALVES     The door does not move. Valves hold it.
 
 # --- Traps ---
@@ -330,6 +334,7 @@ SK_GATHER       Gather
 SK_APPLY        Apply Moss
 SK_POUNCE       Pounce
 SK_TRACK        Track Prey
+SK_CALL         Starfolk Call
 CMB_FLEE        Flee
 CMB_MARK        >
 MENU_PARTY      Party
@@ -452,6 +457,7 @@ MOSS_WALLS      Green moss grows on the wet walls.
 GRATE           A broken grate bites into a paw.
 SLUICE          A rusted sluice gate. Something waits.
 DRIP_TUNNEL     Water drips from the ceiling.
+IRON_MUD        Something made of iron lies in the mud.
 
 @level 3
 @width 40
@@ -551,6 +557,7 @@ HOLLOW          The cavern has no end. The light pulses.
 GARDEN          Moss grows everywhere, soft and deep.
 HEART           Ahead, the Heart beats in the rock.
 SHADES          Shapes move like your own shadows.
+GARDEN_REST     The soft moss heals every wound.
 
 @level 0
 @width 40

@@ -162,7 +162,7 @@ NOT_YET         Geröll versperrt den Weg nach unten.
 WATER_COLD      Kaltes Wasser reicht bis an den Bauch.
 
 # --- Level 3 ---
-VALVE_EMPTY     Eine Ventilfassung. Das Rad fehlt.
+VALVE_EMPTY     Eine Ventilfassung. Das Rad fehlt.\nAuch in den Tunneln oben gab es Räder.
 VALVE_TURN      Ihr setzt ein Ventilrad ein und dreht.
 VALVE_DONE      Dieses Ventil ist offen.
 CISTERN_OPEN    In der Ferne knirscht eine schwere Tür.
@@ -175,6 +175,10 @@ COLLAPSE        Der Boden bricht unter euch!
 SHADOW          %s trifft nur einen Schatten.
 GETS_UP         %s steht wieder auf!
 GETS_BACK       %s rappelt sich auf, schwach.
+GETS_TIRED      %s steht erschöpft wieder auf.
+CALLS           %s ruft das Sternvolk an.
+STARLIGHT       %s steht im Sternenlicht auf.
+NEED_MOSS2      Dafür braucht es zwei Moos.
 DOOR_VALVES     Die Tür klemmt. Ventile halten sie.
 
 # --- Traps ---
@@ -306,6 +310,7 @@ SK_GATHER       Sammeln
 SK_APPLY        Moos auflegen
 SK_POUNCE       Ansprung
 SK_TRACK        Beute aufspüren
+SK_CALL         Sternenruf
 CMB_FLEE        Flucht
 CMB_MARK        >
 MENU_PARTY      Katzen
@@ -401,6 +406,7 @@ MOSS_WALLS      Grünes Moos wächst an den nassen Wänden.
 GRATE           Ein kaputtes Gitter beißt in eine Pfote.
 SLUICE          Ein rostiges Schleusentor. Etwas wartet.
 DRIP_TUNNEL     Wasser tropft von der Decke.
+IRON_MUD        Etwas aus Eisen liegt hier im Schlamm.
 
 # --- Level 3: Die alte Zisterne ---
 ENTRY_3         Eure Schritte hallen lange nach.
@@ -476,6 +482,7 @@ HOLLOW          Die Höhle endet nie. Das Licht pulsiert.
 GARDEN          Überall wächst Moos, weich und tief.
 HEART           Vorne schlägt das Herz im Fels.
 SHADES          Gestalten regen sich wie eure Schatten.
+GARDEN_REST     Das weiche Moos heilt jede Wunde.
 
 # --- Test levels ---
 ENTRY_TEST      Kalter Testkeller. Wände, sonst nichts.

@@ -679,16 +679,8 @@ victory:
         bra.s   .rank
 .nx     lea     p_size(a3),a3
         dbra    d2,.cat
-        lea     v_party(a5),a3  ; the fallen get up again, weak
-        moveq   #NPARTY-1,d2
-.up     tst.w   p_hp(a3)
-        bgt.s   .up1
-        move.w  #1,p_hp(a3)
-        move.w  #T_GETS_BACK,d0
-        move.w  p_name(a3),d1
-        bsr     name_msg
-.up1    lea     p_size(a3),a3
-        dbra    d2,.up
+                                ; (the fallen stay down: the healer's
+                                ; Starfolk Call, or a long rest - get_up)
         move.l  v_cgrp(a5),a3   ; the group is gone
         bset    #GF_GONE,G_FLAGS(a3)
         moveq   #0,d0

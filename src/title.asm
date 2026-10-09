@@ -153,7 +153,7 @@ pic_show:
         clr.w   v_wsnum(a5)
         lea     v_name(a5),a3
         bsr     fopen
-        bne.s   .e
+        bne     .e
         lea     v_walls(a5),a1
         moveq   #12,d4          ; magic, length, lines
         bsr     fread

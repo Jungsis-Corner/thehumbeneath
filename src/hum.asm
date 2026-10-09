@@ -218,6 +218,7 @@ v_humc  rs.w    1               ; actions since the last Hum pulse
 v_regen rs.w    1               ; steps since the last hit point regained
 v_pounce rs.w   1               ; combat: the attack is a pounce
 v_track rs.w    1               ; steps since the hunter last tracked prey
+v_down  rs.w    1               ; steps since a cat fell (outside fights)
 v_mute  rs.w    1               ; 1 = sound off
 v_fx    rs.w    1               ; enemies drawn as FX_HIT or FX_ATTACK (render)
 v_mwait rs.w    1               ; frames until the next note
@@ -941,10 +942,12 @@ hurt_all:
 
 ; rest: every cat is healed in full, wounds and poison are gone, the
 ;       fallen stand up again
-rest:
+rest:                           ; d0 = text id, 0 = "The glowing pool..."
         movem.l d0-d3/a0-a3,-(sp)
+        tst.w   d0
+        bne.s   .say
         move.w  #T_REST,d0
-        bsr     msg_print
+.say    bsr     msg_print
         lea     v_party(a5),a3
         moveq   #NPARTY-1,d3
 .c      move.w  p_hpbase(a3),p_hpmax(a3)
@@ -1484,7 +1487,8 @@ cell_events:
         bra     .nx
 .soft   bsr     msg_print
         bra     .nx
-.rest   bsr     rest            ; the glowing pool
+.rest   move.w  EV_PARAM(a3),d0 ; a resting place (its text, 0: the pool's)
+        bsr     rest
         bra     .nx
 .trap   bset    #0,EV_FLAGS(a3) ; trap: only the first time
         bne     .nx
@@ -1646,7 +1650,7 @@ groups_act:
         rts
 .stepx  moveq   #0,d3           ; one step in x towards the party -> EQ = done
         tst.w   d1
-        beq.s   .no
+        beq     .no
         moveq   #1,d3
         tst.w   d1
         bpl.s   .try
@@ -2313,9 +2317,13 @@ redraw:                         ; after a step or turn
         move.w  d0,v_rtime(a5)
         bra     panel_show
 
+MAP_ITEM   equ  $2828           ; a dot of 2 pixels: yellow
+MAP_VALVE  equ  $2814           ; ... cyan
+MAP_TURNED equ  $283c           ; ... white
+
 ; draw_map (key M): the automap, the cells the party has seen as 4x4
-; pixel cells, visited floor in blue, items yellow, the player as a yellow
-; arrow; no enemies. The party does not walk while it is open.
+; pixel cells, visited floor in blue, items yellow, valve sockets cyan
+; (turned: white), the player as a yellow arrow; no enemies. The party does not walk while it is open.
 ; mark_view: the open cells the party can see ahead (up to 3, until a
 ;            wall or closed door) and the open cells left and right of
 ;            them count as seen (for the map and the progress)
@@ -2426,14 +2434,22 @@ draw_map:
         dbra    d6,.cell
         lea     LINEB*4(a0),a0
         dbra    d7,.row
-        lea     v_map+LV_EVENT(a5),a1 ; items not taken: a yellow dot
-.itm    cmp.b   #EV_END,EV_X(a1)
+        lea     v_map+LV_EVENT(a5),a1 ; items not taken: a yellow dot;
+.itm    cmp.b   #EV_END,EV_X(a1)        ; valve sockets: cyan, turned: white
         beq.s   .iend
+        move.w  #MAP_VALVE,d3
+        cmp.b   #EV_VALVE,EV_TYPE(a1)
+        bne.s   .it1
+        btst    #0,EV_FLAGS(a1)
+        beq.s   .it2
+        move.w  #MAP_TURNED,d3
+        bra.s   .it2
+.it1    move.w  #MAP_ITEM,d3
         cmp.b   #EV_ITEM,EV_TYPE(a1)
         bne.s   .inx
         btst    #0,EV_FLAGS(a1)
         bne.s   .inx
-        moveq   #0,d5           ; only where the party has been
+.it2    moveq   #0,d5           ; only where the party has been
         move.b  EV_Y(a1),d5
         moveq   #0,d4
         move.b  EV_X(a1),d4
@@ -2455,8 +2471,8 @@ draw_map:
         add.w   d1,d0
         lea     SCREEN+MAP_X*2+LINEB,a0
         add.l   d0,a0
-        move.w  #$2828,(a0)
-        move.w  #$2828,LINEB(a0)
+        move.w  d3,(a0)
+        move.w  d3,LINEB(a0)
 .inx    addq.l  #EV_SIZE,a1
         bra.s   .itm
 .iend   move.w  v_pos(a5),d0    ; player
@@ -2631,18 +2647,59 @@ bleed_step:
         cmp.w   #TRACK_STEPS,v_track(a5) ; the prey forgets the hunter
         bhs.s   .tr
         addq.w  #1,v_track(a5)
-.tr     addq.w  #1,v_regen(a5)  ; resting while walking: a hit point back
+.tr     bsr     get_up          ; the fallen get up after a while
+        addq.w  #1,v_regen(a5)  ; resting while walking: a hit point back
         cmp.w   #REGEN_STEPS,v_regen(a5)
         blo.s   .bl
         clr.w   v_regen(a5)
-        bsr.s   regen
+        bsr     regen
 .bl     addq.w  #1,v_steps(a5)
         cmp.w   #BLEED_STEPS,v_steps(a5)
         blo.s   .e
         clr.w   v_steps(a5)
-        bsr.s   wound_tick
+        bsr     wound_tick
         bra     party_check
 .e      rts
+
+; get_up: after a step; DOWN_STEPS steps after a cat fell it gets up
+;         again by itself with 1 HP, worn out: its maximum is a quarter
+;         lower until a Moss Pack or a resting place heals it (the quick
+;         way up is the healer's Starfolk Call)
+DOWN_STEPS equ  60
+get_up:
+        movem.l d0-d2/a0,-(sp)
+        lea     v_party(a5),a0
+        moveq   #NPARTY-1,d0
+        moveq   #0,d1
+.c      tst.w   p_hp(a0)        ; somebody down?
+        bgt.s   .n
+        moveq   #1,d1
+.n      lea     p_size(a0),a0
+        dbra    d0,.c
+        tst.w   d1
+        bne.s   .down
+        clr.w   v_down(a5)
+        bra.s   .e
+.down   addq.w  #1,v_down(a5)
+        cmp.w   #DOWN_STEPS,v_down(a5)
+        blo.s   .e
+        clr.w   v_down(a5)
+        lea     v_party(a5),a0
+        moveq   #NPARTY-1,d2
+.u      tst.w   p_hp(a0)
+        bgt.s   .un
+        move.w  #1,p_hp(a0)
+        move.w  p_hpmax(a0),d0  ; worn out
+        lsr.w   #2,d0
+        sub.w   d0,p_hpmax(a0)
+        move.w  #T_GETS_TIRED,d0 ; "<cat> gets back up, worn out."
+        move.w  p_name(a0),d1
+        bsr     name_msg
+.un     lea     p_size(a0),a0
+        dbra    d2,.u
+        bsr     panel_show
+.e      movem.l (sp)+,d0-d2/a0
+        rts
 
 ; regen: every standing cat that neither bleeds nor is poisoned gets a hit
 ;        point back (up to its maximum)

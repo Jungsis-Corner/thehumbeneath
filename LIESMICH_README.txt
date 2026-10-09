@@ -22,6 +22,8 @@ DATEIEN
   boot            startet das Spiel von win1_
   INSTALL_bas     erzeugt per SEXEC eine startbare Datei und startet sie
   LOADER_bas      Start ueber RESPR/LBYTES/CALL
+  HILFEN_REMEDIES.txt  was gegen Wunden, Gift und Gefahren hilft,
+                  Kartenlegende, Hilfen zu Schluesseln und Raetseln
   Alle Dateien muessen auf demselben Laufwerk liegen. Das Spiel sucht sie
   im Standardverzeichnis, dann auf win1_, flp1_ und mdv1_.
 
@@ -63,7 +65,8 @@ DAS SPIEL
     Kaempfer  viele Lebenspunkte, starker Angriff; Gegner greifen ihn
               in der vorderen Reihe bevorzugt an; geht er in Deckung,
               zieht er alle Angriffe auf sich und schuetzt die anderen
-    Heiler    Moos, Kraeuter und der Sternzauber, der die Gruppe schuetzt
+    Heiler    Moos, Kraeuter, der Sternzauber, der die Gruppe schuetzt,
+              und der Sternenruf, der eine gefallene Katze aufrichtet
     Spaeher   flink, warnt vor Fallen direkt voraus und meldet Gegner
               bis zu zwei Felder voraus
     Jaeger    Ansprung: trifft seltener, aber doppelt so hart (nur vorne);
@@ -78,9 +81,11 @@ DAS SPIEL
   hart - Zeit fuer Deckung, den Schutz des Kaempfers oder Heilung.
   Wunden bluten weiter, Schritt fuer Schritt: Kratzer, Riss, tiefe Wunde.
   Moos stillt die Blutung - beim Heiler am besten. Kraeuter heilen Gift.
-  Beim Gehen kommt langsam Lebenskraft zurueck; leuchtende Teiche heilen
-  alles. Nach einem gewonnenen Kampf hoeren Kratzer auf zu bluten, und
-  gefallene Katzen stehen wieder auf.
+  Beim Gehen kommt langsam Lebenskraft zurueck; Rastplaetze heilen
+  alles. Nach einem gewonnenen Kampf hoeren Kratzer auf zu bluten.
+  Eine gefallene Katze bleibt liegen: Der Sternenruf der Heilerin
+  (2 Moos) richtet sie auf. Ohne ihn steht sie erst nach 60 Schritten
+  auf, erschoepft, bis Moosverband oder Rastplatz sie heilen.
   Erfahrung bringt neue Raenge (Taste C zeigt, wie viele EP noch fehlen).
   An den Waenden haben die verschollenen Tiefenwaechter Kratzzeichen
   hinterlassen - sie erzaehlen, was unten geschah.
@@ -145,6 +150,8 @@ FILES
   boot            starts the game from win1_
   INSTALL_bas     creates an executable file with SEXEC and runs it
   LOADER_bas      starts the game via RESPR/LBYTES/CALL
+  HILFEN_REMEDIES.txt  what helps against wounds, poison and dangers,
+                  map legend, hints on keys and puzzles
   All files must be on the same drive. The game looks for them in the
   default directory, then on win1_, flp1_ and mdv1_.
 
@@ -185,7 +192,8 @@ THE GAME
     Fighter  many hit points, a strong attack; enemies prefer it in the
              front row; when it keeps guard it draws every attack and
              shields the others
-    Healer   moss, herbs and the Starfolk Charm that shields the party
+    Healer   moss, herbs, the Starfolk Charm that shields the party, and
+             the Starfolk Call that raises a fallen cat
     Scout    quick, warns of traps just ahead and tells of enemies up
              to two cells ahead
     Hunter   Pounce: hits less often but twice as hard (front row only);
@@ -199,8 +207,10 @@ THE GAME
   as hard - time to keep guard, let the fighter shield the others, or heal.
   Wounds keep bleeding, step by step: scratch, gash, deep wound. Moss
   stops the bleeding - best in the healer's paws. Herbs cure poison.
-  Walking slowly brings strength back; glowing pools heal everything.
-  After a won fight scratches stop bleeding and fallen cats get back up.
+  Walking slowly brings strength back; resting places heal everything.
+  After a won fight scratches stop bleeding. A fallen cat stays down:
+  the healer's Starfolk Call (2 moss) raises it. Without it, it gets up
+  after 60 steps, worn out until a Moss Pack or a resting place heals it.
   Experience brings new ranks (key C shows how many XP are still missing).
   The lost Deepwardens left Scratch-Marks on the walls - they tell what
   happened down there.

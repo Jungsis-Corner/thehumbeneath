@@ -45,14 +45,14 @@ map
 event 2 2 stairs 2 29 29
 event 6 2 message PALE_LIGHT
 # north hall: valve 1, the first mark
-event 18 2 valve
+event 18 1 valve
 event 17 2 mark MARK_3_2
 event 14 5 echo ECHO_TRAP
 event 9 6 slip SLIPPERY
 event 12 7 slip SLIPPERY
 event 20 8 gather FEN_MOSS 2
 # east hall: valve 2, a valve wheel
-event 29 2 valve
+event 29 1 valve
 event 30 13 item VALVE_WHEEL 1
 event 23 1 gather FEN_MOSS 2
 event 26 6 echo ECHO_TRAP
@@ -63,7 +63,7 @@ event 9 19 item MARIGOLD_LEAF 1 or 12 20 or 9 15
 # west passage: the calm mark
 event 3 12 mark MARK_3_1
 # south hall: valve 3, a valve wheel
-event 13 29 valve
+event 13 30 valve
 event 1 30 item VALVE_WHEEL 1
 event 6 27 slip SLIPPERY
 event 14 23 gather HERB 2

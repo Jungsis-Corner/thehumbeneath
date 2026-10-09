@@ -64,6 +64,26 @@ def mark(x, y, colour=WHITE):
 MARK = Deco((0.3, 0.72, 0.26, 0.74), mark)
 
 
+# --- a valve socket (level 3): an iron wheel with spokes on a pipe ------
+def valve(x, y):
+    if 0.62 <= y < 1.0 and abs(x - 1.33) < 0.05:
+        return (WHITE, 0.7, False)                  # the pipe down
+    r = ring(x, y, 1.33, 0.42, 0.2)
+    if 0.78 < r < 1:
+        return (CYAN, 1.3, False)                   # the rim
+    if r < 0.2:
+        return (WHITE, 1.2, False)                  # the hub
+    if r < 0.78:
+        a = math.atan2(y - 0.42, (x - 1.33)) % (math.pi / 2)
+        if min(a, math.pi / 2 - a) < 0.18:
+            return (CYAN, 1.0, False)               # four spokes
+        return DARK
+    return None
+
+
+VALVE = Deco((0.38, 0.62, 0.18, 1.0), valve)
+
+
 # --- level 1: the root cellar -------------------------------------------
 def shelf(x, y):
     """a board on two brackets with jars and an apple on it"""

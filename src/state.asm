@@ -357,7 +357,7 @@ game_load:
         lea     v_shdr(a5),a1   ; the header once more, then check it
         moveq   #SAVE_HEAD,d4
         bsr     fread
-        bne.s   .cl
+        bne     .cl
         moveq   #-1,d0
         move.w  18(a1),d1       ; length must match the kept levels
         move.w  d1,-(sp)

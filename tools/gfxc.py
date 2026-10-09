@@ -396,8 +396,9 @@ WALLSETS = {
 }
 
 # view classes, as in levelc.py
-VC_WALL, VC_DOOR, VC_DOWN, VC_UP, VC_WATER, VC_DECOA, VC_DECOB, VC_MARK = range(1, 9)
-DECOS = 1 << VC_DECOA | 1 << VC_DECOB | 1 << VC_MARK   # walls with a picture
+VC_WALL, VC_DOOR, VC_DOWN, VC_UP, VC_WATER, VC_DECOA, VC_DECOB, VC_MARK, VC_VALVE = range(1, 10)
+DECOS = 1 << VC_DECOA | 1 << VC_DECOB | 1 << VC_MARK | 1 << VC_VALVE  # walls with a picture
+VALVE_SETS = (3,)                  # wall sets of levels with valve sockets
 SOLID = 1 << VC_WALL | 1 << VC_DOOR | DECOS
 
 
@@ -655,6 +656,8 @@ def occluders(kind, d, l):
 
 def build(ws, n):
     decos = list(zip((VC_DECOA, VC_DECOB), deco.SETS[n])) + [(VC_MARK, deco.MARK)]
+    if n in VALVE_SETS:
+        decos.append((VC_VALVE, deco.VALVE))
     bg = b''
     for y in range(VIEW_H):
         _, word = encode([ws.background(x, y) for x in range(4)])
@@ -702,7 +705,7 @@ def build(ws, n):
                     occ = occluders('front', d, l)
                     entries.append((cell, 0, 1 << VC_WALL | DECOS, sh, fronts[VC_WALL, d], occ))
                     entries.append((cell, 0, 1 << VC_DOOR, sh, fronts[VC_DOOR, d], occ))
-                    for vc, _ in decos[:3 if d < DECO_DEPTH else 0]:  # the picture over it
+                    for vc, _ in decos[:len(decos) if d < DECO_DEPTH else 0]:  # the picture over it
                         entries.append((cell, 0, 1 << vc, sh, fronts[vc, d], occ))
             if l != 0:
                 side = lambda x, y, u, v, z: ws.wall(x, y, u, v, z, True)
@@ -710,7 +713,7 @@ def build(ws, n):
                 if t:
                     occ = occluders('side', d, l)
                     entries.append((cell, 1, SOLID, 0, t, occ))
-                    for vc, dc in decos[:3 if d < DECO_DEPTH else 0]:
+                    for vc, dc in decos[:len(decos) if d < DECO_DEPTH else 0]:
                         t = make_tile(side_deco(ws, dc, d, l), True)
                         if t:
                             entries.append((cell, 1, 1 << vc, 0, t, occ))
