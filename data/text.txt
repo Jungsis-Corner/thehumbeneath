@@ -360,6 +360,20 @@ SHEET_HP_MAX    HP %d/%d  XP %d  %s
 SHEET_STATS     Att %d  Def %d  Spd %d  Find %d
 SHEET_MOSS      Moss: fen %d dry %d glow %d max %d
 
+# --- Help page (key H, 4 px font): HELP_1 .. HELP_10 in this order ---
+@width 40
+HELP_TITLE      The keys - H closes
+HELP_1          Up/Down     step forward / back
+HELP_2          Left/Right  turn
+HELP_3          SHIFT+Left/Right  step aside
+HELP_4          SPACE       menu: pack, cats, game
+HELP_5          I  pack     C  cats     M  map
+HELP_6          S  sneak on/off   H  this page
+HELP_7          ESC         save, load, sound, quit
+HELP_8          Menus: Up/Down choose, SPACE or
+HELP_9          ENTER take it, Left or ESC back.
+HELP_10         Joystick: move, FIRE = SPACE.
+
 # --- Debug line under the compass (DEBUG builds only; the panel
 #     cuts it off after 15 characters) ---
 @width 40
@@ -403,7 +417,7 @@ MARK_1_2        The cellar is only the first step.
 EXIT_1          The camp is behind you. Follow the Hum.
 TUT_1           Cursor keys walk and turn the party.
 TUT_2           SPACE: menu. I: pack. C: cats. M: map.
-TUT_3           ESC: save, load or quit the game.
+TUT_3           ESC: save, load, quit. H: all keys.
 APPLES          Crates of old apples line the walls.
 APPLE_RACKS     Old apples rot on wooden racks.
 WEBS            Cobwebs cling to your fur.

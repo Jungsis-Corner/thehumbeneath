@@ -109,6 +109,37 @@ panel_show:
         movem.l (sp)+,d0-d7/a0-a3
         rts
 
+; help_show: the keys in the viewport (key H)
+help_show:
+        movem.l d0-d7/a0-a3,-(sp)
+        bsr     clear_view
+        move.w  #T_HELP_TITLE,d0
+        moveq   #2,d1
+        moveq   #C_YEL,d2
+        bsr.s   .ln
+        add.w   #LINE_H,d1
+        move.w  #T_HELP_1,d4
+        moveq   #HELP_LINES-1,d5
+.l      move.w  d4,d0
+        moveq   #C_WHITE,d2
+        cmp.w   #T_HELP_8,d4    ; the lines on menus and joystick
+        blo.s   .w
+        moveq   #C_CYAN,d2
+.w      bsr.s   .ln
+        addq.w  #1,d4
+        dbra    d5,.l
+        movem.l (sp)+,d0-d7/a0-a3
+        rts
+.ln     movem.l d1/d4-d5,-(sp)  ; d0 = text, d1 = y, d2 = ink
+        bsr     text_get
+        moveq   #1,d0
+        moveq   #C_BLACK,d3
+        bsr     pdraw
+        movem.l (sp)+,d1/d4-d5
+        add.w   #LINE_H+2,d1
+        rts
+HELP_LINES equ  10
+
 ; sheet_show: the party sheet in the viewport (key C)
 sheet_show:
         movem.l d0-d7/a0-a3,-(sp)

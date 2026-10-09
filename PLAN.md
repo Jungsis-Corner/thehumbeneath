@@ -3,7 +3,7 @@
 Status: approved 2026-10-07 (open questions answered with the proposals, see section 8).
 Changes to the architecture below need approval (CLAUDE.md).
 
-Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9 done (levels 1-8, three endings), M9.9 (balance, polish) done, M9.10 (random places) done, M10a (sound) done, M10b (German) done, M10c (graphics) done.
+Progress: M1 done (M1a, M1b, M1c), M2-M8 done, M9 done (levels 1-8, three endings), M9.9 (balance, polish) done, M9.10 (random places) done, M10a (sound) done, M10b (German) done, M10c (graphics) done, M10d (polish) done.
 
 ## 1. Toolchain (taken over from FUSE RUNNER)
 
@@ -582,6 +582,13 @@ draws a level source as PNG for review.
     the next rank; the worn item moved to the stats line); menu boxes get
     as wide as their longest line (MENU_LEN 40, at least MENU_W); save
     slots say "level 1, 14% done"; v_args holds 6 arguments.
+- **M10d Polish: DONE** (2026-10-09). A scripted walk through levels 1-7
+  into level 8 (NOENEMY, SEED 0, 384 KB): every key item, the valves,
+  the handcar, the Pale Totem, every stairs and autosave work. Key H
+  shows a page with all keys (PG_HELP, KEYROW(4) bit 2); the tutorial
+  mentions it. German text fixes ("ihn hören", "Folgt dem Hum").
+  Note for scripted tests: the game reads the keyboard directly, so a key
+  pressed during a message pause is lost - wait after event cells.
 
 ## 7. Testing
 

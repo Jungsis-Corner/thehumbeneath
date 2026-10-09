@@ -134,12 +134,14 @@ K_MAP   equ     9               ; M (KEYROW(2)): map on/off
 K_SHEET equ     10              ; C (KEYROW(2)): party sheet on/off
 K_PACK  equ     11              ; I (KEYROW(5)): pack page on/off
 K_SNEAK equ     12              ; S (KEYROW(3)): sneak on/off
+K_HELP  equ     13              ; H (KEYROW(4)): the keys
 
 ; pages shown in the viewport
 PG_VIEW  equ    0
 PG_MAP   equ    1
 PG_SHEET equ    2
 PG_PACK  equ    3
+PG_HELP  equ    4
 K_MOVE  equ     (1<<K_UP)|(1<<K_DOWN)|(1<<K_LEFT)|(1<<K_RIGHT)
 
 ;---------------------------------------------------------------------
@@ -375,6 +377,9 @@ mainloop:
         bne.s   .page
         moveq   #PG_PACK,d1     ; I: the pack
         btst    #K_PACK,d2
+        bne.s   .page
+        moveq   #PG_HELP,d1     ; H: the keys
+        btst    #K_HELP,d2
         beq.s   .nomap
 .page   cmp.w   v_page(a5),d1   ; the same key again: back to the view
         bne.s   .set
@@ -2112,11 +2117,20 @@ readkeys:                       ; -> d0 = KEYROW(1), CTL2 mapped onto it
         lea     kr3(pc),a3      ; S: sneak
         moveq   #MT_IPCOM,d0
         trap    #1
+        move.w  d1,-(sp)
+        lea     kr4(pc),a3      ; H: the keys
+        moveq   #MT_IPCOM,d0
+        trap    #1
+        move.w  d1,d2
+        move.w  (sp)+,d1
         move.w  (sp)+,d0
         btst    #3,d1
         beq.s   .s
         bset    #K_SNEAK,d0
-.s      move.w  v_keys(a5),v_pkeys(a5)
+.s      btst    #2,d2
+        beq.s   .h
+        bset    #K_HELP,d0
+.h      move.w  v_keys(a5),v_pkeys(a5)
         move.w  d0,v_keys(a5)
         move.l  v_sysv(a5),a0   ; empty the keyboard queue, so that the keys
         move.l  $4c(a0),d1      ; pressed in the game do not end up in BASIC
@@ -2211,8 +2225,12 @@ redraw:                         ; after a step or turn
         bsr     sheet_show
         bra     panel_show
 .nosh   cmp.w   #PG_PACK,v_page(a5)
-        bne.s   .view
+        bne.s   .nopk
         bsr     pack_show
+        bra     panel_show
+.nopk   cmp.w   #PG_HELP,v_page(a5)
+        bne.s   .view
+        bsr     help_show
         bra     panel_show
 .view   move.w  pcount(pc),-(sp)
         bsr     render
@@ -2681,6 +2699,7 @@ kr0:    dc.b    9,1,0,0,0,0,0,2         ; IPC: KEYROW(0)
 kr2:    dc.b    9,1,0,0,0,0,2,2         ; IPC: KEYROW(2)
 kr5:    dc.b    9,1,0,0,0,0,5,2         ; IPC: KEYROW(5)
 kr3:    dc.b    9,1,0,0,0,0,3,2         ; IPC: KEYROW(3)
+kr4:    dc.b    9,1,0,0,0,0,4,2         ; IPC: KEYROW(4)
 steps:  dc.w    0,-1,1,0,0,1,-1,0       ; dx, dy of one step N, E, S, W
 kr7:    dc.b    9,1,0,0,0,0,7,2         ; IPC: KEYROW(7)
 doff:   dc.w    -32,1,32,-1             ; map offset of one step N, E, S, W
