@@ -99,6 +99,18 @@ SPEICHERN
   Laufwerk des Spiels.
   ESC - Ton: Klaenge an oder aus.
 
+NEUE VERSION, SPIELSTAENDE BEHALTEN
+  Spielstaende und Sprache stehen im Image (hum_sv0..hum_sv3, hum_cfg).
+  Ein neues thehum.win hat keine. Unter Linux/WSL uebertraegt sie
+      ./tools/update_win.sh altes_thehum.win
+  in eine Kopie des neuen Images: dist/thehum_update.win. Diese als
+  thehum.win auf den MiSTer (/media/fat/QL) kopieren. Ohne das Skript
+  geht es mit qxltool von Hand:
+      echo "cp hum_sv1 > hum_sv1" | qxltool -w altes_thehum.win
+      echo "write hum_sv1 hum_sv1" | qxltool -w neues_thehum.win
+  (ebenso fuer hum_sv0, hum_sv2, hum_sv3 und hum_cfg). Spielstaende aus
+  v1.0 lassen sich in v1.1 laden.
+
 BAUEN
   In src/: ./make.sh  (braucht vasm und Python 3 mit Pillow; fuer
   thehum.win zusaetzlich qxltool, als 32-Bit-Programm uebersetzt).
@@ -204,6 +216,18 @@ SAVING
   much of the game is done. The saves (hum_sv0..hum_sv3) and the chosen
   language (hum_cfg) are kept on the drive of the game.
   ESC - Sound: sound on or off.
+
+NEW VERSION, KEEPING THE SAVES
+  Saves and language live in the image (hum_sv0..hum_sv3, hum_cfg). A
+  new thehum.win has none. On Linux/WSL
+      ./tools/update_win.sh old_thehum.win
+  writes them into a copy of the new image: dist/thehum_update.win. Copy
+  it to the MiSTer (/media/fat/QL) as thehum.win. Without the script it
+  works with qxltool by hand:
+      echo "cp hum_sv1 > hum_sv1" | qxltool -w old_thehum.win
+      echo "write hum_sv1 hum_sv1" | qxltool -w new_thehum.win
+  (the same for hum_sv0, hum_sv2, hum_sv3 and hum_cfg). Saves of v1.0
+  load in v1.1.
 
 BUILDING
   In src/: ./make.sh  (needs vasm and Python 3 with Pillow; for
